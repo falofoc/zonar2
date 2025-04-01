@@ -643,12 +643,12 @@ if __name__ == '__main__':
         scheduler.start()
         
         # Run the app
-        port = int(os.environ.get('PORT', 8080))
+        port = int(os.environ.get('PORT', 3000))
         print(f"Starting server on port {port}...")
         app.run(
-            host='localhost',  # Use localhost instead of 0.0.0.0
+            host='0.0.0.0',
             port=port,
-            debug=True,
+            debug=os.environ.get('FLASK_ENV') == 'development',
             use_reloader=False,  # Disable reloader to avoid scheduler issues
             threaded=True       # Enable threading
         )
@@ -656,6 +656,4 @@ if __name__ == '__main__':
         print(f"Error starting server: {e}")
         traceback.print_exc()  # Print full error traceback
         if 'scheduler' in locals() and scheduler.running:
-            scheduler.shutdown()
-
-    app.run(host='0.0.0.0', port=8080, debug=True) 
+            scheduler.shutdown() 
