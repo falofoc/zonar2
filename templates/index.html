@@ -1,0 +1,899 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Search Box Styling */
+    .search-container {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .search-form .position-relative {
+        display: flex;
+        align-items: center;
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius-xl); /* More rounded */
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow var(--transition-base), border-color var(--transition-base);
+    }
+
+    .search-form .position-relative:focus-within {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--brand-orange-100), var(--shadow); /* Subtle focus glow + shadow */
+    }
+
+    .search-form .form-control {
+        border: none;
+        background: transparent;
+        box-shadow: none !important; /* Override bootstrap */
+        flex-grow: 1;
+        padding: var(--spacing-sm) var(--spacing-md);
+        color: var(--text-primary);
+        font-size: var(--font-size-base);
+    }
+
+     .search-form .form-control::placeholder {
+         color: var(--text-secondary);
+         opacity: 0.8;
+     }
+
+    .search-button {
+        background: var(--gradient-fire);
+        border: none;
+        color: white;
+        border-radius: var(--border-radius); /* Match inner elements */
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-left: var(--spacing-xs); /* RTL support: margin-right in RTL */
+        transition: background var(--transition-base), transform var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    [dir="rtl"] .search-button {
+        margin-left: 0;
+        margin-right: var(--spacing-xs);
+    }
+
+    .search-button:hover {
+        background: var(--gradient-sunset);
+        transform: scale(1.05);
+    }
+
+    .search-button i {
+        font-size: 1.1rem;
+        color: white;
+    }
+
+    /* Product Card Styling */
+    .product-card {
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        transition: transform var(--transition-base), box-shadow var(--transition-base);
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Make cards in a row equal height */
+        box-shadow: var(--shadow);
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .product-image {
+        width: 100%;
+        height: 200px; /* Fixed height for images */
+        object-fit: contain; /* Changed from cover to contain */
+        background-color: #fff; /* White background for contain */
+        padding: var(--spacing-sm);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .dark-theme .product-image {
+        background-color: #eee; /* Slightly off-white for dark theme */
+    }
+
+    .product-info {
+        padding: var(--spacing-md);
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1; /* Allow info to fill space */
+    }
+
+    .product-name {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+        line-height: 1.3;
+        /* Clamp text to 2 lines */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-height: calc(var(--font-size-lg) * 1.3 * 2); /* Reserve space for 2 lines */
+    }
+
+    .price-box {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: var(--spacing-xs);
+        gap: var(--spacing-xs);
+    }
+
+    .product-price {
+        font-size: var(--font-size-xl);
+        font-weight: 700;
+        color: var(--primary-color);
+        display: inline-flex; /* Align SAR symbol better */
+        align-items: center; /* Align SAR symbol better */
+    }
+
+    .product-price .price-value {
+        margin-right: 0.2em; /* Space after price */
+        letter-spacing: -0.02em;
+    }
+     [dir="rtl"] .product-price .price-value {
+         margin-right: 0;
+         margin-left: 0.2em; /* Space after price in RTL */
+     }
+
+    .sar-symbol {
+        width: 0.8em; /* Adjust size */
+        height: 0.8em;
+        fill: var(--primary-color);
+        display: inline-block;
+        vertical-align: baseline;
+    }
+
+    .price-history {
+        font-size: var(--font-size-sm);
+        min-height: calc(var(--font-size-sm) * 1.2); /* Reserve space */
+        margin-bottom: var(--spacing-sm);
+    }
+    .price-history .text-success,
+    .price-history .text-danger {
+        font-weight: 500;
+    }
+    .price-history i {
+         margin-right: 0.2em;
+         vertical-align: middle;
+     }
+     [dir="rtl"] .price-history i {
+         margin-left: 0.2em;
+         margin-right: 0;
+     }
+
+    .target-price {
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    .target-price i {
+        color: var(--secondary-color);
+    }
+
+    .product-status {
+        margin-top: auto; /* Push status and actions to bottom */
+        margin-bottom: var(--spacing-md);
+    }
+
+    .status-badge {
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+    }
+
+    .status-badge.status-active {
+        background-color: var(--brand-orange-100);
+        color: var(--primary-color);
+        border: 1px solid var(--brand-orange-200);
+    }
+     .dark-theme .status-badge.status-active {
+         background-color: rgba(255, 107, 0, 0.15);
+         color: var(--brand-orange-300);
+         border: 1px solid rgba(255, 107, 0, 0.3);
+     }
+
+    .status-badge.status-inactive {
+        background-color: #f8f9fa; /* Bootstrap light gray */
+        color: var(--text-secondary);
+        border: 1px solid #dee2e6; /* Bootstrap gray border */
+    }
+     .dark-theme .status-badge.status-inactive {
+         background-color: #343a40; /* Bootstrap dark gray */
+         color: var(--text-secondary);
+         border: 1px solid #495057; /* Darker border */
+     }
+
+    /* Product Card Actions/Buttons */
+    .product-actions {
+        display: none; /* Hide old actions - keeping structure for reference */
+    }
+
+    /* New Button Row using Bootstrap classes for consistency */
+    .product-card .btn-group { /* Wrap the last row buttons */
+         width: 100%;
+    }
+
+    .product-card .btn {
+         font-size: var(--font-size-sm);
+         padding: var(--spacing-sm) var(--spacing-sm); /* Slightly smaller padding */
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+         gap: 0.4em;
+         flex-grow: 1; /* Make buttons fill space in group */
+     }
+     .product-card .btn i {
+         font-size: 1.1em; /* Make icons slightly larger relative to text */
+     }
+
+     /* Specific button styling */
+     .product-card .btn-outline-secondary { /* History */
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+     }
+     .product-card .btn-outline-secondary:hover {
+        background-color: #e9ecef; /* Light gray background */
+        color: var(--text-primary);
+     }
+     .dark-theme .product-card .btn-outline-secondary {
+        color: var(--text-secondary);
+        border-color: var(--border-color);
+     }
+      .dark-theme .product-card .btn-outline-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+     }
+
+     .product-card .btn-outline-primary { /* Edit */
+        /* Uses default outline primary from base */
+     }
+
+     .product-card .btn-outline-danger { /* Delete */
+        /* Uses default outline danger */
+     }
+
+    .product-card .btn-buy { /* Link styled as button */
+         background: var(--gradient-fire);
+         color: white;
+         border-color: transparent; /* Remove border if any */
+         padding: var(--spacing-sm) var(--spacing-md);
+         margin-top: var(--spacing-sm); /* Add space above */
+         width: 100%;
+         text-align: center;
+         font-weight: 500;
+         border-radius: var(--border-radius);
+         transition: background var(--transition-base), transform var(--transition-fast);
+    }
+    .product-card .btn-buy:hover {
+        background: var(--gradient-sunset);
+        color: white;
+        transform: scale(1.02);
+    }
+
+    /* Empty State Styling */
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xl) var(--spacing-md);
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        border: 1px dashed var(--border-color);
+        margin-top: var(--spacing-lg);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--secondary-color);
+        margin-bottom: var(--spacing-md);
+        display: block;
+    }
+
+    .empty-state h3 {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .empty-state-text {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .empty-state .add-product-btn {
+        background: var(--gradient-fire);
+        border: none;
+        color: white;
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: var(--font-size-base);
+        font-weight: 500;
+        border-radius: var(--border-radius);
+        transition: background var(--transition-base), transform var(--transition-fast);
+    }
+
+    .empty-state .add-product-btn:hover {
+        background: var(--gradient-sunset);
+        transform: scale(1.03);
+    }
+    .empty-state .add-product-btn i {
+        margin-right: 0.5em;
+    }
+    [dir="rtl"] .empty-state .add-product-btn i {
+        margin-left: 0.5em;
+        margin-right: 0;
+    }
+
+    /* Pagination Adjustments */
+    .pagination {
+        justify-content: center; /* Center pagination */
+        margin-top: var(--spacing-lg);
+    }
+    .page-item .page-link {
+        border-radius: var(--border-radius-sm) !important; /* Consistent radius */
+        margin: 0 3px; /* Spacing between page items */
+        border-color: var(--border-color);
+        color: var(--text-secondary);
+        background-color: var(--card-bg);
+        transition: all var(--transition-base);
+    }
+    .page-item .page-link:hover {
+        background-color: var(--brand-orange-100);
+        color: var(--primary-color);
+        border-color: var(--brand-orange-200);
+    }
+    .page-item.active .page-link {
+        background: var(--gradient-fire);
+        border-color: var(--primary-color);
+        color: white;
+        box-shadow: var(--shadow-sm);
+    }
+     .page-item.disabled .page-link {
+         background-color: transparent;
+         border-color: var(--border-color);
+         color: var(--text-secondary);
+         opacity: 0.6;
+     }
+      .page-link i { /* Arrow styling */
+        font-size: 0.9em;
+      }
+
+     /* Modal Body Scroll for Price History */
+     #priceHistoryModal .modal-body {
+          max-height: 60vh; /* Limit height */
+          overflow-y: auto; /* Enable scroll */
+     }
+
+     .price-history-list .price-entry {
+         padding: var(--spacing-sm) 0;
+         border-bottom: 1px solid var(--border-color);
+     }
+     .price-history-list .price-entry:last-child {
+         border-bottom: none;
+     }
+     .price-history-list .price-value {
+         font-weight: 500;
+         color: var(--text-primary);
+     }
+      .price-history-list .price-date {
+         font-size: var(--font-size-xs);
+         color: var(--text-secondary);
+     }
+
+    /* Update button styling to use orange brand colors */
+    .btn-primary {
+        background: var(--gradient-fire);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+        background: var(--gradient-sunset);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-secondary {
+        background-color: var(--brand-orange-200);
+        border-color: var(--brand-orange-300);
+        color: var(--text-primary);
+    }
+    
+    .btn-secondary:hover {
+        background-color: var(--brand-orange-300);
+        border-color: var(--brand-orange-400);
+        color: var(--text-primary);
+    }
+    
+    .btn-danger {
+        background-color: var(--primary-color);
+        border-color: var(--primary-hover);
+    }
+    
+    .btn-danger:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+    }
+    
+    /* Update text color classes */
+    .text-success {
+        color: var(--primary-color) !important;
+    }
+    
+    .text-danger {
+        color: var(--brand-orange-600) !important;
+    }
+    
+    /* Override Bootstrap icons for price change indicators */
+    .bi-arrow-down-circle-fill {
+        color: var(--secondary-color);
+    }
+    
+    .bi-arrow-up-circle-fill {
+        color: var(--primary-color);
+    }
+    
+    /* Override tool-btn colors */
+    .tool-btn {
+        background-color: var(--brand-orange-100);
+        color: var(--primary-color);
+    }
+    
+    .tool-btn:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    /* All product card buttons to use consistent orange styling */
+    .product-card .btn-outline-secondary,
+    .product-card .btn-outline-primary,
+    .product-card .btn-outline-danger {
+        color: var(--primary-color);
+        border-color: var(--brand-orange-300);
+    }
+    
+    .product-card .btn-outline-secondary:hover,
+    .product-card .btn-outline-primary:hover,
+    .product-card .btn-outline-danger:hover {
+        background-color: var(--brand-orange-100);
+        color: var(--primary-color);
+    }
+    
+    /* Make delete button stand out a bit */
+    .product-card .btn-outline-danger:hover {
+        background-color: var(--brand-orange-200);
+    }
+
+    /* Make all icons use orange color */
+    .bi {
+        color: var(--primary-color);
+    }
+    
+    /* Inactive badge should still use neutral color */
+    .status-badge.status-inactive .bi {
+        color: var(--text-secondary);
+    }
+    
+    /* Button icons should match their button text color */
+    .btn .bi {
+        color: inherit;
+    }
+    
+    /* Update alert colors */
+    .alert-danger {
+        background-color: var(--brand-orange-100);
+        border-color: var(--brand-orange-300);
+        color: var(--brand-orange-700);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+    {% if current_user.is_authenticated %}
+    <div class="search-container">
+        <div class="search-form mx-auto" style="max-width: 600px;">
+            <form action="{{ url_for('home') }}" method="GET">
+                <div class="position-relative">
+                    <input type="text" class="form-control shadow-none" name="search" placeholder="{{ translate('search') }}" value="{{ request.args.get('search', '') }}">
+                    <button type="submit" class="search-button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        {% if products %}
+            {% for product in products %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="product-card">
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" class="product-image" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="product-info">
+                        <h5 class="product-name">{{ product.custom_name or product.name }}</h5>
+                        <div class="price-box">
+                            <div class="product-price">
+                                <span class="price-value">{{ product.current_price|round(2) }}</span>
+                                <svg class="sar-symbol" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1124.14 1256.39" fill="currentColor" width="1em" height="1em">
+                                  <path d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z"/>
+                                  <path d="M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="price-history">
+                            {% if product.price_history and (product.get_price_history()|length > 1) %}
+                                {% set history = product.get_price_history() %}
+                                {% set last_idx = history|length - 1 %}
+                                {% set prev_idx = history|length - 2 %}
+                                {% if history[last_idx].price < history[prev_idx].price %}
+                                    <span class="text-success">
+                                        <i class="bi bi-arrow-down-circle-fill"></i>
+                                        {{ (history[prev_idx].price - history[last_idx].price)|round(2) }}
+                                    </span>
+                                {% elif history[last_idx].price > history[prev_idx].price %}
+                                    <span class="text-danger">
+                                        <i class="bi bi-arrow-up-circle-fill"></i>
+                                        {{ (history[last_idx].price - history[last_idx].price)|round(2) }}
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {% if product.target_price and product.target_price > 0 %}
+                        <div class="target-price">
+                            <i class="bi bi-bullseye"></i>
+                            {{ translate('target_price') }}: {{ product.target_price|round(2) }}
+                        </div>
+                        {% endif %}
+                        <div class="product-status">
+                            <span class="status-badge {% if product.tracking_enabled %}status-active{% else %}status-inactive{% endif %}">
+                                <i class="bi {% if product.tracking_enabled %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %}"></i>
+                                {% if product.tracking_enabled %}
+                                    متتبع
+                                {% else %}
+                                    غير مفعل
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="product-tools">
+                            <button class="tool-btn btn-check" data-id="{{ product.id }}" title="{{ translate('check_now') }}">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn-action btn-check" onclick="toggleTracking('{{ product.id }}')">
+                                <i class="bi bi-{{ 'check-circle-fill' if product.tracking else 'x-circle-fill' }}"></i>
+                                {{ translate('tracking') if product.tracking else translate('not_tracking') }}
+                            </button>
+                            <a href="{{ url_for('get_buy_link', product_id=product.id) }}" target="_blank" class="btn-action btn-buy">
+                                <i class="bi bi-cart"></i> {{ translate('buy_now') }}
+                            </a>
+                            <button class="btn-refresh" onclick="refreshPrice('{{ product.id }}')" title="{{ translate('refresh_price') }}">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#priceHistoryModal{{ product.id }}" title="{{ translate('price_history') }}">
+                                <i class="bi bi-graph-up"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal{{ product.id }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteProductModal{{ product.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="{{ url_for('get_buy_link', product_id=product.id) }}" target="_blank" class="btn btn-buy flex-grow-1">
+                                <i class="bi bi-cart"></i> {{ translate('buy_now') }}
+                            </a>
+                            <button class="btn btn-primary" onclick="refreshPrice('{{ product.id }}')" title="{{ translate('refresh_price') }}">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Product Modal -->
+            <div class="modal fade" id="editProductModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ translate('edit') }}: {{ product.custom_name or product.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('edit_product', product_id=product.id) }}" method="POST">
+                                <div class="mb-3">
+                                    <label for="custom_name" class="form-label">{{ translate('product_name') }}</label>
+                                    <input type="text" class="form-control" id="custom_name" name="custom_name" value="{{ product.custom_name or product.name }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="target_price" class="form-label">{{ translate('target_price') }}</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" class="form-control" id="target_price" name="target_price" value="{{ product.target_price or '' }}">
+                                        <span class="input-group-text"></span>
+                                    </div>
+                                </div>
+                                <div class="mb-3 form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="tracking" name="tracking" {% if product.tracking %}checked{% endif %}>
+                                    <label class="form-check-label" for="tracking">{{ translate('enable_tracking') }}</label>
+                                </div>
+                                <div class="mb-3 form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="notify_always" name="notify_always" {% if product.notify_always %}checked{% endif %}>
+                                    <label class="form-check-label" for="notify_always">{{ translate('notify_any_change') }}</label>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
+                                    <button type="submit" class="btn btn-primary">{{ translate('save') }}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Delete Product Modal -->
+            <div class="modal fade" id="deleteProductModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ translate('confirm_delete') }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>{{ translate('confirm_delete_message') }}: <strong>{{ product.custom_name or product.name }}</strong>?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
+                            <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-danger">{{ translate('delete') }}</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Price History Modal -->
+            <div class="modal fade" id="priceHistoryModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ translate('price_history') }}: {{ product.custom_name or product.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% if product.price_history and (product.get_price_history()|length > 0) %}
+                                <div class="price-history-list">
+                                    {% for entry in product.get_price_history()|sort(attribute='date', reverse=true) %}
+                                        <div class="price-entry">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="price-value">
+                                                    {{ entry.price|round(2) }}
+                                                </div>
+                                                <div class="price-date">
+                                                    {{ entry.date.strftime('%Y-%m-%d %H:%M') }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="bi bi-graph-up text-muted display-4 mb-3"></i>
+                                    <p>{{ translate('no_history') }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('close') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="bi bi-bag-plus empty-state-icon"></i>
+                    <h3>{{ translate('no_products_yet') }}</h3>
+                    <p class="empty-state-text">{{ translate('start_tracking_message') }}</p>
+                    <button class="add-product-btn" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="bi bi-plus-lg"></i> {{ translate('add_first_product') }}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if products.pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if products.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('home', page=products.prev_num, search=request.args.get('search', '')) }}" aria-label="Previous">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for page in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page %}
+                    {% if page == products.page %}
+                    <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('home', page=page, search=request.args.get('search', '')) }}">{{ page }}</a></li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if products.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('home', page=products.next_num, search=request.args.get('search', '')) }}" aria-label="Next">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('add_product') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- We're using the add-product-form ID instead of action attribute to let JS handle submission -->
+                    <form id="add-product-form">
+                        <div class="mb-3">
+                            <label for="url" class="form-label">{{ translate('product_url') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                <input type="url" class="form-control" id="url" name="url" required placeholder="https://www.amazon.sa/...">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="custom_name" class="form-label">{{ translate('custom_name') }} ({{ translate('optional') }})</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-pencil"></i></span>
+                                <input type="text" class="form-control" id="custom_name" name="custom_name">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="target_price" class="form-label">{{ translate('target_price') }} ({{ translate('optional') }})</label>
+                            <div class="input-group">
+                                <span class="input-group-text"></span>
+                                <input type="number" step="0.01" class="form-control" id="target_price" name="target_price">
+                            </div>
+                        </div>
+                        <div class="mb-3 form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="notify_on_any_change" name="notify_on_any_change">
+                            <label class="form-check-label" for="notify_on_any_change">{{ translate('notify_any_change') }}</label>
+                        </div>
+                        <div class="alert alert-danger d-none" id="add-product-error"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
+                    <button type="button" class="btn btn-primary" id="add-product-btn">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <i class="bi bi-plus-lg me-1"></i> إضافة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Welcome page for non-authenticated users -->
+    <div class="row justify-content-center align-items-center py-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <div class="display-4 text-primary mb-4">
+                        <div class="logo-icon mx-auto mb-3" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #FF9800 0%, #FF5722 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(255, 87, 34, 0.3);">
+                            <i class="bi bi-fire" style="font-size: 4rem; color: white;"></i>
+                        </div>
+                        <h1>Flare <span class="ms-1">فلير</span></h1>
+                    </div>
+                    <h3 class="mb-4">{{ translate('welcome') }}</h3>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="feature-icon" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #FFCA28 0%, #FF9800 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);">
+                                    <i class="bi bi-graph-up-arrow" style="font-size: 1.8rem; color: white;"></i>
+                                </div>
+                            </div>
+                            <h5>{{ translate('track_prices') }}</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="feature-icon" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #FF7043 0%, #F44336 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);">
+                                    <i class="bi bi-bell" style="font-size: 1.8rem; color: white;"></i>
+                                </div>
+                            </div>
+                            <h5>{{ translate('get_notified') }}</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="feature-icon" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #FF5722 0%, #E64A19 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 4px 10px rgba(230, 74, 25, 0.3);">
+                                    <i class="bi bi-ui-checks" style="font-size: 1.8rem; color: white;"></i>
+                                </div>
+                            </div>
+                            <h5>{{ translate('easy_to_use') }}</h5>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right"></i> {{ translate('login') }}
+                        </a>
+                        <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-person-plus"></i> {{ translate('signup') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkButtons = document.querySelectorAll('.check-price-btn');
+        checkButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.id;
+                const button = this;
+                
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("checking") }}...';
+                
+                fetch(`/check_price/${productId}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("check_now") }}';
+                    
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('{{ translate("error_checking_price") }}');
+                    }
+                })
+                .catch(() => {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("check_now") }}';
+                    alert('{{ translate("error_checking_price") }}');
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

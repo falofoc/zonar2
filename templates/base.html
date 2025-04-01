@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang }}" dir="{{ 'rtl' if g.lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zonar - زونار</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Primary Brand Colors */
+            --primary-color: #FF6B00;
+            --primary-hover: #FF4500;
+            --secondary-color: #FFB100;
+            --accent-color: #FFDB58;
+            
+            /* Extended Brand Palette */
+            --brand-orange-100: #FFF0E6;
+            --brand-orange-200: #FFD4B8;
+            --brand-orange-300: #FFB38A;
+            --brand-orange-400: #FF915C;
+            --brand-orange-500: #FF6B00; /* Primary */
+            --brand-orange-600: #CC5500;
+            --brand-orange-700: #993F00;
+            
+            /* UI Colors - Updated */
+            --success-color: #2ECC71;
+            --danger-color: #E74C3C;
+            --warning-color: #F1C40F;
+            --info-color: var(--primary-color); /* Changed from blue to primary orange */
+            
+            /* Theme Colors */
+            --bg-color: #FFFAF5;
+            --card-bg: #FFFFFF;
+            --text-primary: #2D3436;
+            --text-secondary: #636E72;
+            --link-color: var(--primary-color); /* New variable for links */
+            
+            /* Dark Theme Colors */
+            .dark-theme {
+                --bg-color: #1A1A1A;
+                --card-bg: #2C2C2C;
+                --text-primary: #ECEFF4;
+                --text-secondary: #D8DEE9;
+                --border-color: rgba(255, 107, 0, 0.3);
+            }
+            
+            /* Borders and Shadows */
+            --border-color: rgba(255, 107, 0, 0.15);
+            --shadow-sm: 0 2px 4px rgba(255, 107, 0, 0.05);
+            --shadow: 0 4px 6px rgba(255, 107, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(255, 107, 0, 0.15);
+            
+            /* Typography */
+            --font-family-ar: 'Tajawal', sans-serif;
+            --font-family-en: 'Poppins', sans-serif;
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 1.875rem;
+            
+            /* Spacing and Layout */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            /* Border Radius */
+            --border-radius-sm: 0.375rem;
+            --border-radius: 0.5rem;
+            --border-radius-lg: 0.75rem;
+            --border-radius-xl: 1rem;
+            
+            /* Transitions */
+            --transition-fast: 150ms ease;
+            --transition-base: 300ms ease;
+            --transition-slow: 500ms ease;
+            
+            /* Brand Gradients */
+            --gradient-fire: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            --gradient-flame: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            --gradient-sunset: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+        }
+
+        [dir="rtl"] {
+            font-family: var(--font-family-ar);
+            letter-spacing: 0;
+        }
+
+        [dir="ltr"] {
+            font-family: var(--font-family-en);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            transition: var(--transition-base);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 70px; /* Adjust based on final navbar height */
+        }
+
+        .dark-theme {
+            --bg-color: #1A1A1A; /* Darker background */
+            --card-bg: #2C2C2C; /* Darker cards */
+            --text-primary: #ECEFF4;
+            --text-secondary: #D8DEE9;
+            --border-color: rgba(255, 107, 0, 0.3);
+        }
+
+        /* --- Modern Minimal Navbar --- */
+        .navbar {
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            padding: 0.75rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030; /* Ensure above other content */
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .brand-text {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            background: var(--gradient-fire);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(255, 107, 0, 0.2);
+            letter-spacing: -0.02em;
+        }
+
+        .brand-text span {
+            font-size: var(--font-size-xl);
+            opacity: 0.9;
+        }
+
+        .flame-logo {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            transform-origin: center bottom;
+            animation: flicker 3s infinite alternate;
+            filter: drop-shadow(0 2px 4px rgba(255, 107, 0, 0.3));
+        }
+
+        .flame-main {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 80%;
+            background: var(--gradient-fire);
+            border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+            box-shadow: 0 0 15px var(--primary-color),
+                        0 -15px 20px var(--secondary-color),
+                        0 0 20px var(--accent-color);
+            animation: flameMain 0.8s infinite alternate;
+        }
+
+        .flame-inner {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 60%;
+            background: var(--gradient-flame);
+            border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
+            opacity: 0.8;
+            animation: flameInner 0.6s infinite alternate;
+        }
+
+        .flame-outer {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            height: 95%;
+            background: var(--gradient-sunset);
+            border-radius: 50% 50% 30% 30% / 60% 60% 40% 40%;
+            opacity: 0.3;
+            animation: flameOuter 1s infinite alternate;
+        }
+
+        .flame-spark {
+            position: absolute;
+            bottom: 60%;
+            left: 50%;
+            width: 3px;
+            height: 3px;
+            background: #FFF;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: sparkle 0.7s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes flameMain {
+            0% {
+                transform: translateX(-50%) scale(1);
+                border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+            }
+            100% {
+                transform: translateX(-50%) scale(1.1, 1.2);
+                border-radius: 45% 55% 30% 30% / 55% 65% 35% 35%;
+            }
+        }
+
+        @keyframes flameInner {
+            0% { 
+                transform: translateX(-50%) scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateX(-50%) scale(0.9, 1.1);
+                opacity: 0.9;
+            }
+        }
+
+        @keyframes flameOuter {
+            0% { 
+                transform: translateX(-50%) scale(1);
+                opacity: 0.3;
+            }
+            100% { 
+                transform: translateX(-50%) scale(1.15, 1.1);
+                opacity: 0.2;
+            }
+        }
+
+        @keyframes sparkle {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translate(random(5) - 2.5px, -5px) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* Navbar Action Buttons (Icons) */
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Spacing between icons */
+        }
+
+        .nav-icon-btn {
+            color: var(--text-secondary);
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm);
+            transition: all var(--transition-base);
+        }
+
+        .nav-icon-btn:hover {
+            color: var(--primary-color);
+            background: var(--brand-orange-100);
+            transform: translateY(-2px);
+        }
+
+        .nav-icon-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Notification Badge on Icon */
+        .nav-icon-btn .notification-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            background-color: var(--danger-color); /* Use danger color for notifications */
+            color: white;
+            border-radius: 1rem;
+            line-height: 1;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            pointer-events: none; /* Don't interfere with button click */
+            animation: pulse-badge 2s infinite;
+        }
+
+        [dir="rtl"] .nav-icon-btn .notification-badge {
+            left: var(--spacing-xs);
+            right: auto;
+        }
+
+        /* User Menu Dropdown */
+        .user-menu-toggle {
+            padding: 0.25rem 0.5rem; /* Adjust padding */
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: var(--border-radius);
+        }
+
+        .user-menu-toggle i {
+             font-size: 1.5rem; /* Slightly larger user icon */
+        }
+
+        .user-menu-toggle .username {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* Auth Buttons (Login/Signup) */
+        .auth-buttons .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+        }
+
+        .auth-buttons .btn-primary {
+            background: var(--gradient-fire);
+             border-color: var(--primary-color);
+            color: white;
+        }
+         .auth-buttons .btn-primary:hover {
+             background: var(--gradient-sunset);
+             border-color: var(--primary-color);
+         }
+
+        .auth-buttons .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .auth-buttons .btn-outline-primary:hover {
+            background: var(--brand-orange-100);
+        }
+
+
+        /* Dropdown Menu Styling */
+        .dropdown-menu {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            padding: var(--spacing-sm);
+        }
+
+        .dropdown-item {
+            color: var(--text-primary);
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            transition: all var(--transition-base);
+        }
+
+        .dropdown-item:hover, .dropdown-item:focus {
+            background: var(--brand-orange-100);
+            color: var(--primary-color);
+        }
+
+        .dropdown-item:hover i,
+        .dropdown-item:focus i {
+            color: var(--primary-color);
+        }
+
+        .dropdown-divider {
+            border-top: 1px solid var(--border-color);
+            margin: 0.5rem 0;
+        }
+        
+        /* Notification Dropdown Specifics */
+        .notification-dropdown {
+            width: 320px; /* Adjust width */
+            max-height: 450px;
+            overflow-y: auto;
+        }
+        .notification-list .dropdown-item {
+             flex-direction: column;
+             align-items: flex-start;
+             gap: 0.2rem;
+             padding: 0.75rem;
+             white-space: normal; /* Allow text wrapping */
+        }
+        .notification-list p {
+             font-size: 0.9rem;
+             margin-bottom: 0.1rem;
+            color: var(--text-primary);
+             width: 100%; /* Ensure text wraps */
+         }
+        .notification-list small {
+             font-size: 0.75rem;
+             color: var(--text-secondary);
+         }
+         .notification-list .mark-read {
+             font-size: 0.8rem;
+             color: var(--primary-color);
+             padding: 0.2rem 0;
+             margin-top: 0.2rem;
+             align-self: flex-end;
+         }
+        /* RTL specific styling for notifications */
+        [dir="rtl"] .notification-list .dropdown-item {
+            text-align: right;
+        }
+        [dir="rtl"] .notification-list p {
+            text-align: right;
+        }
+        [dir="rtl"] .notification-list .mark-read {
+            align-self: flex-start;
+        }
+        [dir="rtl"] .notification-list .bi {
+            margin-left: 0.25rem;
+            margin-right: 0;
+        }
+
+        /* Mobile Navbar */
+        .navbar-toggler {
+            border: none;
+            padding: 0.5rem;
+            font-size: 1.5rem; /* Make icon larger */
+            color: var(--text-secondary);
+        }
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        .navbar-toggler:hover {
+            color: var(--primary-color);
+        }
+        /* Remove default icon background */
+        .navbar-toggler-icon {
+            background-image: none;
+            /* Custom hamburger/close icon can be added here if needed */
+        }
+
+        .navbar-collapse {
+            /* Styles for the collapsed menu container */
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        @media (max-width: 991px) {
+            .navbar-nav {
+                padding-top: 0.5rem;
+            width: 100%;
+            }
+            .navbar-nav .nav-item {
+                width: 100%;
+            }
+            .navbar-actions {
+            width: 100%;
+                padding: 0.5rem 0;
+                justify-content: space-around; /* Distribute icons */
+                border-top: 1px solid var(--border-color);
+                margin-top: 0.5rem;
+            }
+            .user-menu-toggle .username {
+                display: none; /* Hide username text on mobile */
+            }
+            .auth-buttons {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+                padding-top: 0.5rem;
+                border-top: 1px solid var(--border-color);
+            }
+            .auth-buttons .btn {
+                width: 100%;
+            }
+             /* Group icons together on mobile collapse */
+            .navbar-nav {
+            display: flex;
+            flex-direction: column;
+                 align-items: stretch;
+             }
+            .navbar-nav .nav-link {
+                 /* Replicate dropdown-item style for consistency */
+            color: var(--text-primary);
+                 padding: var(--spacing-sm) var(--spacing-md);
+                 border-radius: var(--border-radius);
+                 display: flex;
+                 align-items: center;
+                 gap: 0.75rem;
+                 font-size: 1rem;
+                 transition: all var(--transition-base);
+             }
+            .navbar-nav .nav-link i {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+                 transition: color 0.2s ease;
+             }
+             .navbar-nav .nav-link:hover,
+             .navbar-nav .nav-link:focus {
+                 background: var(--brand-orange-100);
+                 color: var(--primary-color);
+             }
+             .navbar-nav .nav-link:hover i,
+             .navbar-nav .nav-link:focus i {
+            color: var(--primary-color);
+             }
+             .navbar-nav .dropdown-menu {
+                 position: static !important;
+            border: none;
+                 box-shadow: none;
+                 background: transparent;
+                 padding: 0 0 0 2rem; /* Indent dropdown items */
+                 margin-top: 0;
+             }
+            [dir="rtl"] .navbar-nav .dropdown-menu {
+                padding: 0 2rem 0 0;
+            }
+        }
+
+        /* --- End Modern Minimal Navbar --- */
+
+        /* Keep existing styles below, adjust if conflicting */
+
+        /* ... (rest of your existing styles, remove duplicates or conflicts) ... */
+
+        /* Add Product Modal - Minor adjustments for consistency */
+        .modal-header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+        }
+        .modal-title {
+            font-weight: 600;
+        }
+        .modal-header .btn-close {
+            filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+        }
+        .dark-theme .modal-header .btn-close {
+             filter: invert(1) grayscale(1) brightness(2);
+        }
+        .modal-content {
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .modal-footer {
+            background-color: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
+        }
+        .modal-footer .btn {
+             padding: 0.6rem 1.2rem;
+             font-size: 0.95rem;
+        }
+
+        /* Input group styling in modal */
+         .modal-body .input-group {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        .modal-body .input-group .input-group-text {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+        .modal-body .input-group .form-control {
+            border: none;
+            box-shadow: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: transparent;
+        }
+        .modal-body .input-group:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--brand-orange-100);
+        }
+        .dark-theme .modal-body .input-group {
+            border-color: rgba(255, 107, 0, 0.3);
+        }
+        .dark-theme .modal-body .input-group .form-control,
+        .dark-theme .modal-body .input-group .input-group-text {
+            color: var(--text-primary);
+        }
+
+        /* ... (rest of styles) ... */
+
+        /* Remove FAB styles */
+        /* .fab-add-product { ... } */
+
+        /* Fire-themed Loading Animation */
+        .spinner-border {
+            border-color: var(--primary-color);
+            border-right-color: transparent;
+        }
+
+        @keyframes fireSpinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notification Fire Animation */
+        .toast {
+            animation: slideInToast 0.3s ease-out;
+        }
+
+        @keyframes slideInToast {
+            from {
+                transform: translateX(100%);
+            opacity: 0;
+        }
+            to {
+                transform: translateX(0);
+            opacity: 1;
+        }
+        }
+
+        /* Fire-themed Button Hover Effect */
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        /* Update link colors */
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color var(--transition-base);
+        }
+
+        a:hover {
+            color: var(--primary-hover);
+        }
+
+        /* Update btn-info to use orange */
+        .btn-info {
+            background-color: var(--brand-orange-300);
+            border-color: var(--brand-orange-400);
+            color: var(--text-primary);
+        }
+
+        .btn-info:hover {
+            background-color: var(--brand-orange-400);
+            border-color: var(--brand-orange-500);
+            color: white;
+        }
+
+        /* Update text-info to use orange */
+        .text-info {
+            color: var(--primary-color) !important;
+        }
+
+        /* Update form focus states */
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+        }
+        
+        /* Update dropdown active states */
+        .dropdown-item.active,
+        .dropdown-item:active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Update nav-link active states */
+        .nav-link.active {
+            color: var(--primary-color);
+        }
+        
+        /* Update pagination */
+        .page-link {
+            color: var(--primary-color);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update list group active state */
+        .list-group-item.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update progress bars */
+        .progress-bar {
+            background-color: var(--primary-color);
+        }
+
+        /* Update alerts */
+        .alert-info {
+            background-color: var(--brand-orange-100);
+            border-color: var(--brand-orange-200);
+            color: var(--brand-orange-700);
+        }
+
+        /* Update badges */
+        .bg-info {
+            background-color: var(--primary-color) !important;
+        }
+
+        /* Update checkboxes and radios */
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update switches */
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update input focus */
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+        }
+
+        /* Update accordion */
+        .accordion-button:not(.collapsed) {
+            color: var(--primary-color);
+            background-color: var(--brand-orange-100);
+        }
+
+        .accordion-button:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+        }
+
+        /* Update spinners */
+        .spinner-border.text-info {
+            color: var(--primary-color) !important;
+        }
+
+        /* Update tooltips */
+        .tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: var(--primary-color);
+        }
+
+        .tooltip-inner {
+            background-color: var(--primary-color);
+        }
+
+        /* Update popovers */
+        .popover {
+            border-color: var(--brand-orange-200);
+        }
+
+        .popover-header {
+            background-color: var(--brand-orange-100);
+            border-bottom-color: var(--brand-orange-200);
+        }
+
+        /* Dark theme adjustments */
+        .dark-theme {
+            --info-color: var(--brand-orange-400);
+            
+            .alert-info {
+                background-color: rgba(255, 107, 0, 0.1);
+            border-color: rgba(255, 107, 0, 0.2);
+                color: var(--brand-orange-300);
+            }
+            
+            .form-control:focus {
+                box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+            }
+        }
+
+        /* Custom styling for the close (X) button */
+        .btn-close {
+            filter: invert(56%) sepia(93%) saturate(1683%) hue-rotate(360deg) brightness(103%) contrast(105%) !important;
+            opacity: 0.8;
+            transition: opacity var(--transition-base);
+        }
+        
+        .btn-close:hover {
+            opacity: 1;
+            filter: invert(56%) sepia(93%) saturate(1683%) hue-rotate(360deg) brightness(103%) contrast(105%) !important;
+        }
+        
+        .dark-theme .btn-close {
+            filter: invert(56%) sepia(93%) saturate(1683%) hue-rotate(360deg) brightness(103%) contrast(105%) !important;
+            opacity: 0.8;
+        }
+        
+        /* Alert close button */
+        .alert .btn-close {
+            padding: 0.75rem;
+        }
+
+        /* Position close buttons on the left side */
+        .modal-header {
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+        
+        .modal-header .modal-title {
+            margin-right: auto;
+        }
+        
+        [dir="rtl"] .modal-header .modal-title {
+            margin-left: auto;
+            margin-right: 0;
+        }
+        
+        .alert-dismissible {
+            padding-right: var(--bs-alert-padding-x);
+            padding-left: calc(1.5em + var(--bs-alert-padding-x));
+        }
+        
+        .alert-dismissible .btn-close {
+            position: absolute;
+            left: 0;
+            right: auto;
+            padding: 1.25rem var(--bs-alert-padding-x);
+            transform: translateY(-50%);
+            top: 50%;
+        }
+        
+        [dir="rtl"] .alert-dismissible .btn-close {
+            right: 0;
+            left: auto;
+        }
+
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{{ 'dark-theme' if g.theme == 'dark' else '' }}">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <div class="flame-logo">
+                    <div class="flame-main"></div>
+                    <div class="flame-inner"></div>
+                    <div class="flame-outer"></div>
+                    <div class="flame-spark"></div>
+                </div>
+                <span class="brand-text">Zonar <span class="ms-1">زونار</span></span>
+            </a>
+
+            <!-- Toggler for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list"></i> <!-- Simple list icon -->
+            </button>
+
+            <!-- Navbar content -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Main nav items (optional, can add back if needed) -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <!-- Kept empty as per minimal design, Home removed -->
+                    <!-- Example if needed later:
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Features</a>
+                    </li>
+                    -->
+                </ul>
+
+                <!-- Right side actions/auth -->
+                <div class="navbar-actions ms-lg-auto">
+                    <button class="nav-icon-btn" id="themeToggle" title="{{ translate('toggle_theme') }}">
+                        <i class="bi bi-moon-stars"></i> <!-- Icon updated in JS -->
+                    </button>
+
+                    {% if current_user.is_authenticated %}
+                    <!-- Add Product Button (Logged In) -->
+                    <button class="nav-icon-btn" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
+                        <i class="bi bi-plus-circle"></i>
+                    </button
+
+                    <!-- Notifications Dropdown (Logged In) -->
+                    <div class="dropdown">
+                        <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ translate('notifications') }}">
+                            <i class="bi bi-bell"></i>
+                            {% if unread_count > 0 %}
+                            <span class="notification-badge">{{ unread_count }}</span>
+                            {% endif %}
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end notification-dropdown">
+                             <div class="dropdown-header px-3 py-2">{{ translate('notifications') }}</div>
+                            <div class="notification-list">
+                                {% if notifications %}
+                                    {% for notification in notifications %}
+                                    <div class="dropdown-item">
+                                            <small class="text-muted mb-1">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        <p class="mb-1">
+                                                {% if "dropped" in notification.message %}
+                                                <i class="bi bi-arrow-down-circle-fill text-success me-1"></i>
+                                                {% elif "increased" in notification.message %}
+                                                <i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>
+                                                {% elif "Target price" in notification.message %}
+                                                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                            {% else %}
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                {% endif %}
+                                                {{ notification.message }}
+                                            </p>
+                                        <button class="btn btn-sm btn-link p-0 mark-read" data-id="{{ notification.id }}">
+                                                {{ translate('mark_as_read') }}
+                                            </button>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="dropdown-item text-muted">{{ translate('no_notifications') }}</div>
+                                {% endif %}
+                            </div>
+                            {% if notifications %}
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item text-center text-primary small">{{ translate('view_all_notifications') }}</a>
+                    {% endif %}
+                        </div>
+                    </div>
+                        
+                    <!-- Sign-out Button -->
+                    <a href="#" class="btn btn-primary ms-2 logout-link">
+                        <i class="bi bi-box-arrow-right"></i> {{ translate('logout') }}
+                    </a>
+
+                    {% else %}
+                    <!-- Auth Buttons (Logged Out) -->
+                    <div class="auth-buttons d-flex gap-2">
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary">{{ translate('login') }}</a>
+                        <a href="{{ url_for('signup') }}" class="btn btn-primary">{{ translate('signup') }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Rest of body content -->
+    <div class="container flex-grow-1">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mt-3 flash-message" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Add Product Modal (Structure mostly unchanged, styling updated via CSS) -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addProductModalLabel">{{ translate('add_amazon_product') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-product-form">
+                        <div class="mb-3">
+                            <label for="url" class="form-label">{{ translate('amazon_link') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                <input type="url" class="form-control" id="url" name="url" required placeholder="https://www.amazon.sa/...">
+                            </div>
+                            <div class="form-text">{{ translate('paste_link_here') }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="custom_name" class="form-label">{{ translate('custom_name_optional') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-pencil"></i></span>
+                                <input type="text" class="form-control" id="custom_name" name="custom_name" placeholder="{{ translate('my_special_product') }}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="target_price" class="form-label">{{ translate('target_price_optional') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-bullseye"></i></span>
+                                <input type="number" class="form-control" id="target_price" name="target_price" placeholder="100.00" step="0.01" min="0">
+                            </div>
+                            <div class="form-text">{{ translate('notify_below_price') }}</div>
+                        </div>
+                        <div class="mb-3 form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="notify_on_any_change" name="notify_on_any_change">
+                            <label class="form-check-label" for="notify_on_any_change">{{ translate('notify_any_change') }}</label>
+                        </div>
+                        <div class="alert alert-danger d-none mt-3" id="add-product-error"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
+                    <button type="button" class="btn btn-primary" id="add-product-btn">
+                        <span class="spinner-border spinner-border-sm me-1 d-none"></span>
+                        <i class="bi bi-plus-lg me-1"></i> {{ translate('add_product_button') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3 toast-container" style="z-index: 1100"></div>
+
+    <!-- Bootstrap and other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+    // Theme toggle functionality (Updated icon logic)
+    function toggleTheme() {
+        const body = document.body;
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+        
+        if (body.classList.contains('dark-theme')) {
+            body.classList.remove('dark-theme');
+            icon.classList.remove('bi-sun-fill');
+            icon.classList.add('bi-moon-stars'); // Moon for light theme
+            updateTheme('light');
+        } else {
+            body.classList.add('dark-theme');
+            icon.classList.remove('bi-moon-stars');
+            icon.classList.add('bi-sun-fill'); // Sun for dark theme
+            updateTheme('dark');
+        }
+    }
+
+    function updateTheme(theme) {
+        fetch('/settings/theme', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrf_token')
+            },
+            body: 'theme=' + theme,
+            credentials: 'same-origin'
+        }).catch(error => console.error('Error updating theme:', error));
+    }
+
+    // Initialize theme based on user preference
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const icon = themeToggle.querySelector('i');
+            const isDarkTheme = document.body.classList.contains('dark-theme');
+            
+            // Set initial icon state
+            if (isDarkTheme) {
+                icon.classList.remove('bi-moon-stars');
+                icon.classList.add('bi-sun-fill');
+            } else {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-stars');
+            }
+            
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+
+        // Add Product Form Handling (Updated loading state)
+        const addProductForm = document.getElementById('add-product-form');
+        const addProductBtn = document.getElementById('add-product-btn');
+        const addProductError = document.getElementById('add-product-error');
+        const addProductModalEl = document.getElementById('addProductModal');
+        const addProductSpinner = addProductBtn ? addProductBtn.querySelector('.spinner-border') : null;
+        const addProductIcon = addProductBtn ? addProductBtn.querySelector('.bi-plus-lg') : null;
+
+        if (addProductBtn && addProductForm && addProductModalEl && addProductSpinner && addProductIcon) {
+            const addProductModal = bootstrap.Modal.getOrCreateInstance(addProductModalEl);
+
+            addProductBtn.addEventListener('click', function() {
+                const formData = new FormData(addProductForm);
+                addProductError.classList.add('d-none'); // Hide previous errors
+                
+                // Show loading state
+                addProductBtn.disabled = true;
+                addProductSpinner.classList.remove('d-none');
+                addProductIcon.classList.add('d-none');
+                
+                fetch('/add_product', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrf_token')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('success', data.message || 'Product added successfully!');
+                        addProductModal.hide();
+                        addProductForm.reset();
+                        // Consider dynamically adding the product instead of full reload
+                        setTimeout(() => window.location.reload(), 1000); // Reload after a short delay
+                    } else {
+                        addProductError.textContent = data.error || 'Failed to add product. Please check the URL and try again.';
+                        addProductError.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addProductError.textContent = 'An unexpected error occurred. Please try again later.';
+                    addProductError.classList.remove('d-none');
+                })
+                .finally(() => {
+                    // Reset button state
+                    addProductBtn.disabled = false;
+                    addProductSpinner.classList.add('d-none');
+                    addProductIcon.classList.remove('d-none');
+                });
+            });
+        }
+
+        // Mark Notification as Read
+        const markReadButtons = document.querySelectorAll('.mark-read');
+        markReadButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                const notificationId = this.dataset.id;
+                const notificationItem = this.closest('.dropdown-item');
+
+                fetch(`/notifications/${notificationId}/mark-read`, {
+            method: 'POST',
+            headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrf_token')
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+                    if (data.success) {
+                        // Optional: Add subtle fade out effect
+                        notificationItem.style.transition = 'opacity 0.3s ease';
+                        notificationItem.style.opacity = '0';
+                        setTimeout(() => {
+                            notificationItem.remove();
+                            // Update badge count (if needed, requires passing count or querying)
+                        }, 300);
+            } else {
+                        showToast('error', data.error || 'Failed to mark as read.');
+            }
+        })
+        .catch(error => {
+                    console.error('Error:', error);
+                    showToast('error', 'Failed to mark notification as read.');
+                });
+            });
+        });
+
+    }); // End DOMContentLoaded
+
+    // Logout confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        const logoutLinks = document.querySelectorAll('.logout-link');
+        const logoutMessage = "{{ 'هل أنت متأكد من تسجيل الخروج؟ سيتم إنهاء جلستك الحالية.' if g.lang == 'ar' else 'Logging out will end your current session. Do you want to continue?' }}";
+        
+        logoutLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (confirm(logoutMessage)) {
+                    window.location.href = "{{ url_for('logout') }}";
+                }
+            });
+        });
+    });
+
+    // Function to get CSRF token (ensure it's defined)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Function to refresh price (keep as is, styling updated via CSS)
+    function refreshPrice(productId) {
+        const button = event.currentTarget;
+        const icon = button.querySelector('i');
+        
+        icon.classList.remove('bi-arrow-repeat');
+        icon.classList.add('bi-arrow-clockwise'); // Use clockwise for active refresh
+        icon.style.animation = 'spin 1s linear infinite';
+        button.disabled = true;
+        
+        fetch(`/check_price/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrf_token')
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('success', data.message || 'Price refresh initiated!');
+                // Consider updating just the price field instead of full reload
+                setTimeout(() => window.location.reload(), 1500); // Reload after delay
+            } else {
+                showToast('error', data.error || 'Failed to refresh price');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('error', 'Failed to refresh price');
+        })
+        .finally(() => {
+            icon.style.animation = '';
+            icon.classList.remove('bi-arrow-clockwise');
+            icon.classList.add('bi-arrow-repeat'); // Reset icon
+            button.disabled = false;
+        });
+    }
+
+    // Function to show toast notifications (Updated style)
+    function showToast(type, message) {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) return;
+        const iconClass = type === 'success' ? 'bi-check-circle-fill' :
+                          type === 'danger' || type === 'error' ? 'bi-exclamation-triangle-fill' :
+                          type === 'warning' ? 'bi-exclamation-triangle-fill' :
+                          'bi-info-circle-fill';
+        const bgClass = type === 'error' ? 'bg-danger' : `bg-${type}`;
+
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white ${bgClass} border-0 mb-2`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        toast.dataset.bsDelay = 5000; // 5 second duration
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="${iconClass} me-2 fs-5"></i>
+                    <span>${message}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
+
+    </script>
+    {% block extra_js %}{% endblock %}
+
+    <!-- Removed FAB HTML -->
+
+</body>
+</html> 

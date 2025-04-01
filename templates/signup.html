@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .auth-card {
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--border-color);
+        background-color: var(--card-bg);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+    
+    .auth-card-header {
+        background: linear-gradient(135deg, var(--brand-orange-200) 0%, var(--brand-orange-100) 100%);
+        padding: var(--spacing-lg);
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .auth-card-title {
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+        font-size: var(--font-size-2xl);
+    }
+    
+    .auth-card-body {
+        padding: var(--spacing-lg);
+    }
+    
+    .form-control {
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        padding: var(--spacing-md);
+        background-color: var(--card-bg);
+        color: var(--text-primary);
+        transition: all var(--transition-base);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--brand-orange-100);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .auth-btn {
+        background: var(--gradient-fire);
+        color: white;
+        border: none;
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-weight: 600;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        transition: all var(--transition-base);
+    }
+    
+    .auth-btn:hover {
+        background: var(--gradient-sunset);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .auth-link {
+        color: var(--primary-color);
+        font-weight: 500;
+        transition: all var(--transition-base);
+    }
+    
+    .auth-link:hover {
+        color: var(--primary-hover);
+        text-decoration: underline;
+    }
+    
+    .input-group-text {
+        background-color: transparent;
+        border-color: var(--border-color);
+        color: var(--primary-color);
+    }
+    
+    .special-offer {
+        background-color: var(--brand-orange-100);
+        border: 1px solid var(--brand-orange-200);
+        color: var(--brand-orange-700);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .special-offer i {
+        font-size: 1.4rem;
+        color: var(--primary-color);
+    }
+    
+    /* RTL-specific styling for input groups */
+    [dir="rtl"] .input-group > .input-group-text {
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        border-left: 0;
+        border-right: 1px solid var(--border-color);
+    }
+    
+    [dir="rtl"] .input-group > .form-control {
+        border-radius: var(--border-radius) 0 0 var(--border-radius);
+        border-right: 0;
+        border-left: 1px solid var(--border-color);
+    }
+    
+    /* Fix Bootstrap's default RTL handling for input groups */
+    [dir="rtl"] .input-group:not(.has-validation)>.dropdown-toggle:nth-last-child(n+3), 
+    [dir="rtl"] .input-group:not(.has-validation)>:not(:last-child):not(.dropdown-toggle):not(.dropdown-menu) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-top-right-radius: var(--border-radius);
+        border-bottom-right-radius: var(--border-radius);
+    }
+    
+    [dir="rtl"] .input-group>:not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+        margin-right: -1px;
+        margin-left: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        border-top-left-radius: var(--border-radius);
+        border-bottom-left-radius: var(--border-radius);
+    }
+    
+    [dir="rtl"] .special-offer {
+        flex-direction: row-reverse;
+        text-align: right;
+        justify-content: flex-start;
+    }
+    
+    [dir="rtl"] .special-offer i {
+        margin-left: 8px;
+        margin-right: 0;
+    }
+    
+    [dir="rtl"] .auth-btn i {
+        margin-left: 0.5rem;
+        margin-right: 0;
+    }
+    
+    [dir="rtl"] .text-center p {
+        direction: rtl;
+    }
+    
+    [dir="rtl"] .form-label {
+        text-align: right;
+        width: 100%;
+    }
+    
+    [dir="rtl"] .auth-link {
+        font-family: var(--font-family-ar);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 5rem;">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <h3 class="auth-card-title">{{ translate('signup') }}</h3>
+                </div>
+                <div class="auth-card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">{{ translate('username') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ translate('ايميل') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ translate('password') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">{{ translate('confirm_password') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                        </div>
+                        <div class="special-offer">
+                            <i class="bi bi-gift-fill"></i> 
+                            <span>اشترك الآن واحصل على عضوية مجانية مدى الحياة! 🔥</span>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="auth-btn">
+                                <i class="bi bi-person-plus me-2"></i>{{ translate('register') }}
+                            </button>
+                        </div>
+                    </form>
+                    <div class="text-center mt-4">
+                        <p>{{ translate('have_account') }} <a href="{{ url_for('login') }}" class="auth-link">{{ translate('login') }}</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
