@@ -748,4 +748,23 @@ def settings():
         print(f"Error in settings route: {e}")
         traceback.print_exc()
         flash(translate('error_occurred'), 'danger')
-        return redirect(url_for('home')) 
+        return redirect(url_for('home')) @app.route("/test_email")
+@login_required
+def test_email():
+    try:
+        from flask_mail import Message
+        from app import mail
+        msg = Message("Test Email from ZONAR", recipients=[current_user.email], body="Hello " + current_user.username + ",
+
+This is a test email from your ZONAR account.
+
+If you received this email, it means your email configuration is working correctly.
+
+Best regards,
+ZONAR Team")
+        mail.send(msg)
+        flash("Test email sent successfully! Please check your inbox.", "success")
+    except Exception as e:
+        flash(f"Error sending email: {str(e)}", "danger")
+        print(f"Email error: {e}")
+    return redirect(url_for("settings"))

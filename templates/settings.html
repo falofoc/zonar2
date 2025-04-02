@@ -5,8 +5,8 @@
     <div class="row">
         <div class="col-lg-8 mx-auto">
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-gradient">
-                    <h5 class="card-title mb-0">{{ translate('account_settings') }}</h5>
+                <div class="card-header bg-gradient" style="background: var(--gradient-fire);">
+                    <h5 class="card-title mb-0 text-white">{{ translate('account_settings') }}</h5>
                 </div>
                 <div class="card-body">
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -22,7 +22,7 @@
                     
                     <!-- Update Email Form -->
                     <div class="mb-5">
-                        <h5>{{ translate('update_email') }}</h5>
+                        <h5 class="settings-section-title">{{ translate('update_email') }}</h5>
                         <p class="text-muted small mb-3">{{ translate('current_email') }}: {{ current_user.email }}</p>
                         <form method="POST">
                             <input type="hidden" name="action" value="update_email">
@@ -34,15 +34,15 @@
                                 <label for="current_password" class="form-label">{{ translate('current_password') }}</label>
                                 <input type="password" class="form-control" id="current_password" name="current_password" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">{{ translate('update_email') }}</button>
+                            <button type="submit" class="btn settings-btn" style="background: var(--primary-color); color: white;">{{ translate('update_email') }}</button>
                         </form>
-                    </div>
+        <a href="{{ url_for('test_email') }}" class="btn settings-btn mt-2" style="background: var(--primary-color); color: white;">{{ translate('test_email') }}</a>                    </div>
                     
                     <hr>
                     
                     <!-- Update Password Form -->
                     <div class="mb-3">
-                        <h5>{{ translate('change_password') }}</h5>
+                        <h5 class="settings-section-title">{{ translate('change_password') }}</h5>
                         <form method="POST">
                             <input type="hidden" name="action" value="update_password">
                             <div class="mb-3">
@@ -57,20 +57,20 @@
                                 <label for="confirm_password" class="form-label">{{ translate('confirm_password') }}</label>
                                 <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">{{ translate('update_password') }}</button>
+                            <button type="submit" class="btn settings-btn" style="background: var(--primary-color); color: white;">{{ translate('update_password') }}</button>
                         </form>
-                    </div>
+        <a href="{{ url_for('test_email') }}" class="btn settings-btn mt-2" style="background: var(--primary-color); color: white;">{{ translate('test_email') }}</a>                    </div>
                 </div>
             </div>
             
             <div class="card shadow-sm">
-                <div class="card-header bg-gradient">
-                    <h5 class="card-title mb-0">{{ translate('preferences') }}</h5>
+                <div class="card-header bg-gradient" style="background: var(--gradient-fire);">
+                    <h5 class="card-title mb-0 text-white">{{ translate('preferences') }}</h5>
                 </div>
                 <div class="card-body">
                     <!-- Theme Selection -->
                     <div class="mb-3">
-                        <h5>{{ translate('theme') }}</h5>
+                        <h5 class="settings-section-title">{{ translate('theme') }}</h5>
                         <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="theme-toggle" {% if current_user.theme == 'dark' %}checked{% endif %}>
                             <label class="form-check-label" for="theme-toggle">
@@ -83,12 +83,16 @@
                     
                     <!-- Language Selection -->
                     <div class="mb-3">
-                        <h5>{{ translate('language') }}</h5>
+                        <h5 class="settings-section-title">{{ translate('language') }}</h5>
                         <div class="btn-group" role="group" aria-label="Language selection">
-                            <button type="button" class="btn {% if g.lang == 'ar' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="changeLanguage('ar')">
+                            <button type="button" class="btn language-btn {% if g.lang == 'ar' %}active{% else %}outline{% endif %}" 
+                                    style="{% if g.lang == 'ar' %}background: var(--primary-color); color: white;{% else %}color: var(--primary-color); border: 1px solid var(--primary-color);{% endif %}" 
+                                    onclick="changeLanguage('ar')">
                                 العربية
                             </button>
-                            <button type="button" class="btn {% if g.lang == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="changeLanguage('en')">
+                            <button type="button" class="btn language-btn {% if g.lang == 'en' %}active{% else %}outline{% endif %}" 
+                                    style="{% if g.lang == 'en' %}background: var(--primary-color); color: white;{% else %}color: var(--primary-color); border: 1px solid var(--primary-color);{% endif %}" 
+                                    onclick="changeLanguage('en')">
                                 English
                             </button>
                         </div>

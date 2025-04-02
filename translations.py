@@ -278,4 +278,4 @@ translations = {
         'send_reset_link': 'إرسال رابط إعادة التعيين',
         'back_to_login': 'العودة إلى تسجيل الدخول'
     }
-} 
+} 'test_email': 'Test Email', 'test_email_ar': 'اختبار البريد'
