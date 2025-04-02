@@ -82,102 +82,73 @@ from translations import translations
 
 # This defines the translate function that's used in templates
 def translate(key):
+    """Translate a key to the current language with better error handling"""
     try:
-        # Debug the language being used
-        current_lang = ""
-        if hasattr(g, 'lang') and g.lang:
-            current_lang = g.lang
-        else:
-            current_lang = request.cookies.get('language', 'ar')
+        # FORCE simple approach - directly access g if possible
+        current_lang = getattr(g, 'lang', None)
         
-        print(f"DEBUG: Translating key '{key}' for language '{current_lang}'")
-        
-        # Ensure language value is actually valid
-        if current_lang not in ['ar', 'en']:
-            print(f"DEBUG: Invalid language '{current_lang}', defaulting to Arabic")
+        # If g.lang is not set, try to get from request
+        if not current_lang:
+            current_lang = request.cookies.get('language')
+            
+        # Still nothing? Default to Arabic
+        if not current_lang or current_lang not in ['ar', 'en']:
             current_lang = 'ar'
             
-        # Get translation from the dictionary
-        if key in translations:
-            if current_lang in translations and key in translations[current_lang]:
-                translated = translations[current_lang].get(key)
-                print(f"DEBUG: Found translation: '{translated}'")
-                return translated
-            elif 'en' in translations and key in translations['en']:
-                # Fall back to English if translation not found in requested language
-                fallback = translations['en'].get(key)
-                print(f"DEBUG: No translation in {current_lang}, using English fallback: '{fallback}'")
-                return fallback
-            else:
-                print(f"DEBUG: No translation found for key '{key}' in any language")
-                return key
+        print(f"TRANSLATING '{key}' FOR LANGUAGE '{current_lang}'")
+        
+        # Get translation directly with fallbacks
+        if key in translations[current_lang]:
+            result = translations[current_lang][key]
+            print(f"FOUND TRANSLATION: {result}")
+            return result
+        elif key in translations['en']:
+            result = translations['en'][key]
+            print(f"FALLBACK TO EN: {result}")
+            return result
         else:
-            # If key not found in translations, return the key itself
-            print(f"DEBUG: Translation key '{key}' not found in translations dictionary")
+            print(f"NO TRANSLATION FOR: {key}")
             return key
     except Exception as e:
-        print(f"DEBUG: Translation error for key '{key}': {e}")
-        traceback.print_exc()
+        print(f"TRANSLATION ERROR: {e}")
+        if key in translations['ar']:
+            return translations['ar'][key]
         return key
 
 @app.context_processor
 def utility_processor():
+    """Add helper functions to template context"""
     return dict(translate=translate)
 
 @app.before_request
 def before_request():
-    """Set up language and theme preference before each request"""
-    try:
-        # Make session permanent by default
-        session.permanent = True
-        
-        # Print debug info before language detection
-        print(f"DEBUG SESSION DATA: {session}")
-        if current_user.is_authenticated:
-            print(f"DEBUG USER DATA: id={current_user.id}, language={current_user.language}")
-        
-        # Determine language preference with this priority:
-        # 1. Session (most immediate)
-        # 2. Authenticated user's stored preference
-        # 3. Cookie
-        # 4. Default (Arabic)
-        if 'language' in session:
-            preferred_lang = session['language']
-            print(f"DEBUG: Language from session: {preferred_lang}")
-        elif current_user.is_authenticated and hasattr(current_user, 'language') and current_user.language:
-            preferred_lang = current_user.language
-            print(f"DEBUG: Language from user profile: {preferred_lang}")
-        else:
-            preferred_lang = request.cookies.get('language')
-            print(f"DEBUG: Language from cookie: {preferred_lang}")
-            
-        # Validate language value
-        if preferred_lang not in ['ar', 'en']:
-            preferred_lang = 'ar'  # Default to Arabic if invalid
-            print(f"DEBUG: Using default Arabic language")
-        
-        # Set the language in Flask's g object for this request
-        g.lang = preferred_lang
-        print(f"DEBUG: Final language set to {g.lang} for this request")
-        
-        # Set theme
-        if current_user.is_authenticated and hasattr(current_user, 'theme'):
-            g.theme = current_user.theme
-        else:
-            g.theme = request.cookies.get('theme', 'light')
-            
-        # Add language info to template context
-        g.is_arabic = (g.lang == 'ar')
-        g.is_english = (g.lang == 'en')
-        print(f"DEBUG: is_arabic={g.is_arabic}, is_english={g.is_english}")
-    except Exception as e:
-        print(f"DEBUG: Error in before_request: {e}")
-        traceback.print_exc()
-        # Safe fallback
+    """Set language preference before each request"""
+    # ALWAYS force Arabic if none specified
+    if 'language' not in session and 'language' not in request.cookies:
+        print("FORCING ARABIC BY DEFAULT - NO LANGUAGE SPECIFIED")
         g.lang = 'ar'
-        g.theme = 'light'
-        g.is_arabic = True
-        g.is_english = False
+        session['language'] = 'ar'
+    else:
+        # Get language from session or cookies
+        lang = session.get('language') or request.cookies.get('language')
+        if lang not in ['ar', 'en']:
+            print(f"INVALID LANGUAGE '{lang}' - FORCING ARABIC")
+            lang = 'ar'
+            session['language'] = 'ar'
+        g.lang = lang
+        
+    print(f"LANGUAGE SET TO: {g.lang}")
+    
+    # Set theme
+    if current_user.is_authenticated and hasattr(current_user, 'theme'):
+        g.theme = current_user.theme
+    else:
+        g.theme = request.cookies.get('theme', 'light')
+        
+    # Arabic language flags for templates
+    g.is_arabic = (g.lang == 'ar')
+    g.is_english = (g.lang == 'en')
+    print(f"CURRENT STATE: AR={g.is_arabic}, EN={g.is_english}")
 
 # Now import the rest of the app components
 try:

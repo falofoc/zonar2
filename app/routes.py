@@ -314,49 +314,32 @@ def logout():
 
 @app.route('/change_language/<lang>')
 def change_language(lang):
-    """Change the language for the current user or session"""
-    try:
-        print(f"DEBUG: Language change requested to {lang}")
-        print(f"DEBUG: Request came from {request.referrer}")
-        
-        # Force language to be either ar or en
-        if lang not in ['en', 'ar']:
-            print(f"DEBUG: Invalid language '{lang}', defaulting to Arabic")
-            lang = 'ar'
-        
-        # Update language for authenticated users in database
-        if current_user.is_authenticated:
-            print(f"DEBUG: Updating language for authenticated user {current_user.id} to {lang}")
-            current_user.language = lang
-            db.session.commit()
-            print(f"DEBUG: User language updated in database to {lang}")
-        
-        # Create response with referrer or fallback
-        redirect_url = request.referrer or url_for('home')
-        print(f"DEBUG: Will redirect to {redirect_url}")
-        response = redirect(redirect_url)
-        
-        # Clear any existing language cookies to prevent conflicts
-        response.delete_cookie('language')
-        
-        # Set cookie with longer duration (1 year)
-        max_age = 365 * 24 * 60 * 60  # 1 year in seconds
-        response.set_cookie('language', lang, max_age=max_age)
-        print(f"DEBUG: Language cookie set to {lang} with max_age={max_age}")
-        
-        # Set in session
-        session['language'] = lang
-        
-        # Force persist session immediately
-        session.modified = True
-        print(f"DEBUG: Session language set to {lang}, session.modified=True")
-        
-        return response
-    except Exception as e:
-        print(f"DEBUG: Error changing language: {e}")
-        traceback.print_exc()
-        flash(translate('error_occurred'), 'danger')
-        return redirect(request.referrer or url_for('home'))
+    """Force language change with minimal code to avoid bugs"""
+    # Force to valid language or default to Arabic
+    if lang not in ['ar', 'en']:
+        lang = 'ar'
+    
+    print(f"CHANGING LANGUAGE TO: {lang}")
+    
+    # Update database for logged in users
+    if current_user.is_authenticated:
+        current_user.language = lang
+        db.session.commit()
+    
+    # Set everywhere possible
+    session['language'] = lang
+    session.modified = True
+    
+    # Prepare response
+    response = redirect(request.referrer or url_for('home'))
+    
+    # Clear any existing cookie first
+    response.delete_cookie('language')
+    
+    # Set with 1 year expiration
+    response.set_cookie('language', lang, max_age=31536000)
+    
+    return response
 
 @app.route('/get_buy_link/<int:product_id>')
 @login_required
