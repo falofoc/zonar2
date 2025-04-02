@@ -1,15 +1,35 @@
 services:
+  # Web Service - The main Flask application
   - type: web
-    name: zonar
+    name: zonar-amazon-tracker
     env: python
-    region: oregon
+    plan: free # Change to 'starter' or higher for production use
     buildCommand: ./build.sh
-    startCommand: gunicorn app:app
+    startCommand: gunicorn wsgi:app
+    region: ohio # Choose a region close to your users - could be singapore for Middle East
     envVars:
-      - key: FLASK_APP
-        value: app.py
       - key: FLASK_ENV
         value: production
-      - key: PYTHON_VERSION
-        value: 3.11.11
-    plan: free 
+      - key: RENDER
+        value: true 
+      - key: SECRET_KEY
+        generateValue: true
+    healthCheckPath: /
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1 # 1GB storage for SQLite
+
+# Add a cron job for automatic price checking
+cron:
+  - name: price-tracker-job
+    schedule: "0 */6 * * *" # Run every 6 hours
+    command: python price_checker.py
+    envVars:
+      - key: RENDER
+        value: true
+      - key: SECRET_KEY
+        fromService:
+          name: zonar-amazon-tracker
+          type: web
+          envVarKey: SECRET_KEY 
