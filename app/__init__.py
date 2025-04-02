@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from flask_cors import CORS  # Add CORS support
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_migrate import Migrate
 
 # Load environment variables
 load_dotenv()
@@ -43,6 +44,7 @@ CORS(app,
 
 # Initialize database and login manager with relaxed settings
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
@@ -58,7 +60,8 @@ import trackers
 
 # This defines the translate function that's used in templates
 def translate(key):
-    return translations[g.lang].get(key, translations['en'].get(key, key))
+    language = request.cookies.get('language', 'en')
+    return translations.get(key, {}).get(language, key)
 
 @app.context_processor
 def utility_processor():
@@ -90,4 +93,9 @@ def init_db():
     # Create all tables
     with app.app_context():
         db.create_all()
-        print("Database tables created successfully!") 
+        print("Database tables created successfully!")
+
+@login_manager.user_loader
+def load_user(id):
+    from app.models import User
+    return User.query.get(int(id)) 
