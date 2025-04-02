@@ -50,9 +50,10 @@ login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = None  # Disable session protection for development
 
 # Import all other components AFTER the app is created
-from ..translations import translations
 import sys
+import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from translations import translations
 import trackers
 
 # This defines the translate function that's used in templates
@@ -74,7 +75,12 @@ def before_request():
         g.theme = request.cookies.get('theme', 'light')
 
 # Now import the rest of the app components
-from . import models, routes
+try:
+    from . import models, routes
+except ImportError:
+    # Handle case when relative import fails
+    import app.models
+    import app.routes
 
 def init_db():
     """Initialize the database and create all tables"""
