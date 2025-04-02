@@ -307,11 +307,20 @@ def add_product():
             }), 401
         return jsonify({'success': False, 'error': 'An unexpected error occurred. Please try again later.'})
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
-    logout_user()
-    flash(translate('logged_out_success'), 'success')
+    """Handle user logout with proper session cleanup"""
+    try:
+        # Clear all session data
+        session.clear()
+        # Logout the user
+        logout_user()
+        flash(translate('logged_out_success'), 'success')
+    except Exception as e:
+        print(f"Error during logout: {str(e)}")
+        flash(translate('error_occurred'), 'danger')
+    
     return redirect(url_for('login'))
 
 @app.route('/change_language/<lang>')
@@ -377,13 +386,10 @@ def edit_product(product_id):
         # Get form data
         custom_name = request.form.get('custom_name')
         target_price_str = request.form.get('target_price')
+        notify_on_any_change = request.form.get('notify_on_any_change') == 'on'
+        tracking_enabled = request.form.get('tracking_enabled') == 'on'
         
-        # Proper way to handle checkboxes - explicitly check if they're in the form data
-        # If the checkbox is unchecked, it won't be in the form data at all
-        notify_always = 'notify_always' in request.form
-        tracking = 'tracking' in request.form
-        
-        print(f"Editing product {product_id}: Custom name={custom_name}, Target price={target_price_str}, Notify={notify_always}, Tracking={tracking}")
+        print(f"Editing product {product_id}: Custom name={custom_name}, Target price={target_price_str}, Notify={notify_on_any_change}, Tracking={tracking_enabled}")
         
         # Update custom name (if provided)
         if custom_name:
@@ -405,8 +411,8 @@ def edit_product(product_id):
             product.target_price = None
             
         # Update notification settings
-        product.notify_on_any_change = notify_always
-        product.tracking_enabled = tracking
+        product.notify_on_any_change = notify_on_any_change
+        product.tracking_enabled = tracking_enabled
         
         # Save changes
         db.session.commit()
@@ -551,4 +557,195 @@ def toggle_tracking(product_id):
     except Exception as e:
         print(f"Error toggling tracking for product {product_id}: {str(e)}")
         traceback.print_exc()
-        return jsonify({'success': False, 'error': translate('error_occurred')}) 
+        return jsonify({'success': False, 'error': translate('error_occurred')})
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    try:
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
+            
+        if request.method == 'POST':
+            email = request.form.get('email')
+            
+            if not email:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({'success': False, 'message': translate('provide_email')})
+                flash(translate('provide_email'), 'danger')
+                return render_template('forgot_password.html', unread_count=0)
+                
+            user = User.query.filter_by(email=email).first()
+            
+            if user:
+                # Generate a reset token
+                token = user.generate_reset_token()
+                db.session.commit()
+                
+                # Send password reset email
+                reset_url = url_for('reset_password', token=token, _external=True)
+                subject = translate('password_reset')
+                
+                # Create the email body
+                body = f"""
+                {translate('reset_email_greeting')} {user.username},
+                
+                {translate('reset_email_body')}
+                
+                {reset_url}
+                
+                {translate('reset_email_expiry')}
+                
+                {translate('reset_email_footer')}
+                """
+                
+                # Send the email
+                from flask_mail import Message
+                from app import mail
+                
+                try:
+                    msg = Message(subject=subject, recipients=[user.email], body=body)
+                    mail.send(msg)
+                    
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return jsonify({
+                            'success': True,
+                            'message': translate('reset_email_sent')
+                        })
+                    flash(translate('reset_email_sent'), 'success')
+                except Exception as e:
+                    print(f"Email sending error: {e}")
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return jsonify({
+                            'success': False,
+                            'message': translate('email_error')
+                        })
+                    flash(translate('email_error'), 'danger')
+            else:
+                # Always inform that email was sent, even if user doesn't exist (security best practice)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True,
+                        'message': translate('reset_email_sent')
+                    })
+                flash(translate('reset_email_sent'), 'success')
+            
+            return render_template('forgot_password.html', unread_count=0)
+        
+        return render_template('forgot_password.html', unread_count=0)
+    except Exception as e:
+        print(f"Error in forgot_password route: {e}")
+        traceback.print_exc()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': translate('error_occurred')})
+        flash(translate('error_occurred'), 'danger')
+        return render_template('forgot_password.html', unread_count=0)
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
+            
+        if not token:
+            flash(translate('invalid_token'), 'danger')
+            return redirect(url_for('login'))
+            
+        # Find user with this token
+        user = User.query.filter_by(reset_token=token).first()
+        
+        if not user or not user.verify_reset_token(token):
+            flash(translate('invalid_expired_token'), 'danger')
+            return redirect(url_for('forgot_password'))
+        
+        if request.method == 'POST':
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+            
+            if not password or not confirm_password:
+                flash(translate('fill_all_fields'), 'danger')
+                return render_template('reset_password.html', token=token, unread_count=0)
+            
+            if password != confirm_password:
+                flash(translate('passwords_dont_match'), 'danger')
+                return render_template('reset_password.html', token=token, unread_count=0)
+            
+            # Update the password
+            user.set_password(password)
+            user.clear_reset_token()
+            db.session.commit()
+            
+            flash(translate('password_updated'), 'success')
+            return redirect(url_for('login'))
+        
+        return render_template('reset_password.html', token=token, unread_count=0)
+    except Exception as e:
+        print(f"Error in reset_password route: {e}")
+        traceback.print_exc()
+        flash(translate('error_occurred'), 'danger')
+        return redirect(url_for('forgot_password'))
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    try:
+        if request.method == 'POST':
+            action = request.form.get('action')
+            
+            if action == 'update_email':
+                email = request.form.get('email')
+                password = request.form.get('current_password')
+                
+                if not email or not password:
+                    flash(translate('fill_all_fields'), 'danger')
+                    return redirect(url_for('settings'))
+                
+                # Check if the password is correct
+                if not current_user.check_password(password):
+                    flash(translate('incorrect_password'), 'danger')
+                    return redirect(url_for('settings'))
+                
+                # Check if email is already in use by another user
+                existing_user = User.query.filter_by(email=email).first()
+                if existing_user and existing_user.id != current_user.id:
+                    flash(translate('email_already_used'), 'danger')
+                    return redirect(url_for('settings'))
+                
+                # Update email
+                current_user.email = email
+                db.session.commit()
+                
+                flash(translate('email_updated'), 'success')
+                return redirect(url_for('settings'))
+                
+            elif action == 'update_password':
+                current_password = request.form.get('current_password')
+                new_password = request.form.get('new_password')
+                confirm_password = request.form.get('confirm_password')
+                
+                if not current_password or not new_password or not confirm_password:
+                    flash(translate('fill_all_fields'), 'danger')
+                    return redirect(url_for('settings'))
+                
+                # Check if current password is correct
+                if not current_user.check_password(current_password):
+                    flash(translate('incorrect_password'), 'danger')
+                    return redirect(url_for('settings'))
+                
+                # Check if new passwords match
+                if new_password != confirm_password:
+                    flash(translate('passwords_dont_match'), 'danger')
+                    return redirect(url_for('settings'))
+                
+                # Update password
+                current_user.set_password(new_password)
+                db.session.commit()
+                
+                flash(translate('password_updated'), 'success')
+                return redirect(url_for('settings'))
+        
+        return render_template('settings.html', unread_count=0)
+    except Exception as e:
+        print(f"Error in settings route: {e}")
+        traceback.print_exc()
+        flash(translate('error_occurred'), 'danger')
+        return redirect(url_for('home')) 

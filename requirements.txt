@@ -10,4 +10,5 @@ Werkzeug==3.0.1
 fake-useragent==1.4.0
 lxml==4.9.3
 gunicorn==21.2.0
-Flask-Migrate==4.0.5 
+Flask-Migrate==4.0.5
+Flask-Mail==0.9.1 

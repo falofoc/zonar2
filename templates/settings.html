@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-gradient">
+                    <h5 class="card-title mb-0">{{ translate('account_settings') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Update Email Form -->
+                    <div class="mb-5">
+                        <h5>{{ translate('update_email') }}</h5>
+                        <p class="text-muted small mb-3">{{ translate('current_email') }}: {{ current_user.email }}</p>
+                        <form method="POST">
+                            <input type="hidden" name="action" value="update_email">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">{{ translate('new_email') }}</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">{{ translate('current_password') }}</label>
+                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">{{ translate('update_email') }}</button>
+                        </form>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Update Password Form -->
+                    <div class="mb-3">
+                        <h5>{{ translate('change_password') }}</h5>
+                        <form method="POST">
+                            <input type="hidden" name="action" value="update_password">
+                            <div class="mb-3">
+                                <label for="current_password_2" class="form-label">{{ translate('current_password') }}</label>
+                                <input type="password" class="form-control" id="current_password_2" name="current_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_password" class="form-label">{{ translate('new_password') }}</label>
+                                <input type="password" class="form-control" id="new_password" name="new_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">{{ translate('confirm_password') }}</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">{{ translate('update_password') }}</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient">
+                    <h5 class="card-title mb-0">{{ translate('preferences') }}</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Theme Selection -->
+                    <div class="mb-3">
+                        <h5>{{ translate('theme') }}</h5>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="theme-toggle" {% if current_user.theme == 'dark' %}checked{% endif %}>
+                            <label class="form-check-label" for="theme-toggle">
+                                <i class="bi bi-moon-fill me-2"></i>{{ translate('dark_mode') }}
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Language Selection -->
+                    <div class="mb-3">
+                        <h5>{{ translate('language') }}</h5>
+                        <div class="btn-group" role="group" aria-label="Language selection">
+                            <button type="button" class="btn {% if g.lang == 'ar' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="changeLanguage('ar')">
+                                العربية
+                            </button>
+                            <button type="button" class="btn {% if g.lang == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}" onclick="changeLanguage('en')">
+                                English
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Theme toggle functionality
+document.getElementById('theme-toggle').addEventListener('change', function() {
+    const theme = this.checked ? 'dark' : 'light';
+    fetch('/change_theme', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ theme: theme })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Apply theme change immediately
+            document.documentElement.setAttribute('data-theme', theme);
+            // Reload to ensure all components update correctly
+            setTimeout(() => location.reload(), 300);
+        }
+    });
+});
+
+// Language change functionality
+function changeLanguage(lang) {
+    fetch('/change_language', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ language: lang })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %} 

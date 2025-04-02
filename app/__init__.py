@@ -10,6 +10,7 @@ from flask_cors import CORS  # Add CORS support
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
+from flask_mail import Mail
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +38,14 @@ secret_key = os.environ.get('SECRET_KEY', None)
 if not secret_key:
     secret_key = secrets.token_hex(32)  # 32 bytes = 256 bits
 
+# Configure Flask-Mail settings
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', None)
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', None)
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', None)
+
 # Security settings with improved session handling
 app.config.update(
     SECRET_KEY=secret_key,
@@ -49,6 +58,9 @@ app.config.update(
     WTF_CSRF_ENABLED=False,
     DEBUG=not is_production
 )
+
+# Initialize Flask-Mail
+mail = Mail(app)
 
 # Print database URI for debugging
 print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")

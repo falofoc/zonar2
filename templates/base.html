@@ -891,6 +891,71 @@
             left: auto;
         }
 
+        /* Search Box Styling */
+        .search-container {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        /* Manual update prices button styling */
+        .btn-refresh {
+            background: var(--gradient-fire);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4em;
+        }
+
+        .btn-refresh:hover {
+            background: var(--gradient-sunset);
+            transform: scale(1.05);
+        }
+
+        .btn-refresh i {
+            font-size: 1.1em;
+        }
+
+        /* Form switch styling */
+        .form-check.form-switch {
+            padding-left: 2.5em;
+        }
+
+        [dir="rtl"] .form-check.form-switch {
+            padding-right: 2.5em;
+            padding-left: 0;
+        }
+
+        .form-switch .form-check-input {
+            width: 2.5em;
+            margin-left: -2.5em;
+            background-color: var(--brand-orange-200);
+            border-color: var(--brand-orange-300);
+        }
+
+        [dir="rtl"] .form-switch .form-check-input {
+            margin-right: -2.5em;
+            margin-left: 0;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-hover);
+        }
+
+        .form-switch .form-check-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            user-select: none;
+        }
+
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -962,11 +1027,11 @@
                                         <div class="dropdown-item">
                                             <small class="text-muted mb-1">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                                             <p class="mb-1">
-                                                {% if "dropped" in notification.message %}
+                                                {% if translate('price_dropped') in notification.message %}
                                                 <i class="bi bi-arrow-down-circle-fill text-success me-1"></i>
-                                                {% elif "increased" in notification.message %}
+                                                {% elif translate('price_increased') in notification.message %}
                                                 <i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>
-                                                {% elif "Target price" in notification.message %}
+                                                {% elif translate('target_reached') in notification.message %}
                                                 <i class="bi bi-check-circle-fill text-success me-1"></i>
                                                 {% else %}
                                                 <i class="bi bi-info-circle me-1"></i>
@@ -988,11 +1053,18 @@
                                 {% endif %}
                             </div>
                         </div>
+                        
+                        <!-- Settings link -->
+                        <a href="{{ url_for('settings') }}" class="nav-icon-btn ms-2" title="{{ translate('settings') }}">
+                            <i class="bi bi-gear"></i>
+                        </a>
                             
                         <!-- Sign-out Button (Logged In Only) -->
-                        <a href="#" class="btn btn-primary ms-2 logout-link">
-                            <i class="bi bi-box-arrow-right"></i> {{ translate('logout') }}
-                        </a>
+                        <form id="logout-form" action="{{ url_for('logout') }}" method="GET" style="display: inline;">
+                            <button type="submit" class="nav-icon-btn ms-2" title="{{ translate('logout') }}" onclick="handleLogout(event)">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </button>
+                        </form>
                     {% else %}
                         <!-- Auth Buttons (Only show when logged out) -->
                         <div class="auth-buttons d-flex gap-2">
@@ -1300,6 +1372,90 @@
         // Implementation of updateTheme function
     }
 
+    // Function to toggle tracking status for a product
+    function toggleTracking(productId) {
+        // Find the button that triggered this
+        const button = event.currentTarget;
+        const icon = button.querySelector('i');
+        
+        // Disable button during request and show loading state
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("updating") }}...';
+        
+        fetch(`/toggle_tracking/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrf_token')
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                showToast('success', data.message);
+                
+                // Update button and status badge
+                const statusBadge = document.querySelector(`#product-${productId} .status-badge`) || 
+                                    document.querySelector(`.product-card[data-id="${productId}"] .status-badge`);
+                
+                // Also update the checkbox in edit modal if it exists
+                const editCheckbox = document.querySelector(`#tracking_enabled-${productId}`);
+                if (editCheckbox) {
+                    editCheckbox.checked = data.tracking;
+                }
+                
+                if (data.tracking) {
+                    // Update to tracking enabled state
+                    if (icon) {
+                        icon.classList.remove('bi-x-circle-fill');
+                        icon.classList.add('bi-check-circle-fill');
+                    }
+                    button.innerHTML = '<i class="bi bi-check-circle-fill"></i> {{ translate("tracking") }}';
+                    
+                    if (statusBadge) {
+                        statusBadge.classList.remove('status-inactive');
+                        statusBadge.classList.add('status-active');
+                        statusBadge.innerHTML = '<i class="bi bi-check-circle-fill"></i> {{ translate("tracking") }}';
+                    }
+                } else {
+                    // Update to tracking disabled state
+                    if (icon) {
+                        icon.classList.remove('bi-check-circle-fill');
+                        icon.classList.add('bi-x-circle-fill');
+                    }
+                    button.innerHTML = '<i class="bi bi-x-circle-fill"></i> {{ translate("not_tracking") }}';
+                    
+                    if (statusBadge) {
+                        statusBadge.classList.remove('status-active');
+                        statusBadge.classList.add('status-inactive');
+                        statusBadge.innerHTML = '<i class="bi bi-x-circle-fill"></i> {{ translate("not_tracking") }}';
+                    }
+                }
+            } else {
+                // Show error message
+                showToast('error', data.error || '{{ translate("error_occurred") }}');
+                
+                // Restore original button state
+                button.innerHTML = originalText;
+            }
+            
+            // Re-enable button
+            button.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('error', '{{ translate("error_occurred") }}');
+            
+            // Restore original button state
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+
     // Force navigation to home when clicking on logo
     (function() {
         // Execute immediately to ensure it's applied as soon as possible
@@ -1335,6 +1491,20 @@
             }, 1000);
         }
     })();
+
+    // Add logout handler function
+    function handleLogout(event) {
+        event.preventDefault();
+        // Show confirmation if needed
+        if (confirm("{{ translate('confirm_logout') }}")) {
+            // Clear any stored data
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Submit the form
+            document.getElementById('logout-form').submit();
+        }
+    }
 
     </script>
     {% block extra_js %}{% endblock %}

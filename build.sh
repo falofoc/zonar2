@@ -29,9 +29,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     print(f"[{datetime.now()}] Starting automated price check")
     from app import app, db
-    from app.models import Product, Notification
+    from app.models import Product, Notification, User
     import trackers
     import json
+    from flask_mail import Message
+    from app import mail
 
     # Run within the application context
     with app.app_context():
@@ -79,6 +81,28 @@ try:
                             read=False
                         )
                         db.session.add(notification)
+                        
+                        # Send email notification
+                        try:
+                            user = User.query.get(product.user_id)
+                            if user:
+                                subject = "Price Alert - Amazon Saudi Tracker"
+                                body = f"""
+                                Hello {user.username},
+                                
+                                {message}
+                                
+                                Click here to view the product: {product.url}
+                                
+                                Thank you for using Amazon Saudi Tracker!
+                                """
+                                
+                                msg = Message(subject=subject, recipients=[user.email], body=body)
+                                mail.send(msg)
+                                print(f"Email notification sent to {user.email}")
+                        except Exception as e:
+                            print(f"Failed to send email notification: {str(e)}")
+                            traceback.print_exc()
                 
                 # Always update last_checked time
                 product.last_checked = datetime.utcnow()

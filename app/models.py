@@ -1,6 +1,7 @@
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
+import secrets
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, login_manager
@@ -19,6 +20,8 @@ class User(db.Model, UserMixin):
     language = db.Column(db.String(10), default='ar')  # Default to Arabic
     theme = db.Column(db.String(10), default='light')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reset_token = db.Column(db.String(100), nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
     
     # Relationships
     products = db.relationship('Product', backref='user', lazy=True, cascade="all, delete-orphan")
@@ -29,6 +32,25 @@ class User(db.Model, UserMixin):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    def generate_reset_token(self):
+        """Generate a password reset token valid for 1 hour"""
+        self.reset_token = secrets.token_urlsafe(32)
+        self.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+        return self.reset_token
+    
+    def verify_reset_token(self, token):
+        """Verify if the password reset token is valid"""
+        if self.reset_token != token:
+            return False
+        if datetime.utcnow() > self.reset_token_expiry:
+            return False
+        return True
+    
+    def clear_reset_token(self):
+        """Clear the password reset token after use"""
+        self.reset_token = None
+        self.reset_token_expiry = None
         
     def __repr__(self):
         return f'<User {self.username}>'
@@ -70,6 +92,11 @@ class Product(db.Model):
     @property
     def notify_always(self):
         return self.notify_on_any_change
+
+    @property
+    def display_name(self):
+        """Return custom name if available, otherwise product name"""
+        return self.custom_name if self.custom_name else self.name
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
