@@ -186,6 +186,15 @@ def signup():
 @login_required
 def add_product():
     try:
+        # Double-check that the user is authenticated
+        if not current_user.is_authenticated:
+            print("User not authenticated but bypassed @login_required - this should not happen")
+            return jsonify({
+                'success': False, 
+                'error': 'Authentication required',
+                'redirect': url_for('login')
+            }), 401
+            
         print("Starting add_product process...")
         
         # Get data from form
@@ -281,6 +290,13 @@ def add_product():
     except Exception as e:
         print(f"Error in add_product route: {str(e)}")
         traceback.print_exc()
+        if not current_user.is_authenticated:
+            # If error is because user is not logged in, redirect to login page
+            return jsonify({
+                'success': False, 
+                'error': 'Authentication required',
+                'redirect': url_for('login')
+            }), 401
         return jsonify({'success': False, 'error': 'An unexpected error occurred. Please try again later.'})
 
 @app.route('/logout')

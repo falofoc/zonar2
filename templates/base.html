@@ -896,85 +896,82 @@
                 <!-- Main nav items (optional, can add back if needed) -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <!-- Kept empty as per minimal design, Home removed -->
-                    <!-- Example if needed later:
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Features</a>
-                    </li>
-                    -->
                 </ul>
 
                 <!-- Right side actions/auth -->
                 <div class="navbar-actions ms-lg-auto">
+                    <!-- Theme Toggle - Always visible -->
                     <button class="nav-icon-btn" id="themeToggle" title="{{ translate('toggle_theme') }}">
                         <i class="bi bi-moon-stars"></i> <!-- Icon updated in JS -->
                     </button>
 
-                    <!-- Language Toggle Button -->
+                    <!-- Language Toggle Button - Always visible -->
                     <a href="{{ url_for('change_language', lang='en' if g.lang == 'ar' else 'ar') }}" class="nav-icon-btn ms-2" title="{{ translate('english' if g.lang == 'ar' else 'arabic') }}">
                         <i class="bi bi-translate"></i>
                         <span class="small ms-1">{{ "EN" if g.lang == 'ar' else "AR" }}</span>
                     </a>
 
                     {% if current_user.is_authenticated %}
-                    <!-- Add Product Button (Logged In) -->
-                    <button class="nav-icon-btn" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
-                        <i class="bi bi-plus-circle"></i>
-                    </button
-
-                    <!-- Notifications Dropdown (Logged In) -->
-                    <div class="dropdown">
-                        <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ translate('notifications') }}">
-                            <i class="bi bi-bell"></i>
-                            {% if unread_count > 0 %}
-                            <span class="notification-badge">{{ unread_count }}</span>
-                            {% endif %}
+                        <!-- Only show these elements if the user is logged in -->
+                        
+                        <!-- Add Product Button (Logged In Only) -->
+                        <button class="nav-icon-btn" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
+                            <i class="bi bi-plus-circle"></i>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-end notification-dropdown">
-                             <div class="dropdown-header px-3 py-2">{{ translate('notifications') }}</div>
-                            <div class="notification-list">
-                                {% if notifications %}
-                                    {% for notification in notifications %}
-                                    <div class="dropdown-item">
+
+                        <!-- Notifications Dropdown (Logged In Only) -->
+                        <div class="dropdown">
+                            <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ translate('notifications') }}">
+                                <i class="bi bi-bell"></i>
+                                {% if unread_count > 0 %}
+                                <span class="notification-badge">{{ unread_count }}</span>
+                                {% endif %}
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown">
+                                <div class="dropdown-header px-3 py-2">{{ translate('notifications') }}</div>
+                                <div class="notification-list">
+                                    {% if notifications %}
+                                        {% for notification in notifications %}
+                                        <div class="dropdown-item">
                                             <small class="text-muted mb-1">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                        <p class="mb-1">
+                                            <p class="mb-1">
                                                 {% if "dropped" in notification.message %}
                                                 <i class="bi bi-arrow-down-circle-fill text-success me-1"></i>
                                                 {% elif "increased" in notification.message %}
                                                 <i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>
                                                 {% elif "Target price" in notification.message %}
                                                 <i class="bi bi-check-circle-fill text-success me-1"></i>
-                                            {% else %}
+                                                {% else %}
                                                 <i class="bi bi-info-circle me-1"></i>
                                                 {% endif %}
                                                 {{ notification.message }}
                                             </p>
-                                        <button class="btn btn-sm btn-link p-0 mark-read" data-id="{{ notification.id }}">
+                                            <button class="btn btn-sm btn-link p-0 mark-read" data-id="{{ notification.id }}">
                                                 {{ translate('mark_as_read') }}
                                             </button>
-                                    </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="dropdown-item text-muted">{{ translate('no_notifications') }}</div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="dropdown-item text-muted">{{ translate('no_notifications') }}</div>
+                                    {% endif %}
+                                </div>
+                                {% if notifications %}
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item text-center text-primary small">{{ translate('view_all_notifications') }}</a>
                                 {% endif %}
                             </div>
-                            {% if notifications %}
-                            <div class="dropdown-divider"></div>
-                            <a href="#" class="dropdown-item text-center text-primary small">{{ translate('view_all_notifications') }}</a>
-                    {% endif %}
                         </div>
-                    </div>
-                        
-                    <!-- Sign-out Button -->
-                    <a href="#" class="btn btn-primary ms-2 logout-link">
-                        <i class="bi bi-box-arrow-right"></i> {{ translate('logout') }}
-                    </a>
-
+                            
+                        <!-- Sign-out Button (Logged In Only) -->
+                        <a href="#" class="btn btn-primary ms-2 logout-link">
+                            <i class="bi bi-box-arrow-right"></i> {{ translate('logout') }}
+                        </a>
                     {% else %}
-                    <!-- Auth Buttons (Logged Out) -->
-                    <div class="auth-buttons d-flex gap-2">
-                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary">{{ translate('login') }}</a>
-                        <a href="{{ url_for('signup') }}" class="btn btn-primary">{{ translate('signup') }}</a>
-                    </div>
+                        <!-- Auth Buttons (Only show when logged out) -->
+                        <div class="auth-buttons d-flex gap-2">
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-primary">{{ translate('login') }}</a>
+                            <a href="{{ url_for('signup') }}" class="btn btn-primary">{{ translate('signup') }}</a>
+                        </div>
                     {% endif %}
                 </div>
             </div>

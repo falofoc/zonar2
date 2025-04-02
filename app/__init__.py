@@ -1,7 +1,7 @@
 import os
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_sqlalchemy import SQLAlchemy
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -31,17 +31,23 @@ else:
     db_path = os.path.join(instance_path, "amazon_tracker.db")
     print(f"Using local database path: {db_path}")
 
-# Security settings - Relaxed for development
+# Generate a more secure secret key
+import secrets
+secret_key = os.environ.get('SECRET_KEY', None)
+if not secret_key:
+    secret_key = secrets.token_hex(32)  # 32 bytes = 256 bits
+
+# Security settings with improved session handling
 app.config.update(
-    SECRET_KEY='dev-key-please-change-in-production',  # Fixed secret key for development
-    SESSION_COOKIE_SECURE=False,
+    SECRET_KEY=secret_key,
+    SESSION_COOKIE_SECURE=is_production,  # Use secure cookies in production
     SESSION_COOKIE_HTTPONLY=True,  # Enable HTTPOnly for security
     SESSION_COOKIE_SAMESITE='Lax',   # Use Lax for better security while still allowing cross-site
-    PERMANENT_SESSION_LIFETIME=1800,
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # Longer session lifetime
     SQLALCHEMY_DATABASE_URI=f'sqlite:///{db_path}',
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     WTF_CSRF_ENABLED=False,
-    DEBUG=True
+    DEBUG=not is_production
 )
 
 # Print database URI for debugging
@@ -66,7 +72,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
 login_manager.login_message = 'Please log in to access this page.'
-login_manager.session_protection = None  # Disable session protection for development
+login_manager.session_protection = "strong"  # Enable strong session protection
 
 # Import all other components AFTER the app is created
 import sys
@@ -120,6 +126,9 @@ def utility_processor():
 
 @app.before_request
 def before_request():
+    # Make session permanent by default to extend its lifetime
+    session.permanent = True
+    
     # Set language based on user preference or default to Arabic
     if current_user.is_authenticated:
         g.lang = current_user.language
