@@ -897,7 +897,7 @@
 <body class="{{ 'dark-theme' if g.theme == 'dark' else '' }}">
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home') }}">
+            <a class="navbar-brand" href="/" onclick="window.location.href='/'; return false;">
                 <div class="flame-logo">
                     <div class="flame-main"></div>
                     <div class="flame-inner"></div>
@@ -942,7 +942,7 @@
 
                         <!-- Notifications Dropdown (Logged In Only) -->
                         <div class="dropdown">
-                            <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ translate('notifications') }}">
+                            <button class="nav-icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ translate('notifications') }}" onclick="event.stopPropagation();">
                                 <i class="bi bi-bell"></i>
                                 {% if unread_count > 0 %}
                                 <span class="notification-badge">{{ unread_count }}</span>
@@ -1092,80 +1092,40 @@
         }
     }
 
-    // Fix navigation links by adding explicit click handlers
-    document.addEventListener('DOMContentLoaded', function() {
-        // Fix login button
-        const loginBtn = document.querySelector('.auth-buttons a[href="/login"]');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log("Login button clicked, navigating to /login");
-                window.location.href = '/login';
-            });
-        }
-        
-        // Fix signup button
-        const signupBtn = document.querySelector('.auth-buttons a[href="/signup"]');
-        if (signupBtn) {
-            signupBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log("Signup button clicked, navigating to /signup");
-                window.location.href = '/signup';
-            });
-        }
-        
-        // Fix navbar brand (home button)
-        const homeBtn = document.querySelector('.navbar-brand');
-        if (homeBtn) {
-            homeBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log("Home button clicked, navigating to /");
-                window.location.href = '/';
-            });
-        }
-        
-        // Fix language switcher
-        const langBtn = document.querySelector('.nav-icon-btn[title="{{ translate("english" if g.lang == "ar" else "arabic") }}"]');
-        if (langBtn) {
-            langBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetLang = "{{ 'en' if g.lang == 'ar' else 'ar' }}";
-                console.log(`Language button clicked, changing to ${targetLang}`);
-                window.location.href = `/change_language/${targetLang}`;
-            });
-        }
-        
-        // Fix logout button
-        const logoutBtn = document.querySelector('.logout-link');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm("{{ translate('confirm_logout') }}")) {
-                    console.log("Logout confirmed, navigating to /logout");
-                    window.location.href = '/logout';
-                }
-            });
-        }
-        
-        // Make sure all links actually navigate when clicked
-        document.querySelectorAll('a[href]').forEach(link => {
-            // Skip links that already have handlers or are meant to be ignored
-            if (link.classList.contains('dropdown-toggle') || 
-                link.getAttribute('data-bs-toggle') || 
-                link.getAttribute('href') === '#') {
-                return;
-            }
-            
-            // Add click handler for all other links
-            link.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href && href !== '#' && !href.startsWith('javascript:')) {
-                    console.log(`Link clicked, navigating to ${href}`);
-                    e.preventDefault();
-                    window.location.href = href;
-                }
-            });
+    // Additional script to ensure all links work properly
+    window.addEventListener('load', function() {
+        // Direct fix for home logo
+        document.querySelector('.navbar-brand').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/';
         });
+        
+        // Fix for notifications dropdown
+        const notificationBtn = document.querySelector('.dropdown .nav-icon-btn[title="{{ translate("notifications") }}"]');
+        if (notificationBtn) {
+            notificationBtn.onclick = function(e) {
+                e.stopPropagation();
+                // Bootstrap will handle the dropdown, we just need to stop event bubbling
+            };
+        }
+        
+        // Fix for add product button
+        const addProductBtn = document.querySelector('.nav-icon-btn[title="{{ translate("add_product") }}"]');
+        if (addProductBtn) {
+            addProductBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Let Bootstrap handle the modal
+            });
+        }
+        
+        // Fix for theme toggle
+        const themeToggleBtn = document.getElementById('themeToggle');
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleTheme();
+            });
+        }
     });
 
     // Function to get CSRF token (ensure it's defined)
