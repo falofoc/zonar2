@@ -897,7 +897,7 @@
 <body class="{{ 'dark-theme' if g.theme == 'dark' else '' }}">
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="/" onclick="window.location.href='/'; return false;">
+            <a class="navbar-brand" href="javascript:void(0);" onclick="window.location.href = '/';">
                 <div class="flame-logo">
                     <div class="flame-main"></div>
                     <div class="flame-inner"></div>
@@ -1224,6 +1224,42 @@
     function updateTheme(theme) {
         // Implementation of updateTheme function
     }
+
+    // Force navigation to home when clicking on logo
+    (function() {
+        // Execute immediately to ensure it's applied as soon as possible
+        const homeLogo = document.querySelector('.navbar-brand');
+        if (homeLogo) {
+            console.log("Found home logo, binding navigation");
+            
+            // Bind multiple methods to ensure the link works
+            homeLogo.addEventListener('click', function(e) {
+                console.log("Logo clicked - navigating to home");
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = '/';
+                return false;
+            });
+            
+            // Also bind to mousedown in case click is being prevented
+            homeLogo.addEventListener('mousedown', function(e) {
+                console.log("Logo mousedown - preparing navigation");
+                // Let the click event handle the navigation
+            });
+            
+            // Backup timeout to check if logo exists after full page load
+            setTimeout(function() {
+                const logoCheck = document.querySelector('.navbar-brand');
+                if (logoCheck) {
+                    console.log("Logo still exists after timeout, reinforcing handler");
+                    logoCheck.onclick = function() {
+                        window.location.href = '/';
+                        return false;
+                    };
+                }
+            }, 1000);
+        }
+    })();
 
     </script>
     {% block extra_js %}{% endblock %}
