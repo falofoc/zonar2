@@ -84,12 +84,34 @@ def translate(key):
             # Fall back to cookie or default
             lang = request.cookies.get('language', 'ar')  # Default to Arabic
             
-        # Get translation from the dictionary    
-        if key in translations and lang in translations:
-            return translations[lang].get(key, translations['en'].get(key, key))
-        return key
+        # Print debugging info
+        print(f"Translating key '{key}' for language '{lang}'")
+        
+        # Check if the key exists in the translations dictionary
+        if key in translations:
+            if lang in translations:
+                # Get translation from the dictionary
+                translated = translations[lang].get(key)
+                if translated:
+                    print(f"Found translation: '{translated}'")
+                    return translated
+                else:
+                    # Fall back to English if translation not found in requested language
+                    fallback = translations['en'].get(key, key)
+                    print(f"No translation in {lang}, using English fallback: '{fallback}'")
+                    return fallback
+            else:
+                # If language not found, fall back to English
+                fallback = translations['en'].get(key, key)
+                print(f"Language {lang} not found in translations, using English fallback: '{fallback}'")
+                return fallback
+        else:
+            # If key not found in translations, return the key itself
+            print(f"Translation key '{key}' not found in translations dictionary")
+            return key
     except Exception as e:
-        print(f"Translation error for key {key}: {e}")
+        print(f"Translation error for key '{key}': {e}")
+        traceback.print_exc()
         return key
 
 @app.context_processor
