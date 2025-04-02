@@ -125,7 +125,8 @@ translations = {
         'forgot_password_instructions': 'Enter your email and we will send you a link to reset your password.',
         'reset_password_instructions': 'Enter the new password below.',
         'send_reset_link': 'Send Reset Link',
-        'back_to_login': 'Back to Login'
+        'back_to_login': 'Back to Login',
+        'test_email': 'Test Email'
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -276,6 +277,7 @@ translations = {
         'forgot_password_instructions': 'أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.',
         'reset_password_instructions': 'أدخل كلمة المرور الجديدة أدناه.',
         'send_reset_link': 'إرسال رابط إعادة التعيين',
-        'back_to_login': 'العودة إلى تسجيل الدخول'
+        'back_to_login': 'العودة إلى تسجيل الدخول',
+        'test_email': 'اختبار البريد'
     }
-} 'test_email': 'Test Email', 'test_email_ar': 'اختبار البريد'
+} 
