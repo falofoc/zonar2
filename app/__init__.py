@@ -77,7 +77,9 @@ login_manager.session_protection = "strong"  # Enable strong session protection
 # Import all other components AFTER the app is created
 import sys
 import os
+# Add the parent directory to sys.path to make imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Now import translations should work
 from translations import translations
 
 # This defines the translate function that's used in templates
