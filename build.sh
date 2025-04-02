@@ -8,9 +8,9 @@ echo "Python version: $(python --version)"
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Create the database if it doesn't exist
+# Force recreate the database in production (Render)
 echo "Creating application database tables..."
-python -c "from app import app, db; from app.models import User, Product, Notification; app.app_context().push(); db.create_all()"
+python -c "from app import app, db; from app.models import User, Product, Notification; app.app_context().push(); db.drop_all(); db.create_all(); print('Database tables dropped and recreated successfully!')"
 
 # Create price_checker.py script for cron job if it doesn't exist
 if [ ! -f "price_checker.py" ]; then
