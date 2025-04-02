@@ -17,6 +17,20 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
+# Ensure instance directory exists
+instance_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../instance"))
+os.makedirs(instance_path, exist_ok=True)
+print(f"Database directory: {instance_path}")
+
+# For Render deployment, use /tmp directory if we're in production
+is_production = os.environ.get('RENDER', False)
+if is_production:
+    db_path = '/tmp/amazon_tracker.db'
+    print(f"Using production database path: {db_path}")
+else:
+    db_path = os.path.join(instance_path, "amazon_tracker.db")
+    print(f"Using local database path: {db_path}")
+
 # Security settings - Relaxed for development
 app.config.update(
     SECRET_KEY='dev-key-please-change-in-production',  # Fixed secret key for development
@@ -24,11 +38,14 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,  # Enable HTTPOnly for security
     SESSION_COOKIE_SAMESITE='Lax',   # Use Lax for better security while still allowing cross-site
     PERMANENT_SESSION_LIFETIME=1800,
-    SQLALCHEMY_DATABASE_URI=f'sqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), "../instance", "amazon_tracker.db"))}',
+    SQLALCHEMY_DATABASE_URI=f'sqlite:///{db_path}',
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     WTF_CSRF_ENABLED=False,
     DEBUG=True
 )
+
+# Print database URI for debugging
+print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
 # Initialize CORS with very permissive settings for development
 CORS(app, 
@@ -99,13 +116,19 @@ except ImportError:
 
 def init_db():
     """Initialize the database and create all tables"""
-    # Ensure instance directory exists
-    os.makedirs('../instance', exist_ok=True)
-    
-    # Create all tables
+    print("Initializing database...")
     with app.app_context():
         db.create_all()
         print("Database tables created successfully!")
+
+# Initialize database if it doesn't exist
+with app.app_context():
+    try:
+        db.create_all()
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        traceback.print_exc()
 
 @login_manager.user_loader
 def load_user(id):
