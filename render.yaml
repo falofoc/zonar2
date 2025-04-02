@@ -1,7 +1,7 @@
 services:
   - type: web
     name: zonar
-    env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn wsgi:app
     envVars:
@@ -10,4 +10,10 @@ services:
       - key: FLASK_APP
         value: app.py
       - key: FLASK_ENV
-        value: production 
+        value: production
+    # Specify disk storage and RAM
+    disk:
+      name: zonar-data
+      mountPath: /data
+      sizeGB: 1
+    plan: free 
