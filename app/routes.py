@@ -182,6 +182,107 @@ def signup():
         flash('An error occurred during signup. Please try again.', 'danger')
         return render_template('signup.html', unread_count=0)
 
+@app.route('/add_product', methods=['POST'])
+@login_required
+def add_product():
+    try:
+        print("Starting add_product process...")
+        
+        # Get data from form
+        url = request.form.get('url')
+        custom_name = request.form.get('custom_name')
+        target_price_str = request.form.get('target_price')
+        notify_on_any_change = request.form.get('notify_on_any_change') == 'on'
+        
+        print(f"Product data: URL={url}, Custom name={custom_name}, Target price={target_price_str}, Notify={notify_on_any_change}")
+        
+        # Validate URL
+        if not url:
+            print("URL is required but was not provided")
+            return jsonify({'success': False, 'error': translate('url_required')})
+        
+        # Validate Amazon.sa URL
+        if not url.startswith('https://www.amazon.sa'):
+            print(f"Invalid URL: {url} - not from amazon.sa")
+            return jsonify({'success': False, 'error': translate('invalid_url')})
+        
+        # Check if product already exists for this user
+        existing_product = Product.query.filter_by(user_id=current_user.id, url=url).first()
+        if existing_product:
+            print(f"Product already exists for user {current_user.id}")
+            return jsonify({'success': False, 'error': translate('product_exists')})
+        
+        # Convert target price to float if provided
+        target_price = None
+        if target_price_str:
+            try:
+                target_price = float(target_price_str)
+                if target_price <= 0:
+                    return jsonify({'success': False, 'error': translate('invalid_price')})
+            except ValueError:
+                return jsonify({'success': False, 'error': translate('invalid_price')})
+        
+        # Fetch product data from Amazon
+        print(f"Fetching product data from Amazon for URL: {url}")
+        product_data = trackers.fetch_product_data(url)
+        
+        if not product_data:
+            print("Failed to fetch product data")
+            return jsonify({'success': False, 'error': translate('fetch_error')})
+        
+        if not product_data.get('price'):
+            print("No price found for product")
+            return jsonify({'success': False, 'error': translate('price_not_found')})
+        
+        print(f"Product data fetched successfully: {product_data}")
+        
+        # Create new product
+        try:
+            product = Product(
+                url=url,
+                name=product_data['name'],
+                custom_name=custom_name,
+                current_price=product_data['price'],
+                target_price=target_price,
+                image_url=product_data.get('image_url'),
+                tracking_enabled=True,
+                notify_on_any_change=notify_on_any_change,
+                user_id=current_user.id,
+                price_history=json.dumps([{
+                    'price': product_data['price'],
+                    'date': datetime.utcnow().isoformat()
+                }])
+            )
+            
+            db.session.add(product)
+            db.session.commit()
+            
+            message = translate('product_added_success').format(product_name=custom_name or product_data['name'])
+            print(f"Product added successfully: {message}")
+            
+            return jsonify({
+                'success': True,
+                'message': message,
+                'product': {
+                    'id': product.id,
+                    'name': product.name,
+                    'custom_name': product.custom_name,
+                    'current_price': product.current_price,
+                    'target_price': product.target_price,
+                    'image_url': product.image_url
+                }
+            })
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error saving product: {str(e)}")
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': translate('save_error')})
+            
+    except Exception as e:
+        print(f"Error in add_product route: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'An unexpected error occurred. Please try again later.'})
+
 @app.route('/logout')
 @login_required
 def logout():
