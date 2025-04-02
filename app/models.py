@@ -45,7 +45,7 @@ class Product(db.Model):
     tracking_enabled = db.Column(db.Boolean, default=True)
     notify_on_any_change = db.Column(db.Boolean, default=False)
     last_checked = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def get_display_name(self):
@@ -76,4 +76,4 @@ class Notification(db.Model):
     message = db.Column(db.String(500), nullable=False)
     read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) 
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) 
