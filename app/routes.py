@@ -29,6 +29,7 @@ def home():
             per_page = 5  # Number of products per page
             
             # Base query for user's products
+            print(f"Querying products for user ID: {current_user.id}")
             query = Product.query.filter_by(user_id=current_user.id)
             
             # Apply search if query exists
@@ -43,6 +44,10 @@ def home():
             
             # Order by creation date (newest first) and paginate
             products = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+            
+            # Log product count for debugging
+            product_count = query.count()
+            print(f"Found {product_count} products for user {current_user.id}")
             
             # Get notifications
             notifications = Notification.query.filter_by(
@@ -64,6 +69,7 @@ def home():
             return render_template('login.html', unread_count=0)
     except Exception as e:
         print(f"Error in home route: {e}")
+        traceback.print_exc()  # Add full traceback for better debugging
         return render_template('login.html', unread_count=0)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -391,4 +397,110 @@ def edit_product(product_id):
         db.session.rollback()
         traceback.print_exc()
         flash(translate('error_occurred'), 'danger')
-        return redirect(url_for('home')) 
+        return redirect(url_for('home'))
+
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+@login_required
+def delete_product(product_id):
+    """
+    Delete a product from the database
+    """
+    try:
+        # Find product and verify ownership
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        
+        # Get product name for confirmation message
+        product_name = product.custom_name or product.name
+        
+        # Delete the product
+        db.session.delete(product)
+        db.session.commit()
+        
+        # Confirm deletion to user
+        flash(translate('product_deleted_success'), 'success')
+        print(f"Product {product_id} ({product_name}) deleted successfully by user {current_user.id}")
+        
+        return redirect(url_for('home'))
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting product {product_id}: {str(e)}")
+        traceback.print_exc()
+        flash(translate('error_occurred'), 'danger')
+        return redirect(url_for('home'))
+
+@app.route('/check_price/<int:product_id>', methods=['POST'])
+@login_required
+def check_price(product_id):
+    """
+    Manually trigger price check for a specific product
+    """
+    try:
+        # Verify the product exists and belongs to this user
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        
+        print(f"Manually checking price for product {product_id}: {product.name}")
+        
+        # Get current product data from Amazon
+        product_data = trackers.fetch_product_data(product.url)
+        
+        if not product_data or 'price' not in product_data:
+            print(f"Failed to fetch current price for product {product_id}")
+            return jsonify({
+                'success': False,
+                'error': translate('check_price_error')
+            })
+        
+        # Get the new price
+        new_price = product_data['price']
+        old_price = product.current_price
+        
+        # Create price history entry
+        price_history = json.loads(product.price_history) if product.price_history else []
+        price_history.append({
+            'price': new_price,
+            'date': datetime.utcnow().isoformat()
+        })
+        
+        # Update product with new price and history
+        product.price_history = json.dumps(price_history)
+        product.current_price = new_price
+        product.last_checked = datetime.utcnow()
+        
+        # Create notification if price changed and notifications are enabled
+        if new_price != old_price:
+            if product.notify_on_any_change or (product.target_price and new_price <= product.target_price):
+                # Create notification message based on price change
+                if new_price < old_price:
+                    message = f"{product.custom_name or product.name}: {translate('price_dropped')} {new_price}."
+                else:
+                    message = f"{product.custom_name or product.name}: {translate('price_increased')} {new_price}."
+                
+                # If target price reached, add special notification
+                if product.target_price and new_price <= product.target_price:
+                    message += f" {translate('target_reached')}!"
+                
+                # Create and save notification
+                notification = Notification(
+                    message=message,
+                    user_id=current_user.id,
+                    read=False
+                )
+                db.session.add(notification)
+        
+        # Save changes
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f"{translate('current_price')}: {new_price}",
+            'old_price': old_price,
+            'new_price': new_price
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error checking price for product {product_id}: {str(e)}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': translate('check_price_error')
+        }) 
