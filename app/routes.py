@@ -118,32 +118,43 @@ def login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-        
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'danger')
-            return redirect(url_for('signup'))
+    try:
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
             
-        if User.query.filter_by(email=email).first():
-            flash('Email already registered', 'danger')
-            return redirect(url_for('signup'))
+        if request.method == 'POST':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            
+            # Add some basic validation
+            if not username or not email or not password:
+                flash('Please fill in all fields', 'danger')
+                return redirect(url_for('signup'))
+            
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists', 'danger')
+                return redirect(url_for('signup'))
+                
+            if User.query.filter_by(email=email).first():
+                flash('Email already registered', 'danger')
+                return redirect(url_for('signup'))
+            
+            user = User(username=username, email=email)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            
+            login_user(user)
+            flash('Account created successfully! Welcome to ZONAR - زونار', 'success')
+            return redirect(url_for('home'))
         
-        user = User(username=username, email=email)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        
-        login_user(user)
-        flash('Account created successfully! Welcome to ZONAR - زونار', 'success')
-        return redirect(url_for('home'))
-    
-    return render_template('signup.html', unread_count=0)
+        return render_template('signup.html', unread_count=0)
+    except Exception as e:
+        print(f"Error in signup route: {e}")
+        traceback.print_exc()  # Print full traceback for debugging
+        flash('An error occurred during signup. Please try again.', 'danger')
+        return render_template('signup.html', unread_count=0)
 
 @app.route('/logout')
 @login_required

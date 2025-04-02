@@ -54,14 +54,26 @@ login_manager.session_protection = None  # Disable session protection for develo
 # Import all other components AFTER the app is created
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from translations import translations
-import trackers
 
 # This defines the translate function that's used in templates
 def translate(key):
-    language = request.cookies.get('language', 'en')
-    return translations.get(key, {}).get(language, key)
+    try:
+        # First try to get from user's preferred language
+        if hasattr(g, 'lang') and g.lang:
+            lang = g.lang
+        else:
+            # Fall back to cookie or default
+            lang = request.cookies.get('language', 'ar')  # Default to Arabic
+            
+        # Get translation from the dictionary    
+        if key in translations and lang in translations:
+            return translations[lang].get(key, translations['en'].get(key, key))
+        return key
+    except Exception as e:
+        print(f"Translation error for key {key}: {e}")
+        return key
 
 @app.context_processor
 def utility_processor():
