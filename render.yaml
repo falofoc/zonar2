@@ -4,7 +4,7 @@ services:
     env: python
     region: oregon
     buildCommand: ./build.sh
-    startCommand: gunicorn --bind=0.0.0.0:$PORT wsgi:app
+    startCommand: gunicorn app:app
     envVars:
       - key: FLASK_APP
         value: app.py
