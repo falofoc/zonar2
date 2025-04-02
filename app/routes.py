@@ -316,8 +316,10 @@ def logout():
 def change_language(lang):
     """Change the language for the current user or session"""
     try:
-        print(f"DEBUG: Changing language to {lang}")
+        print(f"DEBUG: Language change requested to {lang}")
+        print(f"DEBUG: Request came from {request.referrer}")
         
+        # Force language to be either ar or en
         if lang not in ['en', 'ar']:
             print(f"DEBUG: Invalid language '{lang}', defaulting to Arabic")
             lang = 'ar'
@@ -327,20 +329,27 @@ def change_language(lang):
             print(f"DEBUG: Updating language for authenticated user {current_user.id} to {lang}")
             current_user.language = lang
             db.session.commit()
-            print("DEBUG: User language updated in database")
+            print(f"DEBUG: User language updated in database to {lang}")
         
         # Create response with referrer or fallback
         redirect_url = request.referrer or url_for('home')
         print(f"DEBUG: Will redirect to {redirect_url}")
         response = redirect(redirect_url)
         
+        # Clear any existing language cookies to prevent conflicts
+        response.delete_cookie('language')
+        
         # Set cookie with longer duration (1 year)
-        print(f"DEBUG: Setting language cookie to {lang}")
         max_age = 365 * 24 * 60 * 60  # 1 year in seconds
         response.set_cookie('language', lang, max_age=max_age)
+        print(f"DEBUG: Language cookie set to {lang} with max_age={max_age}")
         
-        # Also set in session
+        # Set in session
         session['language'] = lang
+        
+        # Force persist session immediately
+        session.modified = True
+        print(f"DEBUG: Session language set to {lang}, session.modified=True")
         
         return response
     except Exception as e:

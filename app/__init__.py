@@ -131,6 +131,11 @@ def before_request():
         # Make session permanent by default
         session.permanent = True
         
+        # Print debug info before language detection
+        print(f"DEBUG SESSION DATA: {session}")
+        if current_user.is_authenticated:
+            print(f"DEBUG USER DATA: id={current_user.id}, language={current_user.language}")
+        
         # Determine language preference with this priority:
         # 1. Session (most immediate)
         # 2. Authenticated user's stored preference
@@ -153,19 +158,26 @@ def before_request():
         
         # Set the language in Flask's g object for this request
         g.lang = preferred_lang
-        print(f"DEBUG: Language set to {g.lang} for this request")
+        print(f"DEBUG: Final language set to {g.lang} for this request")
         
         # Set theme
         if current_user.is_authenticated and hasattr(current_user, 'theme'):
             g.theme = current_user.theme
         else:
             g.theme = request.cookies.get('theme', 'light')
+            
+        # Add language info to template context
+        g.is_arabic = (g.lang == 'ar')
+        g.is_english = (g.lang == 'en')
+        print(f"DEBUG: is_arabic={g.is_arabic}, is_english={g.is_english}")
     except Exception as e:
         print(f"DEBUG: Error in before_request: {e}")
         traceback.print_exc()
         # Safe fallback
         g.lang = 'ar'
         g.theme = 'light'
+        g.is_arabic = True
+        g.is_english = False
 
 # Now import the rest of the app components
 try:
