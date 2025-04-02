@@ -897,7 +897,8 @@
 <body class="{{ 'dark-theme' if g.theme == 'dark' else '' }}">
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="javascript:void(0);" onclick="window.location.href = '/';">
+            <!-- Navbar brand / home button - Use BUTTON instead of anchor -->
+            <button type="button" class="navbar-brand btn btn-link p-0 border-0" style="text-decoration: none; background: none;" onclick="window.location.href='/'">
                 <div class="flame-logo">
                     <div class="flame-main"></div>
                     <div class="flame-inner"></div>
@@ -905,7 +906,7 @@
                     <div class="flame-spark"></div>
                 </div>
                 <span class="brand-text">Zonar <span class="ms-1">زونار</span></span>
-            </a>
+            </button>
 
             <!-- Toggler for mobile -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -916,7 +917,12 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <!-- Main nav items (optional, can add back if needed) -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <!-- Kept empty as per minimal design, Home removed -->
+                    <!-- Add a home link in navbar -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/" onclick="window.location.href='/'; return false;">
+                            <i class="bi bi-house-fill me-1"></i> {{ translate('home') }}
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- Right side actions/auth -->
