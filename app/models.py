@@ -1,4 +1,5 @@
 import json
+import traceback
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -20,10 +21,28 @@ class User(UserMixin, db.Model):
     notifications = db.relationship('Notification', backref='user', lazy=True)
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        try:
+            if not password:
+                print("Error: Empty password provided")
+                raise ValueError("Password cannot be empty")
+            self.password_hash = generate_password_hash(password)
+            print(f"Password hash generated successfully for user {self.username}")
+        except Exception as e:
+            print(f"Error setting password for user {self.username}: {str(e)}")
+            traceback.print_exc()
+            raise
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        try:
+            if not self.password_hash:
+                print(f"Warning: User {self.username} has no password hash")
+                return False
+            result = check_password_hash(self.password_hash, password)
+            return result
+        except Exception as e:
+            print(f"Error checking password for user {self.username}: {str(e)}")
+            traceback.print_exc()
+            return False
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)

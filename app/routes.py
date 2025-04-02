@@ -119,39 +119,65 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     try:
+        print("Starting signup process...")
         if current_user.is_authenticated:
+            print("User already authenticated, redirecting to home")
             return redirect(url_for('home'))
             
         if request.method == 'POST':
+            print("Processing POST request for signup")
             username = request.form.get('username')
             email = request.form.get('email')
             password = request.form.get('password')
             
+            print(f"Received signup data - Username: {username}, Email: {email}")
+            
             # Add some basic validation
             if not username or not email or not password:
+                print("Missing required fields")
                 flash('Please fill in all fields', 'danger')
                 return redirect(url_for('signup'))
             
-            if User.query.filter_by(username=username).first():
+            # Check for existing username
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
+                print(f"Username {username} already exists")
                 flash('Username already exists', 'danger')
                 return redirect(url_for('signup'))
                 
-            if User.query.filter_by(email=email).first():
+            # Check for existing email
+            existing_email = User.query.filter_by(email=email).first()
+            if existing_email:
+                print(f"Email {email} already registered")
                 flash('Email already registered', 'danger')
                 return redirect(url_for('signup'))
             
-            user = User(username=username, email=email)
-            user.set_password(password)
-            db.session.add(user)
-            db.session.commit()
-            
-            login_user(user)
-            flash('Account created successfully! Welcome to ZONAR - زونار', 'success')
-            return redirect(url_for('home'))
+            print("Creating new user...")
+            try:
+                user = User(username=username, email=email)
+                user.set_password(password)
+                print("User object created, adding to session")
+                db.session.add(user)
+                print("Committing to database")
+                db.session.commit()
+                print("User saved to database successfully")
+                
+                print("Logging in new user")
+                login_user(user)
+                print("User logged in, redirecting to home")
+                flash('Account created successfully! Welcome to ZONAR - زونار', 'success')
+                return redirect(url_for('home'))
+            except Exception as inner_e:
+                print(f"Error during user creation/database operation: {inner_e}")
+                db.session.rollback()  # Roll back the transaction
+                traceback.print_exc()
+                raise  # Re-raise to be caught by outer try-except
         
+        print("Rendering signup template (GET request)")
         return render_template('signup.html', unread_count=0)
     except Exception as e:
-        print(f"Error in signup route: {e}")
+        print(f"Error in signup route: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
         traceback.print_exc()  # Print full traceback for debugging
         flash('An error occurred during signup. Please try again.', 'danger')
         return render_template('signup.html', unread_count=0)
