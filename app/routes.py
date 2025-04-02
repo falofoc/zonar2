@@ -317,4 +317,25 @@ def change_language(lang):
         response = redirect(request.referrer or url_for('home'))
         response.set_cookie('language', lang)
         return response
-    return redirect(request.referrer or url_for('home')) 
+    return redirect(request.referrer or url_for('home'))
+
+@app.route('/get_buy_link/<int:product_id>')
+@login_required
+def get_buy_link(product_id):
+    """
+    Redirects user to the product URL on Amazon.sa
+    Also logs the click for analytics purposes
+    """
+    try:
+        # Verify the product exists and belongs to this user
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        
+        # Log the click if needed
+        print(f"User {current_user.username} clicked to buy product {product.id}: {product.name}")
+        
+        # Redirect to the Amazon product URL
+        return redirect(product.url)
+    except Exception as e:
+        print(f"Error in get_buy_link: {str(e)}")
+        flash('Unable to access product link', 'danger')
+        return redirect(url_for('home')) 
