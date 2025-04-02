@@ -338,4 +338,57 @@ def get_buy_link(product_id):
     except Exception as e:
         print(f"Error in get_buy_link: {str(e)}")
         flash('Unable to access product link', 'danger')
+        return redirect(url_for('home'))
+
+@app.route('/edit_product/<int:product_id>', methods=['POST'])
+@login_required
+def edit_product(product_id):
+    """
+    Update a product's details based on user input
+    """
+    try:
+        # Verify the product exists and belongs to this user
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        
+        # Get form data
+        custom_name = request.form.get('custom_name')
+        target_price_str = request.form.get('target_price')
+        notify_on_any_change = request.form.get('notify_on_any_change') == 'on'
+        tracking_enabled = request.form.get('tracking_enabled') == 'on'
+        
+        print(f"Editing product {product_id}: Custom name={custom_name}, Target price={target_price_str}, Notify={notify_on_any_change}, Tracking={tracking_enabled}")
+        
+        # Update custom name (if provided)
+        if custom_name:
+            product.custom_name = custom_name
+            
+        # Update target price if provided and valid
+        if target_price_str:
+            try:
+                target_price = float(target_price_str)
+                if target_price <= 0:
+                    flash(translate('invalid_price'), 'danger')
+                    return redirect(url_for('home'))
+                product.target_price = target_price
+            except ValueError:
+                flash(translate('invalid_price'), 'danger')
+                return redirect(url_for('home'))
+        else:
+            # Clear target price if empty string was submitted
+            product.target_price = None
+            
+        # Update notification settings
+        product.notify_on_any_change = notify_on_any_change
+        product.tracking_enabled = tracking_enabled
+        
+        # Save changes
+        db.session.commit()
+        flash(translate('product_updated_success'), 'success')
+        
+        return redirect(url_for('home'))
+    except Exception as e:
+        print(f"Error in edit_product route: {str(e)}")
+        db.session.rollback()
+        traceback.print_exc()
+        flash(translate('error_occurred'), 'danger')
         return redirect(url_for('home')) 

@@ -59,7 +59,8 @@ translations = {
         'login_error': 'An error occurred during login. Please try again.',
         'provide_credentials': 'Please provide both username and password',
         'product_added_success': 'Product "{product_name}" added successfully!',
-        'notify_any_change': 'Notify me of any price change',
+        'product_updated_success': 'Product updated successfully!',
+        'notify_any_change': 'Notify me on any price change (up or down)',
         'enable_tracking': 'Enable price tracking',
         'tracking_settings': 'Tracking Settings',
         'notification_settings': 'Notification Settings',
@@ -84,7 +85,6 @@ translations = {
         'my_special_product': 'My Special Product',
         'target_price_optional': 'Target Price (Optional)',
         'notify_below_price': 'Get notified when the price drops below this value',
-        'notify_any_change': 'Notify me on any price change (up or down)',
         'add_product_button': 'Add Product',
     },
     'ar': {
@@ -147,7 +147,8 @@ translations = {
         'login_error': 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.',
         'provide_credentials': 'يرجى إدخال اسم المستخدم وكلمة المرور',
         'product_added_success': 'تمت إضافة المنتج "{product_name}" بنجاح!',
-        'notify_any_change': 'إشعارني بأي تغير في السعر',
+        'product_updated_success': 'تم تحديث المنتج بنجاح!',
+        'notify_any_change': 'إشعاري بأي تغير في السعر (صعود أو نزول)',
         'enable_tracking': 'تفعيل تتبع السعر',
         'tracking_settings': 'إعدادات التتبع',
         'notification_settings': 'إعدادات الإشعارات',
@@ -195,7 +196,6 @@ translations = {
         'my_special_product': 'منتجي المميز',
         'target_price_optional': 'السعر المستهدف (اختياري)',
         'notify_below_price': 'سيتم إشعارك عندما ينخفض السعر عن هذه القيمة',
-        'notify_any_change': 'إشعاري بأي تغير في السعر (صعود أو نزول)',
         'add_product_button': 'إضافة المنتج',
     }
 } 
