@@ -990,8 +990,8 @@
                     {% else %}
                         <!-- Auth Buttons (Only show when logged out) -->
                         <div class="auth-buttons d-flex gap-2">
-                            <a href="{{ url_for('login') }}" class="btn btn-outline-primary">{{ translate('login') }}</a>
-                            <a href="{{ url_for('signup') }}" class="btn btn-primary">{{ translate('signup') }}</a>
+                            <a href="/login" onclick="window.location.href='/login'; return false;" class="btn btn-outline-primary">{{ translate('login') }}</a>
+                            <a href="/signup" onclick="window.location.href='/signup'; return false;" class="btn btn-primary">{{ translate('signup') }}</a>
                         </div>
                     {% endif %}
                 </div>
@@ -1091,6 +1091,29 @@
             updateTheme('dark');
         }
     }
+
+    // Fix navigation links by adding explicit click handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fix login button
+        const loginBtn = document.querySelector('.auth-buttons a[href="/login"]');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("Login button clicked, navigating to /login");
+                window.location.href = '/login';
+            });
+        }
+        
+        // Fix signup button
+        const signupBtn = document.querySelector('.auth-buttons a[href="/signup"]');
+        if (signupBtn) {
+            signupBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("Signup button clicked, navigating to /signup");
+                window.location.href = '/signup';
+            });
+        }
+    });
 
     function updateTheme(theme) {
         fetch('/settings/theme', {
