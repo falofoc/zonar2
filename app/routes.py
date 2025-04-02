@@ -377,10 +377,13 @@ def edit_product(product_id):
         # Get form data
         custom_name = request.form.get('custom_name')
         target_price_str = request.form.get('target_price')
-        notify_on_any_change = request.form.get('notify_on_any_change') == 'on'
-        tracking_enabled = request.form.get('tracking_enabled') == 'on'
         
-        print(f"Editing product {product_id}: Custom name={custom_name}, Target price={target_price_str}, Notify={notify_on_any_change}, Tracking={tracking_enabled}")
+        # Proper way to handle checkboxes - explicitly check if they're in the form data
+        # If the checkbox is unchecked, it won't be in the form data at all
+        notify_always = 'notify_always' in request.form
+        tracking = 'tracking' in request.form
+        
+        print(f"Editing product {product_id}: Custom name={custom_name}, Target price={target_price_str}, Notify={notify_always}, Tracking={tracking}")
         
         # Update custom name (if provided)
         if custom_name:
@@ -402,8 +405,8 @@ def edit_product(product_id):
             product.target_price = None
             
         # Update notification settings
-        product.notify_on_any_change = notify_on_any_change
-        product.tracking_enabled = tracking_enabled
+        product.notify_on_any_change = notify_always
+        product.tracking_enabled = tracking
         
         # Save changes
         db.session.commit()
@@ -521,4 +524,31 @@ def check_price(product_id):
         return jsonify({
             'success': False,
             'error': translate('check_price_error')
-        }) 
+        })
+
+@app.route('/toggle_tracking/<int:product_id>', methods=['POST'])
+@login_required
+def toggle_tracking(product_id):
+    """
+    Toggle the tracking status of a product
+    """
+    try:
+        # Verify the product exists and belongs to this user
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        
+        # Toggle tracking status
+        product.tracking_enabled = not product.tracking_enabled
+        
+        # Save changes
+        db.session.commit()
+        
+        # Return JSON response for AJAX
+        return jsonify({
+            'success': True, 
+            'tracking': product.tracking_enabled,
+            'message': translate('tracking_enabled') if product.tracking_enabled else translate('tracking_disabled')
+        })
+    except Exception as e:
+        print(f"Error toggling tracking for product {product_id}: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': translate('error_occurred')}) 

@@ -498,6 +498,31 @@
         border-color: var(--brand-orange-300);
         color: var(--brand-orange-700);
     }
+
+    /* Form switch styling improvements */
+    .form-check.form-switch {
+        transition: all 0.3s ease;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    
+    .form-check.form-switch:hover {
+        background-color: var(--brand-orange-100);
+    }
+    
+    .form-check.form-switch .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .form-check.form-switch .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 87, 34, 0.25);
+    }
+    
+    .form-check.form-switch.changed {
+        background-color: var(--brand-orange-100);
+        box-shadow: 0 0 0 1px var(--primary-color);
+    }
 </style>
 {% endblock %}
 
@@ -880,6 +905,21 @@
                     button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("check_now") }}';
                     alert('{{ translate("error_checking_price") }}');
                 });
+            });
+        });
+
+        // Make checkbox toggles in edit modals more responsive
+        document.querySelectorAll('.form-check-input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                // Toggle a class on the parent to show it's changed
+                this.closest('.form-check').classList.toggle('changed', true);
+                
+                // Toggle a visual feedback
+                if (this.checked) {
+                    this.closest('.form-check').style.opacity = '1';
+                } else {
+                    this.closest('.form-check').style.opacity = '0.7';
+                }
             });
         });
     });
