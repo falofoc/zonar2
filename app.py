@@ -183,12 +183,12 @@ def check_prices():
 
 @app.before_request
 def before_request():
-    # Set language based on user preference or default to English
+    # Set language based on user preference or default to Arabic
     if current_user.is_authenticated:
         g.lang = current_user.language
         g.theme = current_user.theme
     else:
-        g.lang = request.cookies.get('language', 'en')
+        g.lang = request.cookies.get('language', 'ar')  # Default to Arabic
         g.theme = request.cookies.get('theme', 'light')
 
 def translate(key):
@@ -560,17 +560,16 @@ def update_language():
     return jsonify({'status': 'error', 'message': 'Invalid language'}), 400
 
 @app.route('/change_language/<lang>')
-def change_language():
-    lang = request.view_args.get('lang')
+def change_language(lang):
     if lang in ['en', 'ar']:
         if current_user.is_authenticated:
             current_user.language = lang
             db.session.commit()
-        else:
-            # Set a cookie for non-authenticated users
-            response = redirect(request.referrer or url_for('home'))
-            response.set_cookie('language', lang)
-            return response
+        
+        # Set a cookie for all users (including non-authenticated)
+        response = redirect(request.referrer or url_for('home'))
+        response.set_cookie('language', lang)
+        return response
     return redirect(request.referrer or url_for('home'))
 
 @app.route('/check_price/<int:product_id>', methods=['POST'])

@@ -909,6 +909,12 @@
                         <i class="bi bi-moon-stars"></i> <!-- Icon updated in JS -->
                     </button>
 
+                    <!-- Language Toggle Button -->
+                    <a href="{{ url_for('change_language', lang='en' if g.lang == 'ar' else 'ar') }}" class="nav-icon-btn ms-2" title="{{ translate('english' if g.lang == 'ar' else 'arabic') }}">
+                        <i class="bi bi-translate"></i>
+                        <span class="small ms-1">{{ "EN" if g.lang == 'ar' else "AR" }}</span>
+                    </a>
+
                     {% if current_user.is_authenticated %}
                     <!-- Add Product Button (Logged In) -->
                     <button class="nav-icon-btn" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
