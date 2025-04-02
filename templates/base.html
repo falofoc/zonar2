@@ -1132,6 +1132,75 @@
                 toggleTheme();
             });
         }
+        
+        // Add Product Form Submission Handler
+        const addProductSubmitBtn = document.getElementById('add-product-btn');
+        if (addProductSubmitBtn) {
+            addProductSubmitBtn.addEventListener('click', function() {
+                // Get the form and error display element
+                const form = document.getElementById('add-product-form');
+                const errorDisplay = document.getElementById('add-product-error');
+                const spinner = addProductSubmitBtn.querySelector('.spinner-border');
+                
+                // Show spinner and disable button during request
+                spinner.classList.remove('d-none');
+                addProductSubmitBtn.disabled = true;
+                
+                // Clear previous errors
+                errorDisplay.classList.add('d-none');
+                errorDisplay.textContent = '';
+                
+                // Get form data
+                const formData = new FormData(form);
+                
+                // Submit the form via AJAX
+                fetch('/add_product', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide spinner
+                    spinner.classList.add('d-none');
+                    addProductSubmitBtn.disabled = false;
+                    
+                    if (data.success) {
+                        // Success! Show toast and reload the page
+                        if (typeof showToast === 'function') {
+                            showToast('success', data.message);
+                        } else {
+                            alert(data.message);
+                        }
+                        
+                        // Close modal and reload page
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                        
+                        // Reload the page after a short delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        // Error - display the error message
+                        errorDisplay.textContent = data.error;
+                        errorDisplay.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    // Network or other error
+                    console.error('Add product error:', error);
+                    spinner.classList.add('d-none');
+                    addProductSubmitBtn.disabled = false;
+                    errorDisplay.textContent = 'An unexpected error occurred. Please try again.';
+                    errorDisplay.classList.remove('d-none');
+                });
+            });
+        }
     });
 
     // Function to get CSRF token (ensure it's defined)
