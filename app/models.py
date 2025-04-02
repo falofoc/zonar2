@@ -9,40 +9,29 @@ from . import db, login_manager
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-class User(UserMixin, db.Model):
+class User(db.Model, UserMixin):
+    __tablename__ = 'users'
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(128), nullable=False)
+    language = db.Column(db.String(10), default='ar')  # Default to Arabic
+    theme = db.Column(db.String(10), default='light')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    theme = db.Column(db.String(10), default='light')  # 'light' or 'dark'
-    language = db.Column(db.String(2), default='ar')   # 'en' or 'ar', default to Arabic
-    products = db.relationship('Product', backref='user', lazy=True)
-    notifications = db.relationship('Notification', backref='user', lazy=True)
-
+    
+    # Relationships
+    products = db.relationship('Product', backref='user', lazy=True, cascade="all, delete-orphan")
+    notifications = db.relationship('Notification', backref='user', lazy=True, cascade="all, delete-orphan")
+    
     def set_password(self, password):
-        try:
-            if not password:
-                print("Error: Empty password provided")
-                raise ValueError("Password cannot be empty")
-            self.password_hash = generate_password_hash(password)
-            print(f"Password hash generated successfully for user {self.username}")
-        except Exception as e:
-            print(f"Error setting password for user {self.username}: {str(e)}")
-            traceback.print_exc()
-            raise
-
+        self.password_hash = generate_password_hash(password)
+    
     def check_password(self, password):
-        try:
-            if not self.password_hash:
-                print(f"Warning: User {self.username} has no password hash")
-                return False
-            result = check_password_hash(self.password_hash, password)
-            return result
-        except Exception as e:
-            print(f"Error checking password for user {self.username}: {str(e)}")
-            traceback.print_exc()
-            return False
+        return check_password_hash(self.password_hash, password)
+        
+    def __repr__(self):
+        return f'<User {self.username}>'
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
