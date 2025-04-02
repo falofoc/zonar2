@@ -66,11 +66,13 @@ def home():
                 unread_count=unread_count
             )
         else:
-            return render_template('login.html', unread_count=0)
+            # For non-authenticated users show login page with proper language support
+            print("User not authenticated, showing login page")
+            return redirect(url_for('login'))
     except Exception as e:
         print(f"Error in home route: {e}")
         traceback.print_exc()  # Add full traceback for better debugging
-        return render_template('login.html', unread_count=0)
+        return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
