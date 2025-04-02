@@ -3,11 +3,13 @@ services:
     name: zonar
     env: python
     region: oregon
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app
+    buildCommand: ./build.sh
+    startCommand: gunicorn --bind=0.0.0.0:$PORT wsgi:app
     envVars:
       - key: FLASK_APP
         value: app.py
       - key: FLASK_ENV
         value: production
+      - key: PYTHON_VERSION
+        value: 3.11.11
     plan: free 
