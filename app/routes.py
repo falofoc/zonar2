@@ -922,6 +922,15 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         password = os.environ.get("MAIL_PASSWORD", "vnmlzqhuvwktbucj")
         receiver_email = user.email
         
+        # Email server settings
+        mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+        mail_port = int(os.environ.get("MAIL_PORT", 587))
+        mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ['true', '1', 't', 'yes', 'y']
+        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "False").lower() in ['true', '1', 't', 'yes', 'y']
+        
+        print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
+        print(f"Sending email to {receiver_email} from {sender_email}")
+        
         # Get translated content
         subject = translations[user_lang].get(subject_key, translations['en'].get(subject_key, ""))
         greeting = translations[user_lang].get(greeting_key, translations['en'].get(greeting_key, ""))
@@ -947,20 +956,36 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         email_content = f"{greeting}\n\n{body}\n\n{footer}"
         message.attach(MIMEText(email_content, "plain"))
         
-        # Create a secure SSL context
+        print(f"Email prepared with subject: {subject}")
+        
+        # Create a secure context
         context = ssl.create_default_context()
         
-        # Connect to Gmail SMTP server
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-            # Log in
-            server.login(sender_email, password)
-            # Send email
-            server.sendmail(sender_email, receiver_email, message.as_string())
+        # Decide between SSL and TLS based on configuration
+        if mail_use_ssl:
+            print(f"Using SSL connection on port {mail_port}")
+            with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
+                print("Logging in to email server...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+        else:
+            print(f"Using TLS connection on port {mail_port}")
+            with smtplib.SMTP(mail_server, mail_port) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                print("Logging in to email server...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
         
         print(f"Localized email sent to {user.email} in {user_lang}")
         return True
     except Exception as e:
+        import traceback
         print(f"Error sending localized email: {e}")
+        traceback.print_exc()  # Print full traceback for debugging
         return False
 
 @app.route('/verify_email/<token>')
