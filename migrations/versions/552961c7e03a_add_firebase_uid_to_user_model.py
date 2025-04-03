@@ -35,9 +35,9 @@ def upgrade():
                type_=sa.String(length=10),
                existing_nullable=True)
         batch_op.create_index(batch_op.f('ix_users_firebase_uid'), ['firebase_uid'], unique=True)
-        batch_op.create_unique_constraint(batch_op.f('uq_users_reset_token'), ['reset_token'])
-        batch_op.create_unique_constraint(batch_op.f('uq_users_google_id'), ['google_id'])
-        batch_op.create_unique_constraint(batch_op.f('uq_users_verification_token'), ['verification_token'])
+        batch_op.create_unique_constraint(None, ['reset_token'])
+        batch_op.create_unique_constraint(None, ['google_id'])
+        batch_op.create_unique_constraint(None, ['verification_token'])
         batch_op.drop_column('verification_token_expiry')
         batch_op.drop_column('reset_token_expiry')
 
@@ -49,9 +49,9 @@ def downgrade():
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.add_column(sa.Column('reset_token_expiry', sa.DATETIME(), nullable=True))
         batch_op.add_column(sa.Column('verification_token_expiry', sa.DATETIME(), nullable=True))
-        batch_op.drop_constraint(batch_op.f('uq_users_verification_token'), type_='unique')
-        batch_op.drop_constraint(batch_op.f('uq_users_google_id'), type_='unique')
-        batch_op.drop_constraint(batch_op.f('uq_users_reset_token'), type_='unique')
+        batch_op.drop_constraint(None, type_='unique')
+        batch_op.drop_constraint(None, type_='unique')
+        batch_op.drop_constraint(None, type_='unique')
         batch_op.drop_index(batch_op.f('ix_users_firebase_uid'))
         batch_op.alter_column('language',
                existing_type=sa.String(length=10),

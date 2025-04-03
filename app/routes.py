@@ -15,7 +15,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask_mail import Message
 from app import mail
-from firebase_admin import auth
 
 # Routes
 @app.route('/')
@@ -1571,56 +1570,4 @@ def setup_admin(token, username):
     except Exception as e:
         db.session.rollback()
         return f"Error: {str(e)}", 500
-
-@app.route('/firebase_auth', methods=['POST'])
-def firebase_auth_route():
-    """Handles authentication requests from Firebase client SDK."""
-    id_token = request.json.get('id_token')
-
-    if not id_token:
-        return jsonify({'success': False, 'error': 'ID token is missing.'}), 400
-
-    try:
-        # Verify the ID token while checking if the token is revoked.
-        print("Verifying Firebase ID token...")
-        decoded_token = auth.verify_id_token(id_token)
-        uid = decoded_token['uid']
-        print(f"Firebase ID token verified successfully for UID: {uid}")
-
-        # Prepare user info dictionary
-        firebase_user_info = {
-            'uid': uid,
-            'email': decoded_token.get('email'),
-            'email_verified': decoded_token.get('email_verified', False),
-            'display_name': decoded_token.get('name'),
-            'photo_url': decoded_token.get('picture')
-        }
-
-        # Get or create the user in your database
-        user = User.get_or_create_firebase_user(firebase_user_info)
-
-        # Log the user in using Flask-Login
-        login_user(user, remember=True) # Remember the user across sessions
-        session.permanent = True # Make the session permanent based on app config
-        
-        print(f"User {user.email or user.username} logged in successfully via Firebase.")
-        
-        # Redirect URL after successful login (e.g., home page)
-        redirect_url = url_for('home') 
-
-        return jsonify({'success': True, 'redirect_url': redirect_url})
-
-    except auth.InvalidIdTokenError as e:
-        # Token is invalid or expired
-        print(f"Invalid Firebase ID token: {e}")
-        return jsonify({'success': False, 'error': 'Invalid or expired authentication token.'}), 401
-    except auth.RevokedIdTokenError as e:
-        # Token has been revoked
-        print(f"Revoked Firebase ID token: {e}")
-        return jsonify({'success': False, 'error': 'Authentication token has been revoked.'}), 401
-    except Exception as e:
-        # Handle other potential errors (database issues, etc.)
-        print(f"Error during Firebase authentication backend processing: {e}")
-        traceback.print_exc()
-        return jsonify({'success': False, 'error': 'An internal error occurred during authentication.'}), 500
 

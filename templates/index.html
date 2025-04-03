@@ -599,408 +599,292 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 2rem;">
-    {% if current_user.is_authenticated %}
-    
-    {% if not email_verified %}
-    <div class="verification-banner">
-        <p><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ translate('verification_required') }}</p>
-        <a href="{{ url_for('resend_verification') }}" class="btn btn-sm btn-warning">{{ translate('resend_verification') }}</a>
-    </div>
-    {% endif %}
-    
-    <div class="search-container">
-        <div class="search-form mx-auto" style="max-width: 600px;">
-            <form action="{{ url_for('home') }}" method="GET">
-                <div class="position-relative">
-                    <input type="text" class="form-control shadow-none" name="search" placeholder="{{ translate('search') }}" value="{{ request.args.get('search', '') }}">
-                    <button type="submit" class="search-button">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-            </form>
+<div class="container mt-4">
+    <!-- Search Form -->
+    <form method="GET" action="{{ url_for('home') }}" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="{{ translate('search_placeholder') }}" value="{{ search_query }}">
+            <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
         </div>
-    </div>
+    </form>
 
-    <div class="row mt-4">
-        {% if products %}
-            {% for product in products %}
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="product-card">
-                    {% if product.image_url %}
-                    <img src="{{ product.image_url }}" class="product-image" alt="{{ product.name }}">
-                    {% endif %}
-                    <div class="product-info">
-                        <h5 class="product-name">{{ product.custom_name or product.name }}</h5>
-                        <div class="price-box">
-                            <div class="product-price">
-                                <span class="price-value">{{ product.current_price|round(2) }}</span>
-                                <svg class="sar-symbol" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1124.14 1256.39" fill="currentColor" width="1em" height="1em">
-                                  <path d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z"/>
-                                  <path d="M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="price-history">
-                            {% if product.price_history and (product.get_price_history()|length > 1) %}
-                                {% set history = product.get_price_history() %}
-                                {% set last_idx = history|length - 1 %}
-                                {% set prev_idx = history|length - 2 %}
-                                {% if history[last_idx].price < history[prev_idx].price %}
-                                    <span class="text-success">
-                                        <i class="bi bi-arrow-down-circle-fill"></i>
-                                        {{ (history[prev_idx].price - history[last_idx].price)|round(2) }}
-                                    </span>
-                                {% elif history[last_idx].price > history[prev_idx].price %}
-                                    <span class="text-danger">
-                                        <i class="bi bi-arrow-up-circle-fill"></i>
-                                        {{ (history[last_idx].price - history[last_idx].price)|round(2) }}
-                                    </span>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                        {% if product.target_price and product.target_price > 0 %}
-                        <div class="target-price">
-                            <i class="bi bi-bullseye"></i>
-                            {{ translate('target_price') }}: {{ product.target_price|round(2) }}
-                        </div>
-                        {% endif %}
-                        <div class="product-status">
-                            <span class="status-badge {% if product.tracking_enabled %}status-active{% else %}status-inactive{% endif %}">
-                                <i class="bi {% if product.tracking_enabled %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %}"></i>
-                                {% if product.tracking_enabled %}
-                                    {{ translate('tracking') }}
-                                {% else %}
-                                    {{ translate('not_tracking') }}
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="product-tools">
-                            <button class="tool-btn btn-check" data-id="{{ product.id }}" title="{{ translate('check_now') }}">
-                                <i class="bi bi-arrow-repeat"></i>
-                            </button>
-                        </div>
-                        <div class="product-actions">
-                            <button class="btn-action btn-check" onclick="toggleTracking('{{ product.id }}')" id="tracking-btn-{{ product.id }}">
-                                <i class="bi bi-{% if product.tracking_enabled %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
-                                {{ translate('tracking') if product.tracking_enabled else translate('not_tracking') }}
-                            </button>
-                            <a href="{{ url_for('get_buy_link', product_id=product.id) }}" target="_blank" class="btn-action btn-buy">
-                                <i class="bi bi-cart"></i> {{ translate('buy_now') }}
-                            </a>
-                            <button class="btn-refresh" onclick="refreshPrice('{{ product.id }}')" title="{{ translate('refresh_price') }}">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                        </div>
-                        <div class="mt-3 d-flex justify-content-end gap-2">
-                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#priceHistoryModal{{ product.id }}" title="{{ translate('price_history') }}">
-                                <i class="bi bi-graph-up"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal{{ product.id }}">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteProductModal{{ product.id }}">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="d-flex gap-2 mt-2">
-                            <a href="{{ url_for('get_buy_link', product_id=product.id) }}" target="_blank" class="btn btn-buy flex-grow-1">
-                                <i class="bi bi-cart"></i> {{ translate('buy_now') }}
-                            </a>
-                            <button class="btn btn-primary" onclick="refreshPrice('{{ product.id }}')" title="{{ translate('refresh_price') }}">
-                                <i class="bi bi-arrow-repeat"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Edit Product Modal -->
-            <div class="modal fade" id="editProductModal{{ product.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">{{ translate('edit') }}: {{ product.custom_name or product.name }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form action="{{ url_for('edit_product', product_id=product.id) }}" method="POST">
-                                <div class="mb-3">
-                                    <label for="custom_name" class="form-label">{{ translate('product_name') }}</label>
-                                    <input type="text" class="form-control" id="custom_name" name="custom_name" value="{{ product.custom_name or product.name }}">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="target_price" class="form-label">{{ translate('target_price') }}</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.01" class="form-control" id="target_price" name="target_price" value="{{ product.target_price or '' }}">
-                                        <span class="input-group-text"></span>
-                                    </div>
-                                </div>
-                                <div class="mb-3 form-check form-switch">
-                                    <input type="checkbox" class="form-check-input" id="tracking_enabled-{{ product.id }}" name="tracking_enabled" {% if product.tracking_enabled %}checked{% endif %}>
-                                    <label class="form-check-label" for="tracking_enabled-{{ product.id }}">{{ translate('enable_tracking') }}</label>
-                                </div>
-                                <div class="mb-3 form-check form-switch">
-                                    <input type="checkbox" class="form-check-input" id="notify_on_any_change-{{ product.id }}" name="notify_on_any_change" {% if product.notify_on_any_change %}checked{% endif %}>
-                                    <label class="form-check-label" for="notify_on_any_change-{{ product.id }}">{{ translate('notify_any_change') }}</label>
-                                </div>
-                                <div class="d-flex justify-content-end">
-                                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
-                                    <button type="submit" class="btn btn-primary">{{ translate('save') }}</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Delete Product Modal -->
-            <div class="modal fade" id="deleteProductModal{{ product.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">{{ translate('confirm_delete') }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>{{ translate('confirm_delete_message') }}: <strong>{{ product.custom_name or product.name }}</strong>?</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
-                            <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn btn-danger">{{ translate('delete') }}</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Price History Modal -->
-            <div class="modal fade" id="priceHistoryModal{{ product.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">{{ translate('price_history') }}: {{ product.custom_name or product.name }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            {% if product.price_history and (product.get_price_history()|length > 0) %}
-                                <div class="price-history-list">
-                                    {% for entry in product.get_price_history()|sort(attribute='date', reverse=true) %}
-                                        <div class="price-entry">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div class="price-value">
-                                                    {{ entry.price|round(2) }}
-                                                </div>
-                                                <div class="price-date">
-                                                    {{ entry.date.strftime('%Y-%m-%d %H:%M') }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="text-center py-4">
-                                    <i class="bi bi-graph-up text-muted display-4 mb-3"></i>
-                                    <p>{{ translate('no_history') }}</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('close') }}</button>
-                        </div>
-                    </div>
-                </div>
+    <!-- Products Grid or Empty State -->
+    <div class="row">
+        {% if products.items %} {# Use products.items for pagination #}
+            {% for product in products.items %}
+            <div class="col-md-6 col-lg-4 mb-4 product-card-wrapper">
+                {% include 'product_card.html' %}
             </div>
             {% endfor %}
         {% else %}
-            <div class="col-12">
-                <div class="empty-state-message">
-                    <div class="mb-4">
-                        <img src="{{ url_for('static', filename='img/empty-cart.svg') }}" alt="No products yet" style="width: 120px; height: auto; opacity: 0.8;">
-                    </div>
-                    <h4>{{ translate('no_products_yet') }}</h4>
-                    <p>{{ translate('start_tracking_description') }}</p>
-                    <button class="btn" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                        <i class="bi bi-plus-circle me-2"></i>{{ translate('add_first_product') }}
+            <div class="col-12 text-center">
+                <div class="empty-state-container p-4 p-md-5 border rounded-3 shadow-sm bg-light" style="margin-top: 30px;">
+                    <img src="{{ url_for('static', filename='img/telescope-find.svg') }}" alt="{{ translate('no_products_alt') }}" style="width: 150px; height: auto; opacity: 0.85; margin-bottom: 25px;">
+                    
+                    <h3 class="mb-3 fw-bold" style="color: #FF6B00;">{{ translate('ready_to_discover') }}</h3>
+                    
+                    <p class="lead mb-4 text-muted">
+                        {{ translate('start_tracking_description_v2') }}
+                    </p>
+                    
+                    <button class="btn btn-primary btn-lg btn-pulse" data-bs-toggle="modal" data-bs-target="#addProductModal" style="background: linear-gradient(135deg, #FF9800, #FF6B00); border: none;">
+                        <i class="bi bi-magic me-2"></i>{{ translate('add_first_product_v2') }}
                     </button>
+                    
+                    <p class="mt-4 text-muted small">
+                        <i class="bi bi-info-circle me-1"></i> {{ translate('why_track_prices') }}
+                    </p>
                 </div>
             </div>
         {% endif %}
     </div>
 
+    <!-- Pagination -->
     {% if products.pages > 1 %}
-    <nav aria-label="Page navigation">
-        <ul class="pagination">
-            {% if products.has_prev %}
-            <li class="page-item">
-                <a class="page-link" href="{{ url_for('home', page=products.prev_num, search=request.args.get('search', '')) }}" aria-label="Previous">
-                    <i class="bi bi-chevron-left"></i>
-                </a>
-            </li>
-            {% endif %}
-            
-            {% for page in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if page %}
-                    {% if page == products.page %}
-                    <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                {# Previous Page Link #}
+                <li class="page-item {% if not products.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('home', page=products.prev_num, search=search_query) if products.has_prev else '#' }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo; {{ translate('previous') }}</span>
+                    </a>
+                </li>
+                
+                {# Page Numbers #}
+                {% for page_num in products.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if products.page == page_num %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('home', page=page_num, search=search_query) }}">{{ page_num }}</a>
+                        </li>
                     {% else %}
-                    <li class="page-item"><a class="page-link" href="{{ url_for('home', page=page, search=request.args.get('search', '')) }}">{{ page }}</a></li>
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
                     {% endif %}
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link">…</span></li>
-                {% endif %}
-            {% endfor %}
-            
-            {% if products.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="{{ url_for('home', page=products.next_num, search=request.args.get('search', '')) }}" aria-label="Next">
-                    <i class="bi bi-chevron-right"></i>
-                </a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
+                {% endfor %}
+                
+                {# Next Page Link #}
+                <li class="page-item {% if not products.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('home', page=products.next_num, search=search_query) if products.has_next else '#' }}" aria-label="Next">
+                        <span aria-hidden="true">{{ translate('next') }} &raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     {% endif %}
 
-    <!-- Add Product Modal -->
-    <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ translate('add_product') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- We're using the add-product-form ID instead of action attribute to let JS handle submission -->
-                    <form id="add-product-form">
-                        <div class="mb-3">
-                            <label for="url" class="form-label">{{ translate('product_url') }}</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                                <input type="url" class="form-control" id="url" name="url" required placeholder="https://www.amazon.sa/...">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="custom_name" class="form-label">{{ translate('custom_name') }} ({{ translate('optional') }})</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-pencil"></i></span>
-                                <input type="text" class="form-control" id="custom_name" name="custom_name">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="target_price" class="form-label">{{ translate('target_price') }} ({{ translate('optional') }})</label>
-                            <div class="input-group">
-                                <span class="input-group-text"></span>
-                                <input type="number" step="0.01" class="form-control" id="target_price" name="target_price">
-                            </div>
-                        </div>
-                        <div class="mb-3 form-check form-switch">
-                            <input type="checkbox" class="form-check-input" id="notify_on_any_change" name="notify_on_any_change">
-                            <label class="form-check-label" for="notify_on_any_change">{{ translate('notify_any_change') }}</label>
-                        </div>
-                        <div class="alert alert-danger d-none" id="add-product-error"></div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
-                    <button type="button" class="btn btn-primary" id="add-product-btn">
-                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                        <i class="bi bi-plus-lg me-1"></i> {{ translate('add_product_button') }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <!-- Welcome page for non-authenticated users -->
-    <div class="row justify-content-center align-items-center py-5">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <div class="display-4 text-primary mb-4">
-                        <div class="logo-icon mx-auto mb-3" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #FF9800 0%, #FF5722 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(255, 87, 34, 0.3);">
-                            <i class="bi bi-fire" style="font-size: 4rem; color: white;"></i>
-                        </div>
-                        <h1>Flare <span class="ms-1">فلير</span></h1>
-                    </div>
-                    <h3 class="mb-4">{{ translate('welcome') }}</h3>
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <div class="feature-icon" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #FFCA28 0%, #FF9800 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);">
-                                    <i class="bi bi-graph-up-arrow" style="font-size: 1.8rem; color: white;"></i>
-                                </div>
-                            </div>
-                            <h5>{{ translate('track_prices') }}</h5>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <div class="feature-icon" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #FF7043 0%, #F44336 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);">
-                                    <i class="bi bi-bell" style="font-size: 1.8rem; color: white;"></i>
-                                </div>
-                            </div>
-                            <h5>{{ translate('get_notified') }}</h5>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <div class="feature-icon" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #FF5722 0%, #E64A19 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 4px 10px rgba(230, 74, 25, 0.3);">
-                                    <i class="bi bi-ui-checks" style="font-size: 1.8rem; color: white;"></i>
-                                </div>
-                            </div>
-                            <h5>{{ translate('easy_to_use') }}</h5>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-box-arrow-in-right"></i> {{ translate('login') }}
-                        </a>
-                        <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-person-plus"></i> {{ translate('signup') }}
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
+
+{% include 'add_product_modal.html' %}
+{% include 'edit_product_modal.html' %}
+
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkButtons = document.querySelectorAll('.check-price-btn');
-        checkButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const productId = this.dataset.id;
-                const button = this;
+// Script to handle editing products (setting modal fields)
+const editProductModal = document.getElementById('editProductModal');
+if (editProductModal) {
+    editProductModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const productId = button.getAttribute('data-product-id');
+        const productName = button.getAttribute('data-product-name');
+        const productCustomName = button.getAttribute('data-product-custom-name');
+        const productTargetPrice = button.getAttribute('data-product-target-price');
+        const productNotify = button.getAttribute('data-product-notify') === 'true'; // Convert to boolean
+        const productTracking = button.getAttribute('data-product-tracking') === 'true'; // Convert to boolean
+
+        const modalTitle = editProductModal.querySelector('.modal-title');
+        const form = editProductModal.querySelector('form');
+        const customNameInput = editProductModal.querySelector('#editCustomName');
+        const targetPriceInput = editProductModal.querySelector('#editTargetPrice');
+        const notifyCheckbox = editProductModal.querySelector('#editNotifyOnChange');
+        const trackingCheckbox = editProductModal.querySelector('#editTrackingEnabled');
+
+        modalTitle.textContent = `{{ translate('edit_product') }} - ${productName}`;
+        form.action = `/edit_product/${productId}`;
+        customNameInput.value = productCustomName || '';
+        targetPriceInput.value = productTargetPrice || '';
+        notifyCheckbox.checked = productNotify;
+        trackingCheckbox.checked = productTracking;
+        
+        // Update hidden input for tracking status
+        const hiddenTrackingInput = editProductModal.querySelector('input[name=\"tracking_enabled\"]');
+         if (hiddenTrackingInput) {
+             hiddenTrackingInput.value = productTracking ? 'on' : 'off'; 
+         }
+        
+        // Update hidden input for notify status
+         const hiddenNotifyInput = editProductModal.querySelector('input[name=\"notify_on_any_change\"]');
+         if (hiddenNotifyInput) {
+            hiddenNotifyInput.value = productNotify ? 'on' : 'off';
+         }
+         
+         // Add listeners to update hidden inputs when checkboxes change
+         trackingCheckbox.addEventListener('change', function() {
+             if(hiddenTrackingInput) hiddenTrackingInput.value = this.checked ? 'on' : 'off';
+         });
+         notifyCheckbox.addEventListener('change', function() {
+             if(hiddenNotifyInput) hiddenNotifyInput.value = this.checked ? 'on' : 'off';
+         });
+    });
+}
+
+// Script to handle deleting products (setting modal fields)
+const deleteProductModal = document.getElementById('deleteProductModal');
+if(deleteProductModal) {
+    deleteProductModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const productId = button.getAttribute('data-product-id');
+        const productName = button.getAttribute('data-product-name') || button.getAttribute('data-product-custom-name'); // Use custom name if available
+
+        const modalBody = deleteProductModal.querySelector('.modal-body');
+        const form = deleteProductModal.querySelector('form');
+
+        // Use translation function (assuming it's globally available or adapt as needed)
+        const confirmationMessage = "{{ translate('delete_confirmation') }}".replace('%s', `<strong>${productName}</strong>`);
+        modalBody.innerHTML = confirmationMessage;
+        
+        form.action = `/delete_product/${productId}`;
+    });
+}
+
+// AJAX for manual price check
+document.querySelectorAll('.check-price-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default link behavior
+        const productId = this.dataset.productId;
+        const priceElement = document.getElementById(`current-price-${productId}`);
+        const statusElement = document.getElementById(`check-status-${productId}`);
+        const buttonIcon = this.querySelector('i');
+
+        // Show loading state
+        buttonIcon.classList.remove('bi-arrow-clockwise');
+        buttonIcon.classList.add('spinner-border', 'spinner-border-sm');
+        statusElement.textContent = '{{ translate("checking") }}...';
+        statusElement.className = 'text-muted small'; // Reset class
+
+        fetch(`/check_price/${productId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest', // Identify as AJAX
+                'X-CSRFToken': '{{ csrf_token() }}' // Add CSRF token if using Flask-WTF
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                priceElement.textContent = `${data.new_price.toFixed(2)} {{ translate('sar') }}`;
+                statusElement.textContent = `{{ translate('checked_just_now') }}. ${data.message}`;
+                statusElement.className = 'text-success small'; 
                 
-                button.disabled = true;
-                button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("checking") }}...';
-                
-                fetch(`/check_price/${productId}`, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    button.disabled = false;
-                    button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("check_now") }}';
-                    
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert('{{ translate("error_checking_price") }}');
-                    }
-                })
-                .catch(() => {
-                    button.disabled = false;
-                    button.innerHTML = '<i class="bi bi-arrow-repeat"></i> {{ translate("check_now") }}';
-                    alert('{{ translate("error_checking_price") }}');
-                });
-            });
+                // Optionally update price history chart if implemented
+                // updatePriceChart(productId, data.new_price); 
+            } else {
+                statusElement.textContent = `{{ translate('error') }}: ${data.error || '{{ translate("check_price_error") }}'}`;
+                statusElement.className = 'text-danger small';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            statusElement.textContent = `{{ translate('error') }}: {{ translate('network_error') }}`;
+            statusElement.className = 'text-danger small';
+        })
+        .finally(() => {
+            // Restore button icon
+            buttonIcon.classList.remove('spinner-border', 'spinner-border-sm');
+            buttonIcon.classList.add('bi-arrow-clockwise');
         });
     });
+});
+
+// AJAX for toggling tracking
+document.querySelectorAll('.toggle-tracking-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const productId = this.dataset.productId;
+        const statusElement = document.getElementById(`tracking-status-${productId}`);
+        const buttonIcon = this.querySelector('i');
+        const currentStatus = this.dataset.trackingStatus === 'true';
+
+        // Optimistic UI update (optional)
+        // statusElement.textContent = currentStatus ? '{{ translate("disabling") }}...' : '{{ translate("enabling") }}...';
+        // buttonIcon.className = 'spinner-border spinner-border-sm'; // Show spinner
+
+        fetch(`/toggle_tracking/${productId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token() }}' 
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.dataset.trackingStatus = data.tracking; // Update button state
+                statusElement.textContent = data.tracking ? '{{ translate("tracking_active") }}' : '{{ translate("tracking_paused") }}';
+                statusElement.className = data.tracking ? 'text-success small' : 'text-warning small';
+                
+                // Update button icon and style
+                if(data.tracking) {
+                    buttonIcon.classList.remove('bi-play-circle');
+                    buttonIcon.classList.add('bi-pause-circle');
+                    this.classList.remove('btn-outline-success');
+                    this.classList.add('btn-outline-warning');
+                    this.setAttribute('title', '{{ translate("pause_tracking") }}');
+                } else {
+                    buttonIcon.classList.remove('bi-pause-circle');
+                    buttonIcon.classList.add('bi-play-circle');
+                    this.classList.remove('btn-outline-warning');
+                    this.classList.add('btn-outline-success');
+                    this.setAttribute('title', '{{ translate("resume_tracking") }}');
+                }
+                 // Refresh tooltips if using Bootstrap 5
+                 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                     // Dispose existing tooltip before creating new one
+                     var existingTooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+                     if (existingTooltip) {
+                         existingTooltip.dispose();
+                     }
+                     return new bootstrap.Tooltip(tooltipTriggerEl);
+                 });
+
+            } else {
+                // Revert optimistic UI update if needed
+                statusElement.textContent = `{{ translate('error') }}: ${data.error || '{{ translate("error_occurred") }}'}`;
+                statusElement.className = 'text-danger small';
+                // Restore original button icon based on actual status
+                buttonIcon.className = currentStatus ? 'bi bi-pause-circle' : 'bi bi-play-circle'; 
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            statusElement.textContent = `{{ translate('error') }}: {{ translate('network_error') }}`;
+            statusElement.className = 'text-danger small';
+            // Restore original button icon
+            buttonIcon.className = currentStatus ? 'bi bi-pause-circle' : 'bi bi-play-circle'; 
+        });
+    });
+});
+
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+
+// Add pulsing animation CSS for the button
+const style = document.createElement('style');
+style.textContent = `
+.btn-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 107, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0); }
+}
+`;
+document.head.appendChild(style);
+
 </script>
 {% endblock %} 

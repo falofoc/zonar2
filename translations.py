@@ -177,7 +177,23 @@ translations = {
         'tour_button_skip': 'Skip Tour',
         'tour_button_next': 'Next',
         'tour_button_back': 'Back',
-        'tour_button_finish': 'Finish'
+        'tour_button_finish': 'Finish',
+        'search_placeholder': 'Search your products by name...',
+        'no_products_alt': 'Illustration of a telescope searching for products',
+        'ready_to_discover': 'Ready to Discover Amazing Deals?',
+        'start_tracking_description_v2': 'Start tracking prices of your favorite products from Amazon.sa and get instant notifications when prices drop. Never miss a deal again!',
+        'add_first_product_v2': 'Add Your First Product Now!',
+        'why_track_prices': 'Why track prices? To know the best time to buy!',
+        'previous': 'Previous',
+        'next': 'Next',
+        'checked_just_now': 'Checked just now',
+        'check_price_error': 'Could not check price',
+        'network_error': 'Network error',
+        'tracking_active': 'Tracking Active',
+        'tracking_paused': 'Tracking Paused',
+        'pause_tracking': 'Pause Tracking',
+        'resume_tracking': 'Resume Tracking',
+        'delete_confirmation': 'Are you sure you want to delete %s?'
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -380,6 +396,22 @@ translations = {
         'tour_button_skip': 'إغلاق',
         'tour_button_next': 'التالي',
         'tour_button_back': 'السابق',
-        'tour_button_finish': 'إنهاء'
+        'tour_button_finish': 'إنهاء',
+        'search_placeholder': 'ابحث في منتجاتك بالاسم...',
+        'no_products_alt': 'رسم توضيحي لتلسكوب يبحث عن المنتجات',
+        'ready_to_discover': 'مستعد لاكتشاف صفقات مذهلة؟',
+        'start_tracking_description_v2': 'ابدأ بتتبع أسعار منتجاتك المفضلة من أمازون السعودية واحصل على تنبيهات فورية عند انخفاض الأسعار. لا تفوّت أي صفقة بعد الآن!',
+        'add_first_product_v2': 'أضف أول منتج لك الآن!',
+        'why_track_prices': 'لماذا تتبع الأسعار؟ لمعرفة أفضل وقت للشراء!',
+        'previous': 'السابق',
+        'next': 'التالي',
+        'checked_just_now': 'تم التحقق الآن',
+        'check_price_error': 'تعذر التحقق من السعر',
+        'network_error': 'خطأ في الشبكة',
+        'tracking_active': 'التتبع نشط',
+        'tracking_paused': 'التتبع متوقف مؤقتاً',
+        'pause_tracking': 'إيقاف التتبع مؤقتاً',
+        'resume_tracking': 'استئناف التتبع',
+        'delete_confirmation': 'هل أنت متأكد أنك تريد حذف %s؟'
     }
 } 
