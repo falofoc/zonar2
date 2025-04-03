@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tour.css') }}">
     
+    <!-- Mobile-specific Tour Guide -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-tour.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-tour-images.css') }}">
+    
     <!-- Force language debug info -->
     <script>
       console.log("Current language: {{ g.lang }}");
@@ -1521,6 +1525,9 @@
     <!-- Tour Guide Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
     <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+    
+    <!-- Mobile Tour Guide Script -->
+    <script src="{{ url_for('static', filename='js/mobile-tour.js') }}"></script>
 
     <!-- Removed FAB HTML -->
 

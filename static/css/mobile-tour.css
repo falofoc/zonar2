@@ -1,0 +1,271 @@
+/* ZONAR Mobile Tour Guide Styles */
+
+/* Mobile Tour Specific Variables */
+:root {
+    --mobile-tour-bg: #FFFFFF;
+    --mobile-tour-text: #333333;
+    --mobile-tour-primary: #FF6B00;
+    --mobile-tour-primary-light: #FFF0E6;
+    --mobile-tour-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    --mobile-tour-border-radius: 1rem;
+    --mobile-tour-z-index: 10000;
+}
+
+.dark-theme {
+    --mobile-tour-bg: #2A2A2A;
+    --mobile-tour-text: #F5F5F5;
+    --mobile-tour-primary-light: rgba(255, 107, 0, 0.2);
+}
+
+/* Mobile Tour Container */
+.mobile-tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: var(--mobile-tour-z-index);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-tour-overlay.active {
+    opacity: 1;
+}
+
+.mobile-tour-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--mobile-tour-bg);
+    border-radius: var(--mobile-tour-border-radius) var(--mobile-tour-border-radius) 0 0;
+    box-shadow: var(--mobile-tour-shadow);
+    padding: 1.5rem;
+    z-index: calc(var(--mobile-tour-z-index) + 1);
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.mobile-tour-container.active {
+    transform: translateY(0);
+}
+
+.mobile-tour-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--mobile-tour-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+.mobile-tour-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--mobile-tour-primary);
+    margin: 0;
+}
+
+.mobile-tour-close {
+    background: transparent;
+    border: none;
+    color: var(--mobile-tour-text);
+    font-size: 1.5rem;
+    padding: 0.25rem;
+    cursor: pointer;
+}
+
+.mobile-tour-step-counter {
+    font-size: 0.85rem;
+    color: var(--mobile-tour-text);
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+.mobile-tour-content {
+    margin: 1rem 0;
+    color: var(--mobile-tour-text);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.mobile-tour-image {
+    width: 100%;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-tour-highlight {
+    animation: mobile-tour-pulse 2s infinite;
+    position: relative;
+    z-index: 9500;
+}
+
+@keyframes mobile-tour-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 107, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 0, 0);
+    }
+}
+
+.mobile-tour-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 1rem;
+}
+
+.mobile-tour-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    flex: 1;
+}
+
+.mobile-tour-btn-primary {
+    background-color: var(--mobile-tour-primary);
+    color: white;
+    margin-left: 0.5rem;
+}
+
+.mobile-tour-btn-secondary {
+    background-color: transparent;
+    color: var(--mobile-tour-primary);
+    border: 1px solid var(--mobile-tour-primary);
+    margin-right: 0.5rem;
+}
+
+.mobile-tour-indicator-container {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.mobile-tour-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ddd;
+    transition: all 0.3s;
+}
+
+.mobile-tour-indicator.active {
+    background-color: var(--mobile-tour-primary);
+    width: 24px;
+    border-radius: 4px;
+}
+
+.mobile-tour-pointer {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF6B00'%3E%3Cpath d='M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: calc(var(--mobile-tour-z-index) + 2);
+    transform: scale(0);
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.mobile-tour-pointer.active {
+    transform: scale(1);
+    opacity: 0.8;
+    animation: pointer-pulse 1.5s infinite;
+}
+
+@keyframes pointer-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Specific RTL fixes for mobile */
+[dir="rtl"] .mobile-tour-btn-primary {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+[dir="rtl"] .mobile-tour-btn-secondary {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+/* Floating tour start button for mobile */
+.mobile-tour-start-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--mobile-tour-primary);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    z-index: 9000;
+    animation: float 3s infinite ease-in-out;
+}
+
+[dir="rtl"] .mobile-tour-start-btn {
+    right: auto;
+    left: 20px;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+/* Media query for tablets */
+@media (min-width: 768px) {
+    .mobile-tour-container {
+        max-width: 500px;
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, 100%);
+        border-radius: var(--mobile-tour-border-radius);
+    }
+    
+    .mobile-tour-container.active {
+        transform: translate(-50%, 0);
+        bottom: 50px;
+    }
+} 
