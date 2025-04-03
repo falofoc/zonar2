@@ -4,8 +4,21 @@ This file exists for compatibility with various WSGI servers and deployment plat
 """
 
 import os
-# Simply import the app from the app package
-from app import app
+import sys
+
+# Add the current directory to sys.path to ensure imports work
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+try:
+    # Import the app from the app package
+    from app import app
+except ImportError as e:
+    print(f"Error importing app in app.py: {e}")
+    print("Python path:", sys.path)
+    print("Current directory:", os.getcwd())
+    raise
 
 # For direct execution
 if __name__ == "__main__":

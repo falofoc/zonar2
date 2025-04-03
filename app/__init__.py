@@ -1,7 +1,6 @@
 import os
 import json
 import traceback
-import shutil
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_sqlalchemy import SQLAlchemy
@@ -24,12 +23,10 @@ instance_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../inst
 os.makedirs(instance_path, exist_ok=True)
 print(f"Database directory: {instance_path}")
 
-# For Render deployment, use persistent storage in production
+# For Render deployment, use /tmp directory if we're in production
 is_production = os.environ.get('RENDER', False)
 if is_production:
-    # Use persistent storage directory on Render
-    db_path = os.path.join(os.environ.get('RENDER_PERSISTENT_DIR', '/data'), 'amazon_tracker.db')
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    db_path = '/tmp/amazon_tracker.db'
     print(f"Using production database path: {db_path}")
 else:
     db_path = os.path.join(instance_path, "amazon_tracker.db")
@@ -56,11 +53,7 @@ app.config.update(
     SESSION_COOKIE_SECURE=is_production,  # Use secure cookies in production
     SESSION_COOKIE_HTTPONLY=True,  # Enable HTTPOnly for security
     SESSION_COOKIE_SAMESITE='Lax',   # Use Lax for better security while still allowing cross-site
-    PERMANENT_SESSION_LIFETIME=timedelta(days=365),  # Extended session lifetime to 1 year
-    REMEMBER_COOKIE_DURATION=timedelta(days=365),  # Remember me cookie duration
-    REMEMBER_COOKIE_SECURE=is_production,
-    REMEMBER_COOKIE_HTTPONLY=True,
-    SESSION_PROTECTION='strong',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # Longer session lifetime
     SQLALCHEMY_DATABASE_URI=f'sqlite:///{db_path}',
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     WTF_CSRF_ENABLED=False,
@@ -100,7 +93,34 @@ import os
 # Add the parent directory to sys.path to make imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Now import translations should work
-from translations import translations
+try:
+    # First try to import from our dedicated translations module
+    try:
+        from app.translations_module import translations
+    except ImportError:
+        # If that fails, try to import directly
+        try:
+            from translations import translations
+        except ImportError as e:
+            # If that fails, try to import it as a module and get the translations dict
+            try:
+                import translations
+                translations = translations.translations
+            except (ImportError, AttributeError):
+                # As a fallback, create a basic translation dictionary
+                print(f"ERROR IMPORTING TRANSLATIONS: {e}")
+                translations = {
+                    'en': {'app_name': 'Amazon.sa Price Tracker'},
+                    'ar': {'app_name': 'متتبع أسعار أمازون السعودية'}
+                }
+                print("Using fallback translations dictionary")
+except Exception as e:
+    print(f"CRITICAL ERROR IMPORTING TRANSLATIONS: {e}")
+    # Initialize an empty dict as absolute fallback
+    translations = {
+        'en': {'app_name': 'Amazon.sa Price Tracker'},
+        'ar': {'app_name': 'متتبع أسعار أمازون السعودية'}
+    }
 
 # This defines the translate function that's used in templates
 def translate(key):
@@ -187,31 +207,9 @@ def init_db():
         db.create_all()
         print("Database tables created successfully!")
 
-def backup_database():
-    """Create a backup of the database file"""
-    if os.path.exists(db_path):
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_dir = os.path.join(os.path.dirname(db_path), 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
-        backup_path = os.path.join(backup_dir, f'amazon_tracker_{timestamp}.db')
-        try:
-            shutil.copy2(db_path, backup_path)
-            print(f"Database backed up to: {backup_path}")
-            # Keep only last 5 backups
-            backups = sorted([f for f in os.listdir(backup_dir) if f.endswith('.db')])
-            for old_backup in backups[:-5]:
-                os.remove(os.path.join(backup_dir, old_backup))
-        except Exception as e:
-            print(f"Error backing up database: {e}")
-            traceback.print_exc()
-
 # Initialize database if it doesn't exist
 with app.app_context():
     try:
-        # Backup existing database before any changes
-        backup_database()
-        
-        # Create tables if they don't exist
         db.create_all()
         print("Database initialized successfully")
     except Exception as e:

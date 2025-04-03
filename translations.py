@@ -1,5 +1,8 @@
-# Main translations dictionary
-TRANSLATIONS = {
+"""
+This file contains translations for the application.
+"""
+
+translations = {
     'en': {
         'app_name': 'Amazon.sa Price Tracker',
         'add_product': 'Add Product',
@@ -214,35 +217,6 @@ TRANSLATIONS = {
         'hunted': 'HUNTED',
         'hunted_tooltip': 'Price has dropped or reached target',
         'price_drop_save': 'Save {amount}',
-        
-        # Public home page
-        'discover_best_deals': 'Discover the Best Amazon Deals',
-        'public_home_subtitle': 'Track price changes and never miss a deal on your favorite Amazon products.',
-        'join_now': 'Join Now',
-        'sort_by': 'Sort By:',
-        'biggest_discount': 'Biggest Discount',
-        'price_low_to_high': 'Price: Low to High',
-        'price_high_to_low': 'Price: High to Low',
-        'newest': 'Newest',
-        'price_dropped_by': 'Price dropped by',
-        'price_increased_since_tracking': 'Price increased since tracking',
-        'price_changed': 'Price changed',
-        'times_since_tracking': 'times since tracking',
-        'price_stable': 'Price has been stable since tracking started',
-        'previous': 'Previous',
-        'next': 'Next',
-        'no_products_found': 'No Products Found',
-        'no_products_description': 'We couldn\'t find any products matching your search criteria. Try changing your search query or check back later.',
-        'clear_search': 'Clear Search',
-        'search_products': 'Search products...',
-        
-        # Session management and price checking
-        'session_exists_elsewhere': 'You appear to be logged in on another device. Continuing will end that session.',
-        'session_expired_elsewhere': 'Your session has expired or you have logged in elsewhere. Please log in again.',
-        'recently_checked': 'This product was checked recently. Please wait before checking again.',
-        'price_checked': 'Price checked successfully',
-        'disclaimer_tracking_only': 'ZONAR is for tracking purposes only. Prices may change at any time.',
-        'disclaimer_prices_change': 'Prices on Amazon.sa may change at any time. ZONAR is a tracking tool only and not affiliated with Amazon.',
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -478,60 +452,8 @@ TRANSLATIONS = {
         'hunted': 'تم اصطياده',
         'hunted_tooltip': 'انخفض السعر أو وصل للهدف',
         'price_drop_save': 'وفر {amount}',
-        
-        # Public home page
-        'discover_best_deals': 'اكتشف أفضل عروض أمازون',
-        'public_home_subtitle': 'تتبع تغيرات الأسعار ولا تفوت أي صفقة على منتجاتك المفضلة.',
-        'join_now': 'انضم الآن',
-        'sort_by': 'ترتيب حسب:',
-        'biggest_discount': 'أكبر خصم',
-        'price_low_to_high': 'السعر: من الأقل إلى الأعلى',
-        'price_high_to_low': 'السعر: من الأعلى إلى الأقل',
-        'newest': 'الأحدث',
-        'price_dropped_by': 'انخفض السعر بمقدار',
-        'price_increased_since_tracking': 'ارتفع السعر منذ بداية التتبع',
-        'price_changed': 'تغير السعر',
-        'times_since_tracking': 'مرات منذ بداية التتبع',
-        'price_stable': 'ظل السعر مستقراً منذ بداية التتبع',
-        'previous': 'السابق',
-        'next': 'التالي',
-        'no_products_found': 'لم يتم العثور على منتجات',
-        'no_products_description': 'لم نتمكن من العثور على منتجات تطابق معايير البحث. حاول تغيير مصطلح البحث أو التحقق لاحقاً.',
-        'clear_search': 'مسح البحث',
-        'search_products': 'البحث عن المنتجات...',
-        
-        # Session management and price checking
-        'session_exists_elsewhere': 'يبدو أنك مسجل الدخول على جهاز آخر. المتابعة ستنهي تلك الجلسة.',
-        'session_expired_elsewhere': 'انتهت صلاحية جلستك أو قمت بتسجيل الدخول في مكان آخر. يرجى تسجيل الدخول مرة أخرى.',
-        'recently_checked': 'تم التحقق من سعر هذا المنتج مؤخرًا. يرجى الانتظار قبل التحقق مرة أخرى.',
-        'price_checked': 'تم التحقق من السعر بنجاح',
-        'disclaimer_tracking_only': 'زونار هو فقط لأغراض تتبع الأسعار. قد تتغير الأسعار في أي وقت.',
-        'disclaimer_prices_change': 'قد تتغير أسعار أمازون السعودية في أي وقت. زونار هو أداة تتبع فقط وليس مرتبطًا بأمازون.',
     }
 }
 
-# Try to import and merge bot translations
-try:
-    from bot_translations import BOT_TRANSLATIONS
-    
-    # Merge bot translations with main translations
-    for lang in BOT_TRANSLATIONS:
-        if lang in TRANSLATIONS:
-            TRANSLATIONS[lang].update(BOT_TRANSLATIONS[lang])
-except ImportError:
-    # Bot translations not available, that's fine
-    pass
-
-def translate(key, language=None):
-    """
-    Get translation for a key in the specified language.
-    If language is not specified, uses the current user's language preference.
-    """
-    # Get the default language
-    if language is None:
-        from flask import g
-        language = getattr(g, 'language', 'ar')  # Default to Arabic if not set
-    
-    # Get translation or return key if not found
-    translations = TRANSLATIONS.get(language, TRANSLATIONS['ar'])
-    return translations.get(key, key) 
+# Do not modify existing code below this line
+# Make sure the translations variable is properly defined above 
