@@ -1,209 +1,103 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>زونار - غير متصل بالإنترنت</title>
-    
-    <!-- Bootstrap CSS (RTL) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            /* Primary Brand Colors */
-            --primary-color: #FF6B00;
-            --primary-hover: #FF4500;
-            --secondary-color: #FFB100;
-            --accent-color: #FFDB58;
-            
-            /* Extended Brand Palette */
-            --brand-orange-100: #FFF0E6;
-            --brand-orange-200: #FFD4B8;
-            --brand-orange-300: #FFB38A;
-            --brand-orange-400: #FF915C;
-            --brand-orange-500: #FF6B00; /* Primary */
-            --brand-orange-600: #CC5500;
-            --brand-orange-700: #993F00;
-            
-            /* Theme Colors */
-            --bg-color: #FFFAF5;
-            --card-bg: #FFFFFF;
-            --text-primary: #2D3436;
-            --text-secondary: #636E72;
-            
-            /* Borders and Shadows */
-            --border-color: rgba(255, 107, 0, 0.15);
-            --shadow-sm: 0 2px 4px rgba(255, 107, 0, 0.05);
-            --shadow: 0 4px 6px rgba(255, 107, 0, 0.1);
-            --shadow-lg: 0 10px 15px rgba(255, 107, 0, 0.15);
-            
-            /* Border Radius */
-            --border-radius-sm: 0.375rem;
-            --border-radius: 0.5rem;
-            --border-radius-lg: 0.75rem;
-            --border-radius-xl: 1rem;
-            
-            /* Transitions */
-            --transition-base: 300ms ease;
-            
-            /* Brand Gradients */
-            --gradient-fire: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-        }
-        
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .offline-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-        
-        .offline-card {
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-lg);
-            padding: 2rem;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .offline-card:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: var(--gradient-fire);
-            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
-        }
-        
-        .offline-icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary-color);
-            animation: pulse 2s infinite;
-        }
-        
-        .offline-title {
-            font-weight: 700;
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-        
-        .offline-message {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-        
-        .retry-btn {
-            background: var(--gradient-fire);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            transition: all var(--transition-base);
-            box-shadow: var(--shadow);
-        }
-        
-        .retry-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .retry-btn:active {
-            transform: translateY(0);
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 576px) {
-            .offline-card {
-                padding: 1.5rem;
-            }
-            
-            .offline-icon {
-                font-size: 3rem;
-            }
-            
-            .offline-title {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="offline-container">
-        <div class="offline-card">
-            <div class="offline-icon">
-                <i class="bi bi-wifi-off"></i>
+{% extends "base.html" %}
+
+{% block title %}{{ translate('offline_mode') }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-4">
+                <div class="display-1 text-muted mb-3">
+                    <i class="bi bi-wifi-off"></i>
+                </div>
+                <h1 class="h3 mb-3">{{ translate('offline_mode') }}</h1>
+                <p class="text-muted mb-4">
+                    {{ translate('offline_description') }}
+                </p>
             </div>
-            <h1 class="offline-title">أنت غير متصل بالإنترنت</h1>
-            <p class="offline-message">
-                يبدو أنه ليس لديك اتصال بالإنترنت حاليًا. يمكنك استعراض المحتوى المخزن سابقًا، ولكن قد لا تتمكن من الوصول إلى بعض الميزات حتى تعود للاتصال.
-            </p>
-            <button class="retry-btn" onclick="window.location.reload()">
-                <i class="bi bi-arrow-repeat me-2"></i>
-                إعادة المحاولة
-            </button>
+            
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <div class="text-center">
+                        <p class="mb-4">{{ translate('offline_description') }}</p>
+                        
+                        <div class="d-flex flex-column gap-3">
+                            <!-- Show cached products if available -->
+                            <div class="cached-content" id="cached-products">
+                                <!-- Will be populated by JavaScript if cached data exists -->
+                                <p class="text-muted">لا توجد منتجات مخزنة حاليًا.</p>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <button class="btn btn-primary" onclick="checkConnection()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i> إعادة الاتصال
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // التحقق من حالة الاتصال
+    function checkConnection() {
+        if (navigator.onLine) {
+            window.location.href = '/';
+        } else {
+            // إظهار رسالة أن المستخدم لا يزال غير متصل
+            alert('{{ translate("still_offline") or "أنت لا تزال غير متصل بالإنترنت" }}');
+        }
+    }
     
-    <div class="footer">
-        <p>&copy; 2023 زونار - تتبع أسعار أمازون</p>
-    </div>
-    
-    <script>
-        // التحقق من حالة الاتصال عند تحميل الصفحة
-        window.addEventListener('online', () => {
-            window.location.reload();
-        });
+    // محاولة استرجاع البيانات المخزنة مؤقتًا
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحقق من وجود بيانات المنتجات في التخزين المحلي
+        const cachedProductsElement = document.getElementById('cached-products');
+        const cachedProducts = localStorage.getItem('cached_products');
         
-        // التحقق من الاتصال عند النقر على زر إعادة المحاولة
-        document.querySelector('.retry-btn').addEventListener('click', () => {
-            if (navigator.onLine) {
-                window.location.reload();
-            } else {
-                alert('ما زلت غير متصل بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.');
+        if (cachedProducts && cachedProductsElement) {
+            try {
+                const products = JSON.parse(cachedProducts);
+                
+                if (products.length > 0) {
+                    let html = '<h5 class="mb-3">المنتجات المحفوظة</h5>';
+                    html += '<div class="list-group">';
+                    
+                    products.forEach(product => {
+                        html += `
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <img src="${product.image_url || '/static/img/no-image.png'}" alt="${product.name}" class="img-fluid" style="width: 50px; height: 50px; object-fit: contain;">
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">${product.custom_name || product.name}</h6>
+                                    <p class="mb-1">السعر الحالي: ${product.current_price} ريال</p>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    html += '</div>';
+                    cachedProductsElement.innerHTML = html;
+                } else {
+                    cachedProductsElement.innerHTML = '<p class="text-muted">لا توجد منتجات مخزنة حاليًا.</p>';
+                }
+            } catch (e) {
+                console.error('Error parsing cached products:', e);
+                cachedProductsElement.innerHTML = '<p class="text-muted">لا توجد منتجات مخزنة حاليًا.</p>';
             }
-        });
-    </script>
-</body>
-</html> 
+        }
+    });
+    
+    // استمع لحدث الاتصال بالإنترنت
+    window.addEventListener('online', function() {
+        window.location.href = '/';
+    });
+</script>
+{% endblock %} 

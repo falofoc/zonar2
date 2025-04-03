@@ -1746,9 +1746,8 @@ def send_notification():
         traceback.print_exc()
         return jsonify({'success': False, 'error': 'حدث خطأ أثناء إرسال الإشعار'}), 500
 
-# مسار لعرض صفحة وضع عدم الاتصال (offline)
-@app.route('/offline.html')
+@app.route('/offline')
 def offline():
-    """عرض صفحة وضع عدم الاتصال"""
-    return render_template('offline.html')
+    """صفحة وضع عدم الاتصال"""
+    return render_template('offline.html', unread_count=0)
 

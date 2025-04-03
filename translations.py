@@ -142,7 +142,7 @@ translations = {
         
         'verification_email_subject': 'Verify Your Email - ZONAR Account',
         'verification_email_greeting': 'Hello {username},',
-        'verification_email_body': 'Please verify your email address to activate all features of your ZONAR account.\n\nClick the link below to verify your email:\n{verification_link}\n\nThis link is valid for 24 hours.',
+        'verification_email_body': 'Please verify your email address to activate all features of your ZONAR account.\n\nClick the link below to verify your email:\n{verification_link}\n\nThis link is valid for 7 days.',
         'verification_email_footer': 'If you did not create this account, please ignore this email.\n\nBest regards,\nThe ZONAR Team',
         
         'verification_success': 'Your email has been verified successfully! You can now receive email notifications.',
@@ -358,7 +358,7 @@ translations = {
         
         'verification_email_subject': 'تحقق من بريدك الإلكتروني - حساب زونار',
         'verification_email_greeting': 'مرحباً {username}،',
-        'verification_email_body': 'يرجى التحقق من عنوان بريدك الإلكتروني لتفعيل جميع ميزات حساب زونار الخاص بك.\n\nانقر على الرابط أدناه للتحقق من بريدك الإلكتروني:\n{verification_link}\n\nهذا الرابط صالح لمدة 24 ساعة.',
+        'verification_email_body': 'يرجى التحقق من عنوان بريدك الإلكتروني لتفعيل جميع ميزات حساب زونار الخاص بك.\n\nانقر على الرابط أدناه للتحقق من بريدك الإلكتروني:\n{verification_link}\n\nهذا الرابط صالح لمدة 7 أيام.',
         'verification_email_footer': 'إذا لم تقم بإنشاء هذا الحساب، يرجى تجاهل هذا البريد الإلكتروني.\n\nمع أطيب التحيات،\nفريق زونار',
         
         'verification_success': 'تم التحقق من بريدك الإلكتروني بنجاح! يمكنك الآن تلقي إشعارات البريد الإلكتروني.',
