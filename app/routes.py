@@ -754,25 +754,55 @@ def settings():
 @login_required
 def test_email():
     try:
-        from flask_mail import Message
-        from app import mail
+        import smtplib, ssl
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
         import os
-        sender_email = os.environ.get("MAIL_DEFAULT_SENDER", "zoonarcom@gmail.com")
-        body_text = f'''Hello {current_user.username},
+        
+        # Email settings
+        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
+        password = os.environ.get("MAIL_PASSWORD", "vnmlzqhuvwktbucj")
+        receiver_email = current_user.email
+        
+        # Create message
+        message = MIMEMultipart()
+        message["Subject"] = "Test Email from ZONAR"
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        
+        # Create body
+        body = f"""Hello {current_user.username},
 
 This is a test email from your ZONAR account.
 
 If you received this email, it means your email configuration is working correctly.
 
 Best regards,
-ZONAR Team'''
-        msg = Message(
-            subject="Test Email from ZONAR",
-            sender=sender_email,
-            recipients=[current_user.email],
-            body=body_text
-        )
-        mail.send(msg)
+ZONAR Team"""
+        
+        message.attach(MIMEText(body, "plain"))
+        
+        # Create a secure SSL context
+        context = ssl.create_default_context()
+        
+        # Connect to Gmail SMTP server
+        print("Connecting to Gmail...")
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context)
+        print("Connected to Gmail")
+        
+        # Login
+        print("Logging in...")
+        server.login(sender_email, password)
+        print("Login successful")
+        
+        # Send email
+        print("Sending email...")
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        print("Email sent successfully")
+        
+        # Close connection
+        server.quit()
+        
         flash("Test email sent successfully! Please check your inbox.", "success")
     except Exception as e:
         flash(f"Error sending email: {str(e)}", "danger")
