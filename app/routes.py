@@ -288,7 +288,11 @@ def add_product():
         # First, clean the URL (remove spaces, etc.)
         url = url.strip()
         
-        # Check for shortened Amazon URLs
+        # Check for shortened Amazon URLs and remove @ if exists at the beginning
+        if url.startswith('@'):
+            url = url[1:]
+            print(f"Removed @ prefix from URL: {url}")
+            
         shortened_url_patterns = [
             'amzn.eu', 'amzn.to', 'amzn.com', 
             'amazon.sa/dp/', 'amazon.sa/gp/', 'amazon.sa/s?'
@@ -304,8 +308,13 @@ def add_product():
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
-                response = requests.head(url, headers=headers, allow_redirects=True)
-                if response.status_code == 200:
+                # Add proper protocol if missing
+                if not url.startswith('http'):
+                    url = 'https://' + url
+                
+                # Use GET request to properly handle Amazon's redirects
+                response = requests.get(url, headers=headers, allow_redirects=True, timeout=10)
+                if response.status_code == 200 or response.status_code == 301 or response.status_code == 302:
                     url = response.url
                     print(f"Expanded URL: {url}")
                 else:
