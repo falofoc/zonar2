@@ -26,15 +26,15 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="me-2">{{ translate('current_email') }}: {{ current_user.email }}</span>
                             {% if current_user.email_verified %}
-                                <span class="badge bg-success" data-bs-toggle="tooltip" title="{{ translate('email_verified_tooltip') }}">
-                                    <i class="bi bi-check-circle-fill me-1"></i> {{ translate('verified') }}
+                                <span class="verification-badge verified" data-bs-toggle="tooltip" title="{{ translate('email_verified_tooltip') }}">
+                                    <i class="bi bi-check"></i>
                                 </span>
                             {% else %}
-                                <span class="badge bg-warning text-dark" data-bs-toggle="tooltip" title="{{ translate('email_not_verified_tooltip') }}">
-                                    <i class="bi bi-exclamation-circle-fill me-1"></i> {{ translate('not_verified') }}
+                                <span class="verification-badge unverified" data-bs-toggle="tooltip" title="{{ translate('email_not_verified_tooltip') }}">
+                                    <i class="bi bi-exclamation"></i>
                                 </span>
-                                <a href="{{ url_for('resend_verification') }}" class="btn btn-sm btn-outline-warning ms-2">
-                                    <i class="bi bi-envelope me-1"></i> {{ translate('resend_verification') }}
+                                <a href="{{ url_for('resend_verification') }}" class="ms-2 btn-link text-decoration-none small">
+                                    {{ translate('resend_verification') }}
                                 </a>
                             {% endif %}
                         </div>
