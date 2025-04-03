@@ -47,11 +47,12 @@ def send_test_email():
         message["From"] = sender_email
         message["To"] = receiver_email
         
-        # Email content
+        # Email content with Arabic test text
         email_content = f"""
-        Hello,
+        Hello / مرحباً،
         
         This is a test email sent from Render.com at {timestamp}.
+        هذه رسالة اختبار مرسلة من Render.com في {timestamp}.
         
         Email configuration:
         - Server: {mail_server}
@@ -60,12 +61,15 @@ def send_test_email():
         - SSL: {mail_use_ssl}
         
         This email confirms that your SMTP settings are working correctly.
+        تؤكد هذه الرسالة الإلكترونية أن إعدادات SMTP الخاصة بك تعمل بشكل صحيح.
         
         Regards,
+        مع تحياتي،
         The Test Script
         """
         
-        message.attach(MIMEText(email_content, "plain"))
+        # Explicitly use UTF-8 encoding for the message
+        message.attach(MIMEText(email_content, "plain", "utf-8"))
         
         # Create secure context
         context = ssl.create_default_context()

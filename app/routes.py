@@ -864,33 +864,48 @@ If you received this email, it means your email configuration is working correct
 Best regards,
 ZONAR Team"""
         
-        message.attach(MIMEText(body, "plain"))
+        # Explicitly use UTF-8 encoding for the message
+        message.attach(MIMEText(body, "plain", "utf-8"))
         
         # Create a secure SSL context
         context = ssl.create_default_context()
         
-        # Connect to Gmail SMTP server
-        print("Connecting to Gmail...")
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context)
-        print("Connected to Gmail")
+        # Get server settings from environment
+        mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+        mail_port = int(os.environ.get("MAIL_PORT", 465))
+        mail_use_tls = os.environ.get("MAIL_USE_TLS", "False").lower() in ['true', '1', 't', 'yes', 'y']
+        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "True").lower() in ['true', '1', 't', 'yes', 'y']
         
-        # Login
-        print("Logging in...")
-        server.login(sender_email, password)
-        print("Login successful")
+        print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
         
-        # Send email
-        print("Sending email...")
-        server.sendmail(sender_email, receiver_email, message.as_string())
-        print("Email sent successfully")
-        
-        # Close connection
-        server.quit()
+        # Connect to server based on configuration
+        if mail_use_ssl:
+            print("Using SSL connection...")
+            with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
+                print("Logging in...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully")
+        else:
+            print("Using TLS connection...")
+            with smtplib.SMTP(mail_server, mail_port) as server:
+                server.ehlo()
+                print("Starting TLS...")
+                server.starttls(context=context)
+                server.ehlo()
+                print("Logging in...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully")
         
         flash("Test email sent successfully! Please check your inbox.", "success")
     except Exception as e:
         flash(f"Error sending email: {str(e)}", "danger")
         print(f"Email error: {e}")
+        import traceback
+        traceback.print_exc()
     return redirect(url_for("settings"))
 
 def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, **format_args):
@@ -929,7 +944,7 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         mail_use_ssl = os.environ.get("MAIL_USE_SSL", "False").lower() in ['true', '1', 't', 'yes', 'y']
         
         print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
-        print(f"Sending email to {receiver_email} from {sender_email}")
+        print(f"Sending email to {receiver_email} with language {user_lang}")
         
         # Get translated content
         subject = translations[user_lang].get(subject_key, translations['en'].get(subject_key, ""))
@@ -954,7 +969,9 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         
         # Combine all parts
         email_content = f"{greeting}\n\n{body}\n\n{footer}"
-        message.attach(MIMEText(email_content, "plain"))
+        
+        # Explicitly use UTF-8 for message content to handle Arabic characters
+        message.attach(MIMEText(email_content, "plain", "utf-8"))
         
         print(f"Email prepared with subject: {subject}")
         
