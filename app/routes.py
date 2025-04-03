@@ -1845,3 +1845,33 @@ def offline():
     """صفحة وضع عدم الاتصال"""
     return render_template('offline.html', unread_count=0)
 
+@app.route('/change_theme', methods=['POST'])
+@login_required
+def change_theme():
+    """Handle theme change and persist it"""
+    try:
+        # Get the theme from JSON request
+        data = request.get_json()
+        theme = data.get('theme', 'light')
+        
+        if theme not in ['light', 'dark']:
+            theme = 'light'
+            
+        print(f"Changing theme to: {theme}")
+        
+        # Update user's theme in database
+        current_user.theme = theme
+        db.session.commit()
+        
+        # Create response with cookie
+        response = jsonify({'success': True, 'theme': theme})
+        
+        # Set theme cookie with 1 year expiration
+        response.set_cookie('theme', theme, max_age=31536000)
+        
+        return response
+    except Exception as e:
+        print(f"Error changing theme: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)})
+

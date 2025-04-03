@@ -1621,7 +1621,46 @@
     }
 
     function updateTheme(theme) {
-        // Implementation of updateTheme function
+        // Send theme preference to server to update in database
+        fetch('/change_theme', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ theme: theme })
+        })
+        .then(response => response.json())
+        .catch(error => {
+            console.error('Error updating theme:', error);
+            // Fallback: Set theme cookie directly
+            document.cookie = `theme=${theme};path=/;max-age=31536000`;
+        });
+        
+        // Update HTML root attribute for CSS variables
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        // Update theme icon
+        updateThemeIcon();
+    }
+    
+    function updateThemeIcon() {
+        const body = document.body;
+        const themeToggle = document.getElementById('themeToggle');
+        if (!themeToggle) return;
+        
+        const icon = themeToggle.querySelector('i');
+        if (!icon) return;
+        
+        // Clear existing classes
+        icon.className = 'bi';
+        
+        // Set appropriate icon based on current theme
+        if (body.classList.contains('dark-theme')) {
+            icon.classList.add('bi-sun-fill'); // Sun icon for dark theme
+        } else {
+            icon.classList.add('bi-moon-stars'); // Moon icon for light theme
+        }
     }
 
     // Function to toggle tracking status for a product
