@@ -14,26 +14,24 @@ class User(db.Model, UserMixin):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    language = db.Column(db.String(2), default='ar')  # Default to Arabic
+    username = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    password_hash = db.Column(db.String(128))
+    language = db.Column(db.String(2), default='ar')  # ar or en
     theme = db.Column(db.String(10), default='light')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    verification_token = db.Column(db.String(100), nullable=True)
+    email_verified = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
     
     # Email verification fields
-    email_verified = db.Column(db.Boolean, default=False)
-    verification_token = db.Column(db.String(100), nullable=True)
     verification_token_expiry = db.Column(db.DateTime, nullable=True)
     
     # Relationships
-    products = db.relationship('Product', backref='user', lazy=True, cascade="all, delete-orphan")
-    notifications = db.relationship('Notification', backref='user', lazy=True, cascade="all, delete-orphan")
-    
-    # New field
-    is_admin = db.Column(db.Boolean, default=False)
+    products = db.relationship('Product', backref='user', lazy='dynamic')
+    notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

@@ -6,7 +6,6 @@ import traceback
 from datetime import datetime
 from flask import render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_login import login_user, login_required, logout_user, current_user
-from functools import wraps
 
 from app import app, db, translate
 from app.models import User, Product, Notification
@@ -14,16 +13,6 @@ import trackers
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
-# Admin only decorator
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin:
-            flash("Admin access required", "danger")
-            return redirect(url_for('home'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 # Routes
 @app.route('/')
@@ -104,8 +93,6 @@ def login():
             password = request.form.get('password')
             remember = request.form.get('remember', False)
             
-            print(f"Login attempt: Username={username}")
-            
             if not username or not password:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': False, 'message': 'Please provide both username and password'})
@@ -113,13 +100,6 @@ def login():
                 return render_template('login.html', unread_count=0)
                 
             user = User.query.filter_by(username=username).first()
-            print(f"User found: {user is not None}")
-            
-            if user:
-                password_valid = user.check_password(password)
-                print(f"Password valid: {password_valid}")
-                if password_valid:
-                    print(f"User data: id={user.id}, admin={user.is_admin}, verified={user.email_verified}")
             
             if user and user.check_password(password):
                 login_user(user, remember=bool(remember))
@@ -138,7 +118,6 @@ def login():
                     next_page = url_for('home')
                 return redirect(next_page)
             else:
-                print(f"Login failed for user: {username}")
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': False, 'message': 'Invalid username or password'})
                 flash('Invalid username or password', 'danger')
@@ -1084,120 +1063,361 @@ def resend_verification():
         flash(translate('error_occurred'), 'danger')
         return redirect(url_for('home'))
 
-@app.route('/admin/email_test', methods=['GET', 'POST'])
+@app.route('/email_testing', methods=['GET', 'POST'])
 @login_required
-@admin_required
-def admin_email_test():
-    if request.method == 'POST':
-        try:
-            recipient = request.form.get('recipient')
-            subject = request.form.get('subject', 'Admin Test Email')
-            message_body = request.form.get('message', 'This is a test email from the admin panel.')
-            
-            # Validate inputs
-            if not recipient:
-                flash("Recipient email is required", "danger")
-                return render_template('admin_email_test.html', now=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                
-            # Email settings
-            sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
-            password = os.environ.get("MAIL_PASSWORD", "")
-            
-            # Server settings
-            mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-            mail_port = int(os.environ.get("MAIL_PORT", 587))
-            mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ['true', '1', 't', 'yes', 'y']
-            mail_use_ssl = os.environ.get("MAIL_USE_SSL", "False").lower() in ['true', '1', 't', 'yes', 'y']
-            
-            # Create message
-            message = MIMEMultipart()
-            message["Subject"] = subject
-            message["From"] = sender_email
-            message["To"] = recipient
-            
-            # Replace placeholder for current time
-            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            message_body = message_body.replace('{{ now }}', current_time)
-            
-            # Explicitly use UTF-8 for message content
-            message.attach(MIMEText(message_body, "plain", "utf-8"))
-            
-            # Create secure context
-            context = ssl.create_default_context()
-            
-            # Log details for debugging
-            print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
-            print(f"Sending email to {recipient}")
-            
-            # Send email with appropriate method
-            if mail_use_ssl:
-                print("Using SSL connection...")
-                with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
-                    print("Logging in...")
-                    server.login(sender_email, password)
-                    print("Sending email...")
-                    server.sendmail(sender_email, recipient, message.as_string())
-                    print("Email sent successfully!")
-            else:
-                print("Using TLS connection...")
-                with smtplib.SMTP(mail_server, mail_port) as server:
-                    server.ehlo()
-                    print("Starting TLS...")
-                    server.starttls(context=context)
-                    server.ehlo()
-                    print("Logging in...")
-                    server.login(sender_email, password)
-                    print("Sending email...")
-                    server.sendmail(sender_email, recipient, message.as_string())
-                    print("Email sent successfully!")
-            
-            flash("Test email sent successfully!", "success")
-            
-        except Exception as e:
-            import traceback
-            print(f"Error sending email: {e}")
-            traceback.print_exc()
-            flash(f"Error sending email: {str(e)}", "danger")
+def email_testing():
+    """
+    Special email testing page for maintenance and debugging purposes
+    Allows testing different email scenarios (TLS/SSL, languages, etc.)
+    """
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash("You don't have permission to access this page", "danger")
+        return redirect(url_for('home'))
     
-    # Always pass the current time for the template
-    return render_template('admin_email_test.html', now=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-@app.route('/reset_admin_password')
-def reset_admin_password():
+    result = None
+    
     try:
-        # Check if there's an admin user
-        admin = User.query.filter_by(username='admin').first()
+        if request.method == 'POST':
+            test_type = request.form.get('test_type')
+            email = request.form.get('test_email', current_user.email)
+            language = request.form.get('language', 'ar')
+            connection_type = request.form.get('connection_type', 'tls')
+            
+            if test_type == 'basic':
+                # Basic test email (using current settings)
+                result = send_test_basic_email(email)
+            
+            elif test_type == 'localized':
+                # Test with specific language
+                result = send_test_localized_email(email, language)
+                
+            elif test_type == 'verification':
+                # Test verification email template
+                result = send_test_verification_email(email, language)
+                
+            elif test_type == 'ssl_tls':
+                # Test specific connection method
+                result = send_test_connection_email(email, connection_type)
+                
+            elif test_type == 'direct':
+                # Direct SMTP test bypassing Flask-Mail
+                result = send_direct_test_email(email, connection_type)
+                
+            flash(result['message'], result['status'])
+            
+        return render_template('email_testing.html', unread_count=0)
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error in email testing page: {str(e)}")
+        print(error_trace)
+        flash(f"Error: {str(e)}", "danger")
+        return render_template('email_testing.html', unread_count=0, error=error_trace)
+
+def send_test_basic_email(receiver_email):
+    """Send a basic test email using current settings"""
+    try:
+        import smtplib, ssl
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import os
         
-        if not admin:
-            # Create admin user if it doesn't exist
-            admin = User(
-                username='admin',
-                email='admin@zonar.local',
-                is_admin=True,
-                email_verified=True
-            )
-            admin.set_password('123456')
-            db.session.add(admin)
-            db.session.commit()
-            return jsonify({
-                'success': True,
-                'message': 'Admin user created with password: 123456'
-            })
+        # Email settings
+        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
+        password = os.environ.get("MAIL_PASSWORD", "")
+        
+        # Create message
+        message = MIMEMultipart()
+        message["Subject"] = "Basic Test Email from ZONAR"
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        
+        # Create body
+        body = f"""Hello,
+
+This is a basic test email from ZONAR's maintenance page.
+Timestamp: {datetime.utcnow().isoformat()}
+
+If you received this email, it means your basic email configuration is working correctly.
+
+Best regards,
+ZONAR Team"""
+        
+        # Explicitly use UTF-8 encoding for the message
+        message.attach(MIMEText(body, "plain", "utf-8"))
+        
+        # Create a secure context
+        context = ssl.create_default_context()
+        
+        # Get server settings from environment
+        mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+        mail_port = int(os.environ.get("MAIL_PORT", 587))
+        mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ['true', '1', 't', 'yes', 'y']
+        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "False").lower() in ['true', '1', 't', 'yes', 'y']
+        
+        print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
+        
+        # Connect based on configuration
+        if mail_use_ssl:
+            print("Using SSL connection...")
+            with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
+                print("Logging in...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully")
         else:
-            # Reset password for existing admin
-            admin.set_password('123456')
-            admin.is_admin = True  # Ensure admin flag is set
-            admin.email_verified = True  # Ensure email is verified
-            db.session.commit()
-            return jsonify({
-                'success': True,
-                'message': 'Admin password reset to: 123456'
-            })
+            print("Using TLS connection...")
+            with smtplib.SMTP(mail_server, mail_port) as server:
+                server.ehlo()
+                print("Starting TLS...")
+                server.starttls(context=context)
+                server.ehlo()
+                print("Logging in...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully")
+                
+        return {'status': 'success', 'message': f"Basic test email sent to {receiver_email}"}
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
+        return {'status': 'danger', 'message': f"Error sending basic test email: {str(e)}"}
+
+def send_test_localized_email(receiver_email, language):
+    """Send a test email with localized content"""
+    try:
+        from translations import translations
+        import os
+        import smtplib, ssl
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        
+        if language not in ['ar', 'en']:
+            language = 'ar'
+            
+        # Email settings
+        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
+        password = os.environ.get("MAIL_PASSWORD", "")
+        
+        # Create message
+        message = MIMEMultipart()
+        subject = translations[language].get('test_email_subject', "Test Email from ZONAR")
+        greeting = translations[language].get('test_email_greeting', "Hello,")
+        body_text = translations[language].get('test_email_body', "This is a test email.")
+        footer = translations[language].get('test_email_footer', "Best regards, ZONAR Team")
+        
+        message["Subject"] = subject
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        
+        # Combine all parts with some Arabic test text
+        email_content = f"""{greeting}
+
+{body_text}
+Timestamp: {datetime.utcnow().isoformat()}
+
+Testing Arabic characters: مرحباً بكم في تطبيق زونار
+
+{footer}"""
+        
+        # Explicitly use UTF-8 for message content
+        message.attach(MIMEText(email_content, "plain", "utf-8"))
+        
+        # Create a secure context
+        context = ssl.create_default_context()
+        
+        # Get server settings from environment
+        mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+        mail_port = int(os.environ.get("MAIL_PORT", 587))
+        mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ['true', '1', 't', 'yes', 'y']
+        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "False").lower() in ['true', '1', 't', 'yes', 'y']
+        
+        # Send using appropriate method
+        if mail_use_ssl:
+            with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message.as_string())
+        else:
+            with smtplib.SMTP(mail_server, mail_port) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                
+        return {'status': 'success', 'message': f"Localized test email sent to {receiver_email} in {language}"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {'status': 'danger', 'message': f"Error sending localized test email: {str(e)}"}
+
+def send_test_verification_email(receiver_email, language):
+    """Send a test verification email"""
+    try:
+        # Create a fake verification link
+        verification_link = url_for('home', _external=True) + "?test=verification"
+        
+        # Create a temporary user object for the send_localized_email function
+        class TempUser:
+            def __init__(self, email, lang):
+                self.email = email
+                self.language = lang
+                self.username = "TestUser"
+                
+        temp_user = TempUser(receiver_email, language)
+        
+        # Send the email
+        success = send_localized_email(
+            temp_user,
+            subject_key="verification_email_subject",
+            greeting_key="verification_email_greeting",
+            body_key="verification_email_body",
+            footer_key="verification_email_footer",
+            verification_link=verification_link
+        )
+        
+        if success:
+            return {'status': 'success', 'message': f"Verification test email sent to {receiver_email} in {language}"}
+        else:
+            return {'status': 'danger', 'message': "Failed to send verification test email"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {'status': 'danger', 'message': f"Error sending verification test email: {str(e)}"}
+
+def send_test_connection_email(receiver_email, connection_type):
+    """Test specific connection method (SSL or TLS)"""
+    try:
+        import smtplib, ssl
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import os
+        
+        # Email settings
+        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
+        password = os.environ.get("MAIL_PASSWORD", "")
+        
+        # Create message
+        message = MIMEMultipart()
+        message["Subject"] = f"ZONAR {connection_type.upper()} Connection Test"
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        
+        # Create body
+        body = f"""Hello,
+
+This is a test email sent using {connection_type.upper()} connection.
+Timestamp: {datetime.utcnow().isoformat()}
+
+If you received this email, the {connection_type.upper()} connection is working correctly.
+
+Best regards,
+ZONAR Team"""
+        
+        # Explicitly use UTF-8 encoding
+        message.attach(MIMEText(body, "plain", "utf-8"))
+        
+        # Create a secure context
+        context = ssl.create_default_context()
+        
+        # Use the specified connection type
+        mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+        
+        if connection_type.lower() == 'ssl':
+            # SSL uses port 465
+            with smtplib.SMTP_SSL(mail_server, 465, context=context) as server:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message.as_string())
+        else:
+            # TLS uses port 587
+            with smtplib.SMTP(mail_server, 587) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                
+        return {'status': 'success', 'message': f"{connection_type.upper()} test email sent to {receiver_email}"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {'status': 'danger', 'message': f"Error sending {connection_type.upper()} test email: {str(e)}"}
+
+def send_direct_test_email(receiver_email, connection_type):
+    """Send a test email directly using SMTP (bypass any wrapper)"""
+    try:
+        import smtplib, ssl
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import os
+        
+        # Hard-coded credentials for direct testing
+        # Use environment variables if available
+        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
+        password = os.environ.get("MAIL_PASSWORD", "")
+        mail_server = "smtp.gmail.com"
+        
+        # Create message with unique subject
+        message = MIMEMultipart()
+        timestamp = datetime.utcnow().isoformat()
+        message["Subject"] = f"ZONAR Direct {connection_type.upper()} Test - {timestamp}"
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        
+        # Detailed email body with diagnostic info
+        body = f"""Hello,
+
+This is a direct SMTP test email from ZONAR's maintenance page.
+Timestamp: {timestamp}
+
+Connection details:
+- Method: {connection_type.upper()}
+- Server: {mail_server}
+- Port: {"465" if connection_type.lower() == 'ssl' else "587"}
+- Sender: {sender_email}
+
+This test bypasses Flask-Mail and any other wrappers, using direct SMTP.
+
+Best regards,
+ZONAR Team"""
+        
+        # Explicitly use UTF-8 encoding
+        message.attach(MIMEText(body, "plain", "utf-8"))
+        
+        # Create a secure context
+        context = ssl.create_default_context()
+        
+        # Send using the specified connection type
+        if connection_type.lower() == 'ssl':
+            # SSL connection
+            print(f"Testing direct SSL connection to {mail_server}:465")
+            with smtplib.SMTP_SSL(mail_server, 465, context=context) as server:
+                print("Server connection established, logging in...")
+                server.login(sender_email, password)
+                print("Login successful, sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully")
+        else:
+            # TLS connection
+            print(f"Testing direct TLS connection to {mail_server}:587")
+            with smtplib.SMTP(mail_server, 587) as server:
+                print("Initial connection established, starting TLS...")
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                print("TLS started, logging in...")
+                server.login(sender_email, password)
+                print("Login successful, sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully")
+                
+        return {'status': 'success', 'message': f"Direct {connection_type.upper()} test email sent to {receiver_email}"}
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Direct email error: {str(e)}")
+        print(error_trace)
+        return {'status': 'danger', 'message': f"Error sending direct test email: {str(e)}"}
 

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Email Testing{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3>Email Testing Dashboard</h3>
+                    <span class="badge bg-warning">Admin Only</span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> This page allows you to test different email functionality scenarios to help diagnose issues.
+                    </div>
+
+                    {% if error %}
+                    <div class="alert alert-danger">
+                        <h5>Error Details:</h5>
+                        <pre>{{ error }}</pre>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <!-- Basic Email Test -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Basic Email Test</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Tests basic email functionality using current environment settings.</p>
+                                    <form method="post" action="{{ url_for('email_testing') }}">
+                                        <input type="hidden" name="test_type" value="basic">
+                                        <div class="mb-3">
+                                            <label for="basic_email" class="form-label">Test Email Address</label>
+                                            <input type="email" class="form-control" id="basic_email" name="test_email" 
+                                                value="{{ current_user.email }}" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-paper-plane"></i> Send Basic Test
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Localized Email Test -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Localized Email Test</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Tests email with translation content in selected language.</p>
+                                    <form method="post" action="{{ url_for('email_testing') }}">
+                                        <input type="hidden" name="test_type" value="localized">
+                                        <div class="mb-3">
+                                            <label for="localized_email" class="form-label">Test Email Address</label>
+                                            <input type="email" class="form-control" id="localized_email" name="test_email" 
+                                                value="{{ current_user.email }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="language" class="form-label">Language</label>
+                                            <select class="form-select" id="language" name="language">
+                                                <option value="ar">Arabic (عربي)</option>
+                                                <option value="en">English</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-info">
+                                            <i class="fas fa-language"></i> Test Localized Email
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verification Email Test -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5>Verification Email Test</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Tests the email verification template with a test link.</p>
+                                    <form method="post" action="{{ url_for('email_testing') }}">
+                                        <input type="hidden" name="test_type" value="verification">
+                                        <div class="mb-3">
+                                            <label for="verification_email" class="form-label">Test Email Address</label>
+                                            <input type="email" class="form-control" id="verification_email" name="test_email" 
+                                                value="{{ current_user.email }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="ver_language" class="form-label">Language</label>
+                                            <select class="form-select" id="ver_language" name="language">
+                                                <option value="ar">Arabic (عربي)</option>
+                                                <option value="en">English</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-user-check"></i> Test Verification Email
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connection Method Test -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h5>Connection Method Test</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Tests specific connection methods (SSL/TLS) regardless of environment settings.</p>
+                                    <form method="post" action="{{ url_for('email_testing') }}">
+                                        <input type="hidden" name="test_type" value="ssl_tls">
+                                        <div class="mb-3">
+                                            <label for="connection_email" class="form-label">Test Email Address</label>
+                                            <input type="email" class="form-control" id="connection_email" name="test_email" 
+                                                value="{{ current_user.email }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="connection_type" class="form-label">Connection Type</label>
+                                            <select class="form-select" id="connection_type" name="connection_type">
+                                                <option value="tls">TLS (Port 587)</option>
+                                                <option value="ssl">SSL (Port 465)</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-shield-alt"></i> Test Connection Method
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Direct SMTP Test -->
+                        <div class="col-md-12">
+                            <div class="card mb-3">
+                                <div class="card-header bg-danger text-white">
+                                    <h5>Direct SMTP Test</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Tests direct SMTP connection bypassing Flask-Mail and other wrappers. Most detailed diagnostics.</p>
+                                    <form method="post" action="{{ url_for('email_testing') }}">
+                                        <input type="hidden" name="test_type" value="direct">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="direct_email" class="form-label">Test Email Address</label>
+                                                    <input type="email" class="form-control" id="direct_email" name="test_email" 
+                                                        value="{{ current_user.email }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="direct_connection" class="form-label">Connection Type</label>
+                                                    <select class="form-select" id="direct_connection" name="connection_type">
+                                                        <option value="tls">TLS (Port 587)</option>
+                                                        <option value="ssl">SSL (Port 465)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-tools"></i> Test Direct SMTP
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Environment Settings -->
+                    <div class="card mt-3">
+                        <div class="card-header bg-secondary text-white">
+                            <h5>Current Email Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <tr>
+                                    <th>Setting</th>
+                                    <th>Value</th>
+                                </tr>
+                                <tr>
+                                    <td>MAIL_SERVER</td>
+                                    <td>{{ config.get('MAIL_SERVER', 'smtp.gmail.com') }}</td>
+                                </tr>
+                                <tr>
+                                    <td>MAIL_PORT</td>
+                                    <td>{{ config.get('MAIL_PORT', '587') }}</td>
+                                </tr>
+                                <tr>
+                                    <td>MAIL_USE_TLS</td>
+                                    <td>{{ config.get('MAIL_USE_TLS', 'True') }}</td>
+                                </tr>
+                                <tr>
+                                    <td>MAIL_USE_SSL</td>
+                                    <td>{{ config.get('MAIL_USE_SSL', 'False') }}</td>
+                                </tr>
+                                <tr>
+                                    <td>MAIL_USERNAME</td>
+                                    <td>{{ config.get('MAIL_USERNAME', 'zoonarcom@gmail.com') }}</td>
+                                </tr>
+                                <tr>
+                                    <td>MAIL_DEFAULT_SENDER</td>
+                                    <td>{{ config.get('MAIL_DEFAULT_SENDER', 'zoonarcom@gmail.com') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
