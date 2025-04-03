@@ -1,6 +1,7 @@
 import os
 import json
 import traceback
+import shutil
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_sqlalchemy import SQLAlchemy
@@ -11,9 +12,6 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from flask_mail import Mail
-from logging.handlers import RotatingFileHandler
-import logging
-from translations import TRANSLATIONS as translations_dict
 
 # Load environment variables
 load_dotenv()
@@ -26,10 +24,12 @@ instance_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../inst
 os.makedirs(instance_path, exist_ok=True)
 print(f"Database directory: {instance_path}")
 
-# For Render deployment, use /tmp directory if we're in production
+# For Render deployment, use persistent storage in production
 is_production = os.environ.get('RENDER', False)
 if is_production:
-    db_path = '/tmp/amazon_tracker.db'
+    # Use persistent storage directory on Render
+    db_path = os.path.join(os.environ.get('RENDER_PERSISTENT_DIR', '/data'), 'amazon_tracker.db')
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
     print(f"Using production database path: {db_path}")
 else:
     db_path = os.path.join(instance_path, "amazon_tracker.db")
@@ -56,7 +56,11 @@ app.config.update(
     SESSION_COOKIE_SECURE=is_production,  # Use secure cookies in production
     SESSION_COOKIE_HTTPONLY=True,  # Enable HTTPOnly for security
     SESSION_COOKIE_SAMESITE='Lax',   # Use Lax for better security while still allowing cross-site
-    PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # Longer session lifetime
+    PERMANENT_SESSION_LIFETIME=timedelta(days=365),  # Extended session lifetime to 1 year
+    REMEMBER_COOKIE_DURATION=timedelta(days=365),  # Remember me cookie duration
+    REMEMBER_COOKIE_SECURE=is_production,
+    REMEMBER_COOKIE_HTTPONLY=True,
+    SESSION_PROTECTION='strong',
     SQLALCHEMY_DATABASE_URI=f'sqlite:///{db_path}',
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     WTF_CSRF_ENABLED=False,
@@ -168,39 +172,6 @@ def before_request():
     g.is_english = (g.lang == 'en')
     print(f"CURRENT STATE: AR={g.is_arabic}, EN={g.is_english}")
 
-    # Verify user session
-    if current_user.is_authenticated:
-        # Get the stored session token from the session
-        session_token = session.get('user_session_token')
-        
-        # Update user's last_active timestamp
-        current_user.last_active = datetime.utcnow()
-        db.session.commit()
-        
-        # Check if the token is valid for this user
-        if not session_token or not current_user.verify_session_token(session_token):
-            # Session is invalid - user may be logged in elsewhere
-            # This won't run for endpoints exempted from login requirements
-            if not request.endpoint or request.endpoint not in ['logout', 'login', 'static']:
-                # Forcibly logout the user
-                logout_user()
-                session.pop('user_session_token', None)
-                session['flash_message'] = {
-                    'message': translate('session_expired_elsewhere'),
-                    'category': 'warning'
-                }
-                
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    # For AJAX requests, return a JSON response
-                    return jsonify({
-                        'success': False,
-                        'message': translate('session_expired_elsewhere'),
-                        'redirect': '/login'
-                    }), 401
-                else:
-                    # For regular requests, redirect to login
-                    return redirect(url_for('login'))
-
 # Now import the rest of the app components
 try:
     from . import models, routes
@@ -216,9 +187,31 @@ def init_db():
         db.create_all()
         print("Database tables created successfully!")
 
+def backup_database():
+    """Create a backup of the database file"""
+    if os.path.exists(db_path):
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_dir = os.path.join(os.path.dirname(db_path), 'backups')
+        os.makedirs(backup_dir, exist_ok=True)
+        backup_path = os.path.join(backup_dir, f'amazon_tracker_{timestamp}.db')
+        try:
+            shutil.copy2(db_path, backup_path)
+            print(f"Database backed up to: {backup_path}")
+            # Keep only last 5 backups
+            backups = sorted([f for f in os.listdir(backup_dir) if f.endswith('.db')])
+            for old_backup in backups[:-5]:
+                os.remove(os.path.join(backup_dir, old_backup))
+        except Exception as e:
+            print(f"Error backing up database: {e}")
+            traceback.print_exc()
+
 # Initialize database if it doesn't exist
 with app.app_context():
     try:
+        # Backup existing database before any changes
+        backup_database()
+        
+        # Create tables if they don't exist
         db.create_all()
         print("Database initialized successfully")
     except Exception as e:
@@ -229,74 +222,3 @@ with app.app_context():
 def load_user(id):
     from app.models import User
     return User.query.get(int(id)) 
-
-# Configure logging
-if not os.path.exists('logs'):
-    os.mkdir('logs')
-
-file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)
-file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-))
-file_handler.setLevel(logging.INFO)
-app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.INFO)
-app.logger.info('Application startup')
-
-# Initialize extensions with app
-db.init_app(app)
-login_manager.init_app(app)
-mail.init_app(app)
-
-# Import models and routes
-from app.models import User, Product
-
-# Create the database tables
-with app.app_context():
-    db.create_all()
-
-from app import routes 
-
-def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
-    
-    # Initialize extensions with the app
-    db.init_app(app)
-    migrate.init_app(app, db)
-    login_manager.init_app(app)
-    
-    # Load translations
-    with app.app_context():
-        # Import translations here to avoid circular import
-        from translations import TRANSLATIONS
-        try:
-            # Import bot translations if available
-            from bot_translations import BOT_TRANSLATIONS
-            # Merge bot translations with main translations
-            for lang in BOT_TRANSLATIONS:
-                if lang in TRANSLATIONS:
-                    TRANSLATIONS[lang].update(BOT_TRANSLATIONS[lang])
-        except ImportError:
-            # Bot translations not available
-            pass
-        
-        app.config['TRANSLATIONS'] = TRANSLATIONS
-    
-    # Import routes
-    from app.routes import init_routes
-    init_routes(app)
-    
-    # Register blueprints
-    try:
-        # Register bot blueprint if available
-        from bot_routes import bot_bp
-        app.register_blueprint(bot_bp)
-    except ImportError:
-        # Bot routes not available
-        pass
-    
-    # Set up login manager
-    login_manager.login_view = 'login'
-    
-    # ... (rest of the function) ... 
