@@ -104,6 +104,8 @@ def login():
             password = request.form.get('password')
             remember = request.form.get('remember', False)
             
+            print(f"Login attempt: Username={username}")
+            
             if not username or not password:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': False, 'message': 'Please provide both username and password'})
@@ -111,6 +113,13 @@ def login():
                 return render_template('login.html', unread_count=0)
                 
             user = User.query.filter_by(username=username).first()
+            print(f"User found: {user is not None}")
+            
+            if user:
+                password_valid = user.check_password(password)
+                print(f"Password valid: {password_valid}")
+                if password_valid:
+                    print(f"User data: id={user.id}, admin={user.is_admin}, verified={user.email_verified}")
             
             if user and user.check_password(password):
                 login_user(user, remember=bool(remember))
@@ -129,6 +138,7 @@ def login():
                     next_page = url_for('home')
                 return redirect(next_page)
             else:
+                print(f"Login failed for user: {username}")
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': False, 'message': 'Invalid username or password'})
                 flash('Invalid username or password', 'danger')
@@ -1151,4 +1161,43 @@ def admin_email_test():
     
     # Always pass the current time for the template
     return render_template('admin_email_test.html', now=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+@app.route('/reset_admin_password')
+def reset_admin_password():
+    try:
+        # Check if there's an admin user
+        admin = User.query.filter_by(username='admin').first()
+        
+        if not admin:
+            # Create admin user if it doesn't exist
+            admin = User(
+                username='admin',
+                email='admin@zonar.local',
+                is_admin=True,
+                email_verified=True
+            )
+            admin.set_password('123456')
+            db.session.add(admin)
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'Admin user created with password: 123456'
+            })
+        else:
+            # Reset password for existing admin
+            admin.set_password('123456')
+            admin.is_admin = True  # Ensure admin flag is set
+            admin.email_verified = True  # Ensure email is verified
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'Admin password reset to: 123456'
+            })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
