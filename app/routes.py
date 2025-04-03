@@ -1067,19 +1067,15 @@ def resend_verification():
 @login_required
 def email_testing():
     """
-    Special email testing page for maintenance and debugging purposes
+    Email testing page for users to verify their email settings
     Allows testing different email scenarios (TLS/SSL, languages, etc.)
     """
-    if not current_user.is_authenticated or not current_user.is_admin:
-        flash("You don't have permission to access this page", "danger")
-        return redirect(url_for('home'))
-    
     result = None
     
     try:
         if request.method == 'POST':
             test_type = request.form.get('test_type')
-            email = request.form.get('test_email', current_user.email)
+            email = current_user.email  # Only allow testing with user's own email
             language = request.form.get('language', 'ar')
             connection_type = request.form.get('connection_type', 'tls')
             
