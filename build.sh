@@ -8,9 +8,28 @@ echo "Python version: $(python --version)"
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Force recreate the database in production (Render)
-echo "Creating application database tables..."
-python -c "from app import app, db; from app.models import User, Product, Notification; app.app_context().push(); db.drop_all(); db.create_all(); print('Database tables dropped and recreated successfully!')"
+# Backup the database before any operations
+echo "Checking for existing database and creating backup..."
+python restore_db.py backup || echo "Backup failed or no existing database found."
+
+# Restore the database if needed (in case of a fresh deployment)
+echo "Attempting to restore database from previous backup..."
+python restore_db.py restore || echo "Restore skipped - database may already exist or no backup found."
+
+# Run database migrations to apply any schema changes
+echo "Running database migrations..."
+if [ -d "migrations" ]; then
+    # Use Flask-Migrate to run migrations
+    flask db upgrade
+    echo "Database migrations applied successfully!"
+else
+    # First-time setup: initialize migrations if they don't exist
+    echo "Initializing database for first time..."
+    flask db init
+    flask db migrate -m "Initial migration"
+    flask db upgrade
+    echo "Database initialized and migrations applied successfully!"
+fi
 
 # Create price_checker.py script for cron job if it doesn't exist
 if [ ! -f "price_checker.py" ]; then
@@ -122,5 +141,9 @@ except Exception as e:
 EOL
     chmod +x price_checker.py
 fi
+
+# Final backup after all operations
+echo "Creating final backup after build completion..."
+python restore_db.py backup || echo "Final backup failed."
 
 echo "Build completed successfully!" 

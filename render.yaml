@@ -1,15 +1,24 @@
 services:
   # Web Service - The main Flask application
   - type: web
-    name: zonar-amazon-tracker
+    name: zonar
     env: python
-    plan: free # Change to 'starter' or higher for production use
     buildCommand: ./build.sh
     startCommand: gunicorn wsgi:app
-    region: ohio # Choose a region close to your users - could be singapore for Middle East
+    region: frankfurt
+    plan: free
+    healthCheckPath: /health
     envVars:
-      - key: FLASK_ENV
-        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: RENDER
+        value: true
+      - key: SECRET_KEY
+        sync: false  # Secret value set via Render dashboard
+      - key: MAIL_USERNAME
+        sync: false  # Secret value set via Render dashboard
+      - key: MAIL_PASSWORD
+        sync: false  # Secret value set via Render dashboard
       - key: MAIL_SERVER
         value: smtp.gmail.com
       - key: MAIL_PORT
@@ -18,21 +27,10 @@ services:
         value: true
       - key: MAIL_USE_SSL
         value: false
-      - key: MAIL_USERNAME
-        value: zoonarcom@gmail.com
-      - key: MAIL_PASSWORD
-        value: vnmlzqhuvwktbucj
-      - key: MAIL_DEFAULT_SENDER
-        value: zoonarcom@gmail.com
-      - key: RENDER
-        value: true 
-      - key: SECRET_KEY
-        generateValue: true
-    healthCheckPath: /
     disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1 # 1GB storage for SQLite
+      name: database-backup
+      mountPath: /opt/render/project/src/.backup
+      sizeGB: 1
 
 # Add a cron job for automatic price checking
 cron:
