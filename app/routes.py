@@ -573,9 +573,114 @@ def check_price(product_id):
             # Send email and create DB notification if needed and email is verified
             if should_notify and current_user.email_verified:
                  print(f"Sending price change notification email to {current_user.email} for product {product.id}")
-                 # Use the central send_email function (or adapt send_localized_email)
-                 email_subject = translate('price_change_subject').format(product_name=product.custom_name or product.name)
-                 send_email(current_user.email, email_subject, notification_message)
+                 
+                 # Calculate price difference and percentage
+                 price_diff = abs(new_price - old_price)
+                 price_change_percent = (price_diff / old_price) * 100
+                 
+                 # Create engaging subject lines in both languages
+                 if new_price < old_price:
+                     email_subject = f"🎉 تخفيض السعر! وفر {price_diff:.2f} ريال على {product.custom_name or product.name}"
+                 else:
+                     email_subject = f"⚡ تنبيه تغير السعر - {product.custom_name or product.name}"
+                 
+                 # Create an engaging HTML email body with bilingual support
+                 email_body = f"""
+                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                     <div dir="rtl" style="text-align: right;">
+                         <h2 style="color: #FF6B00; margin-bottom: 20px;">مرحباً {current_user.username}،</h2>
+                         
+                         <div style="background-color: #FFF5E6; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                             <h3 style="margin-top: 0;">{product.custom_name or product.name}</h3>
+                             
+                             <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                                 <div style="text-align: right;">
+                                     <p style="color: #666; margin: 0;">السعر الحالي:</p>
+                                     <p style="font-size: 24px; color: {'#2E7D32' if new_price < old_price else '#D32F2F'}; font-weight: bold; margin: 5px 0;">
+                                         {new_price:.2f} ريال
+                                     </p>
+                                 </div>
+                                 <div style="text-align: left;">
+                                     <p style="color: #666; margin: 0;">السعر السابق:</p>
+                                     <p style="font-size: 18px; margin: 5px 0;"><strike>{old_price:.2f} ريال</strike></p>
+                                 </div>
+                             </div>
+                             
+                             {f'<p style="color: #2E7D32; font-weight: bold; font-size: 18px; margin: 10px 0;">التوفير: {price_diff:.2f} ريال ({price_change_percent:.1f}%)</p>' if new_price < old_price else ''}
+                             
+                             {f'<p style="color: #D32F2F; font-size: 16px; margin: 10px 0;">ارتفع السعر بمقدار {price_diff:.2f} ريال ({price_change_percent:.1f}%)</p>' if new_price > old_price else ''}
+                         </div>
+                         
+                         {'<p style="font-size: 16px; color: #2E7D32; margin: 15px 0;"><strong>🎯 تم الوصول للسعر المستهدف!</strong> الآن هو الوقت المناسب للشراء!</p>' if product.target_price and new_price <= product.target_price else ''}
+                         
+                         <a href="{product.url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                             {'🛒 اشترِ الآن - سعر محدود!' if new_price < old_price else '🛒 عرض المنتج'}
+                         </a>
+                         
+                         <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                             سنواصل مراقبة السعر وإخطارك بأي تغييرات.
+                         </p>
+                         
+                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
+                         
+                         <p style="color: #999; font-size: 12px;">
+                             مع أطيب التحيات،<br>
+                             فريق زونار
+                         </p>
+                     </div>
+
+                     <!-- English Version -->
+                     <div dir="ltr" style="text-align: left; margin-top: 40px; border-top: 2px solid #EEE; padding-top: 20px;">
+                         <h2 style="color: #FF6B00; margin-bottom: 20px;">Hello {current_user.username},</h2>
+                         
+                         <div style="background-color: #FFF5E6; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                             <h3 style="margin-top: 0;">{product.custom_name or product.name}</h3>
+                             
+                             <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                                 <div>
+                                     <p style="color: #666; margin: 0;">Previous Price:</p>
+                                     <p style="font-size: 18px; margin: 5px 0;"><strike>{old_price:.2f} SAR</strike></p>
+                                 </div>
+                                 <div style="text-align: right;">
+                                     <p style="color: #666; margin: 0;">Current Price:</p>
+                                     <p style="font-size: 24px; color: {'#2E7D32' if new_price < old_price else '#D32F2F'}; font-weight: bold; margin: 5px 0;">
+                                         {new_price:.2f} SAR
+                                     </p>
+                                 </div>
+                             </div>
+                             
+                             {f'<p style="color: #2E7D32; font-weight: bold; font-size: 18px; margin: 10px 0;">You save: {price_diff:.2f} SAR ({price_change_percent:.1f}%)</p>' if new_price < old_price else ''}
+                             
+                             {f'<p style="color: #D32F2F; font-size: 16px; margin: 10px 0;">Price increased by {price_diff:.2f} SAR ({price_change_percent:.1f}%)</p>' if new_price > old_price else ''}
+                         </div>
+                         
+                         {'<p style="font-size: 16px; color: #2E7D32; margin: 15px 0;"><strong>🎯 Target price reached!</strong> Now is a great time to buy!</p>' if product.target_price and new_price <= product.target_price else ''}
+                         
+                         <a href="{product.url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                             {'🛒 Buy Now - Limited Time Price!' if new_price < old_price else '🛒 View Product'}
+                         </a>
+                         
+                         <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                             We'll continue monitoring the price and notify you of any changes.
+                         </p>
+                         
+                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
+                         
+                         <p style="color: #999; font-size: 12px;">
+                             Best regards,<br>
+                             The ZONAR Team
+                         </p>
+                     </div>
+                 </div>
+                 """
+                 
+                 msg = Message(
+                     subject=email_subject,
+                     recipients=[current_user.email],
+                     html=email_body
+                 )
+                 mail.send(msg)
+                 print(f"Email notification sent to {current_user.email}")
 
             # Create and save notification in DB regardless of email status (if should_notify)
             if should_notify:
@@ -683,25 +788,89 @@ def forgot_password():
                 reset_url = url_for('reset_password', token=token, _external=True)
                 print(f"Sending password reset email to {user.email}")
                 
-                # Use send_localized_email for consistency
-                email_sent = send_localized_email(
-                    user,
-                    subject_key="password_reset_subject",
-                    greeting_key="reset_email_greeting",
-                    body_key="reset_email_body",
-                    footer_key="reset_email_footer",
-                    reset_url=reset_url
-                )
+                # Create HTML email with reset link
+                email_body = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <!-- Arabic Version -->
+                    <div dir="rtl" style="text-align: right;">
+                        <h2 style="color: #FF6B00; margin-bottom: 20px;">مرحباً {user.username}،</h2>
+                        
+                        <p style="margin-bottom: 20px;">
+                            لقد تلقينا طلباً لإعادة تعيين كلمة المرور لحسابك في زونار.
+                        </p>
+                        
+                        <p style="margin-bottom: 20px;">
+                            لإعادة تعيين كلمة المرور، يرجى النقر على الزر أدناه:
+                        </p>
+                        
+                        <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                            إعادة تعيين كلمة المرور
+                        </a>
+                        
+                        <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                            هذا الرابط صالح لمدة ساعة واحدة فقط.
+                        </p>
+                        
+                        <p style="color: #666; font-size: 14px;">
+                            إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذا البريد الإلكتروني.
+                        </p>
+                        
+                        <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
+                        
+                        <p style="color: #999; font-size: 12px;">
+                            مع أطيب التحيات،<br>
+                            فريق زونار
+                        </p>
+                    </div>
 
-                if email_sent:
-                     message = translate('reset_email_sent')
-                     category = 'success'
-                else:
-                     message = translate('email_error')
-                     category = 'danger'
+                    <!-- English Version -->
+                    <div dir="ltr" style="text-align: left; margin-top: 40px; border-top: 2px solid #EEE; padding-top: 20px;">
+                        <h2 style="color: #FF6B00; margin-bottom: 20px;">Hello {user.username},</h2>
+                        
+                        <p style="margin-bottom: 20px;">
+                            We received a request to reset your password for your ZONAR account.
+                        </p>
+                        
+                        <p style="margin-bottom: 20px;">
+                            To reset your password, please click the button below:
+                        </p>
+                        
+                        <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                            Reset Password
+                        </a>
+                        
+                        <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                            This link is valid for one hour only.
+                        </p>
+                        
+                        <p style="color: #666; font-size: 14px;">
+                            If you did not request a password reset, please ignore this email.
+                        </p>
+                        
+                        <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
+                        
+                        <p style="color: #999; font-size: 12px;">
+                            Best regards,<br>
+                            The ZONAR Team
+                        </p>
+                    </div>
+                </div>
+                """
+                
+                # Send the email with HTML content
+                msg = Message(
+                    subject="إعادة تعيين كلمة المرور - ZONAR Password Reset",
+                    recipients=[user.email],
+                    html=email_body
+                )
+                mail.send(msg)
+                print(f"Password reset email sent to {user.email}")
+
+                message = translate('reset_email_sent')
+                category = 'success'
 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                     return jsonify({'success': email_sent, 'message': message})
+                    return jsonify({'success': True, 'message': message})
                 flash(message, category)
 
             else:
