@@ -974,8 +974,8 @@ def forgot_password():
                 mail.send(msg)
                 print(f"Password reset email sent to {user.email}")
 
-                     message = translate('reset_email_sent')
-                     category = 'success'
+                message = translate('reset_email_sent')
+                category = 'success'
 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': True, 'message': message})
@@ -1152,9 +1152,9 @@ def send_email(to, subject, body, html=None):
         max_retries = 3
         for attempt in range(1, max_retries + 1):
             try:
-        mail.send(msg)
+                mail.send(msg)
                 print(f"Email sent successfully to {to} (attempt {attempt})")
-        return True
+                return True
             except Exception as retry_error:
                 if attempt < max_retries:
                     print(f"Attempt {attempt} failed: {str(retry_error)}. Retrying...")
@@ -1314,7 +1314,7 @@ def verify_email(token):
         # تطبيق التغييرات في قاعدة البيانات
         try:
             db.session.commit()
-        flash(translate('verification_success'), 'success')
+            flash(translate('verification_success'), 'success')
             
             # إذا لم يكن المستخدم مسجل دخوله، قم بتسجيل دخوله تلقائيًا
             if not current_user.is_authenticated:
@@ -1355,7 +1355,7 @@ def resend_verification():
         
         try:
             # حفظ التغييرات في قاعدة البيانات
-        db.session.commit()
+            db.session.commit()
             print(f"Generated new verification token (valid for 7 days) for: {current_user.username}")
             
             # إنشاء رابط التحقق مع معلمة إضافية للإصدار لمنع مشاكل الذاكرة المخبأة
@@ -1366,17 +1366,17 @@ def resend_verification():
             
             # إرسال بريد التحقق باستخدام الوظيفة المعاد تشكيلها
             email_sent = send_localized_email(
-            current_user,
-            subject_key="verification_email_subject",
-            greeting_key="verification_email_greeting",
-            body_key="verification_email_body",
-            footer_key="verification_email_footer",
-            verification_link=verification_link
-        )
+                current_user,
+                subject_key="verification_email_subject",
+                greeting_key="verification_email_greeting",
+                body_key="verification_email_body",
+                footer_key="verification_email_footer",
+                verification_link=verification_link
+            )
         
             if email_sent:
                 print(f"Verification email sent successfully to: {current_user.email}")
-        flash(translate('verification_resent'), 'success')
+                flash(translate('verification_resent'), 'success')
             else:
                 print(f"Failed to send verification email to: {current_user.email}")
                 # استعادة التغييرات إذا فشل إرسال البريد
