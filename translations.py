@@ -151,6 +151,9 @@ translations = {
         'verification_resent': 'A new verification email has been sent. Please check your inbox.',
         'email_already_verified': 'Your email is already verified.',
         'resend_verification': 'Resend Verification Email',
+        'logged_in_after_verification': 'Logged in successfully after verifying email.',
+        'verification_error_try_again': 'An error occurred during verification. Please try again.',
+        'email_sending_failed': 'Email sending failed. Please try again later.',
         
         # Tour Guide Translations
         'tour_guide': 'Tour Guide',
@@ -374,6 +377,9 @@ translations = {
         'verification_resent': 'تم إرسال بريد تحقق جديد. يرجى التحقق من صندوق الوارد الخاص بك.',
         'email_already_verified': 'تم التحقق من بريدك الإلكتروني بالفعل.',
         'resend_verification': 'إعادة إرسال بريد التحقق',
+        'logged_in_after_verification': 'تم تسجيل الدخول بعد التحقق من بريدك الإلكتروني بنجاح.',
+        'verification_error_try_again': 'حدث خطأ أثناء عملية التحقق. يرجى المحاولة مرة أخرى.',
+        'email_sending_failed': 'فشل في إرسال البريد الإلكتروني. يرجى المحاولة مرة أخرى لاحقاً.',
         
         # Tour Guide Translations
         'tour_guide': 'جولة تعريفية',

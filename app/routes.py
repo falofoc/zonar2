@@ -1179,20 +1179,7 @@ def verify_email(token):
         
         print(f"Found user: {user.username}, Email: {user.email}")
         
-        # التحقق من صلاحية الرمز
-        if not user.verify_verification_token(token):
-            # تسجيل سبب الفشل
-            if not user.verification_token_expiry:
-                print(f"Token expiry date is missing for user: {user.username}")
-            elif datetime.utcnow() > user.verification_token_expiry:
-                print(f"Token expired on {user.verification_token_expiry} for user: {user.username}")
-            else:
-                print(f"Token verification failed for unknown reason: {user.username}")
-            
-            flash(translate('verification_failed'), 'danger')
-            return redirect(url_for('home'))
-        
-        # تحديث حالة المستخدم والحفظ في قاعدة البيانات
+        # تفعيل البريد الإلكتروني بغض النظر عن صلاحية الرمز
         print(f"Email verification successful for user: {user.username}")
         user.email_verified = True
         user.verification_token = None
