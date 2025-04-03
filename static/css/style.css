@@ -1,0 +1,39 @@
+/* Empty State Styling */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h2 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.empty-state-text {
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 2rem;
+}
+
+/* Mobile Add Product Button */
+@media (max-width: 767px) {
+    .nav-icon-btn.d-none.d-md-inline-flex {
+        display: none !important;
+    }
+    
+    .btn-primary.d-md-none {
+        display: block !important;
+        margin: 1rem 0;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: var(--border-radius);
+    }
+} 

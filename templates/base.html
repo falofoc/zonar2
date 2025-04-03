@@ -1011,8 +1011,13 @@
                         <!-- Only show these elements if the user is logged in -->
                         
                         <!-- Add Product Button (Logged In Only) -->
-                        <button class="nav-icon-btn" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
+                        <button class="nav-icon-btn d-none d-md-inline-flex" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
                             <i class="bi bi-plus-circle"></i>
+                        </button>
+                        
+                        <!-- Mobile Add Product Button -->
+                        <button class="btn btn-primary d-md-none mb-2 w-100" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                            <i class="bi bi-plus-circle me-2"></i>{{ translate('add_product') }}
                         </button>
 
                         <!-- Notifications Dropdown (Logged In Only) -->
