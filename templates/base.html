@@ -184,6 +184,12 @@
             transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
+        /* Ensure navbar respects dark theme */
+        .dark-theme .navbar {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
         .navbar-brand {
             display: flex;
             align-items: center;
@@ -1185,33 +1191,27 @@
             line-height: 1;
         }
 
-        /* Pagination Styling */
-        .pagination-container {
-            margin: 2rem 0;
-            display: flex;
-            justify-content: center;
+        /* Further ensure navbar components respect dark theme */
+        .dark-theme .nav-icon-btn {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
         }
         
-        /* Disclaimer footer */
-        .disclaimer-footer {
-            background-color: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-            padding: 1rem 0;
-            margin-top: 3rem;
-            text-align: center;
-            font-size: 0.8rem;
+        .dark-theme .navbar-toggler {
             color: var(--text-secondary);
         }
         
-        .disclaimer-footer p {
-            margin-bottom: 0.5rem;
+        .dark-theme .dropdown-menu {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
         }
         
-        @media (max-width: 768px) {
-            .disclaimer-footer {
-                padding: 0.75rem 1rem;
-                font-size: 0.75rem;
-            }
+        .dark-theme .dropdown-item {
+            color: var(--text-primary);
+        }
+        
+        .dark-theme .brand-text {
+            text-shadow: 0 2px 4px rgba(255, 107, 0, 0.4);
         }
 
     </style>
@@ -1263,12 +1263,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/" onclick="window.location.href='/'; return false;">
                             <i class="bi bi-house-fill me-1"></i> {{ translate('home') }}
-                        </a>
-                    </li>
-                    <!-- Add a link to public home page -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('public_home') }}">
-                            <i class="bi bi-shop me-1"></i> {{ translate('discover_best_deals') or 'Discover Deals' }}
                         </a>
                     </li>
                 </ul>
@@ -1341,6 +1335,11 @@
                         <a href="{{ url_for('settings') }}" class="nav-icon-btn ms-2" title="{{ translate('settings') }}">
                             <i class="bi bi-gear"></i>
                         </a>
+                        
+                        <!-- Tour Guide Button -->
+                        <button class="nav-icon-btn ms-2 tour-button" id="startTour" title="{{ translate('tour_guide') or 'Tour Guide' }}" onclick="localStorage.setItem('zonar_show_tour', 'true'); window.location.href='/?tour'">
+                            <i class="bi bi-info-circle"></i>
+                        </button>
                         
                         <!-- PWA Add to Home Button -->
                         <button class="nav-icon-btn ms-2" id="add-to-home" style="display: none;" title="{{ translate('install_app') or 'Install App' }}">
@@ -1952,6 +1951,10 @@
     </script>
     {% block extra_js %}{% endblock %}
 
+    <!-- Tour Guide Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+
     <!-- Removed FAB HTML -->
 
     <!-- Right before closing body tag, add floating buttons for mobile -->
@@ -1968,15 +1971,6 @@
         {% endif %}
     </button>
     {% endif %}
-
-    <!-- Disclaimer Footer -->
-    <footer class="disclaimer-footer">
-        <div class="container">
-            <p>{{ translate('disclaimer_tracking_only') }}</p>
-            <p>{{ translate('disclaimer_prices_change') }}</p>
-            <p>&copy; {{ now.year }} ZONAR</p>
-        </div>
-    </footer>
 
 </body>
 </html> 
