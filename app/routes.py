@@ -937,11 +937,11 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         password = os.environ.get("MAIL_PASSWORD", "vnmlzqhuvwktbucj")
         receiver_email = user.email
         
-        # Email server settings
+        # Email server settings - Use environment variables directly
         mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-        mail_port = int(os.environ.get("MAIL_PORT", 587))
-        mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ['true', '1', 't', 'yes', 'y']
-        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "False").lower() in ['true', '1', 't', 'yes', 'y']
+        mail_port = int(os.environ.get("MAIL_PORT", 465))
+        mail_use_tls = os.environ.get("MAIL_USE_TLS", "False").lower() in ['true', '1', 't', 'yes', 'y']
+        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "True").lower() in ['true', '1', 't', 'yes', 'y']
         
         print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
         print(f"Sending email to {receiver_email} with language {user_lang}")
@@ -966,6 +966,7 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         message["Subject"] = subject
         message["From"] = sender_email
         message["To"] = receiver_email
+        message["Reply-To"] = sender_email
         
         # Combine all parts
         email_content = f"{greeting}\n\n{body}\n\n{footer}"
@@ -986,6 +987,7 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
                 server.login(sender_email, password)
                 print("Sending email...")
                 server.sendmail(sender_email, receiver_email, message.as_string())
+                print(f"Email sent successfully to {receiver_email}")
         else:
             print(f"Using TLS connection on port {mail_port}")
             with smtplib.SMTP(mail_server, mail_port) as server:
@@ -996,13 +998,42 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
                 server.login(sender_email, password)
                 print("Sending email...")
                 server.sendmail(sender_email, receiver_email, message.as_string())
+                print(f"Email sent successfully to {receiver_email}")
         
-        print(f"Localized email sent to {user.email} in {user_lang}")
+        # Add a notification in the app
+        try:
+            from models import Notification, db
+            notification = Notification(
+                user_id=user.id,
+                message=f"Email sent: {subject}",
+                read=False
+            )
+            db.session.add(notification)
+            db.session.commit()
+            print(f"Added notification for user {user.id}")
+        except Exception as e:
+            print(f"Failed to add notification: {e}")
+        
         return True
     except Exception as e:
         import traceback
         print(f"Error sending localized email: {e}")
         traceback.print_exc()  # Print full traceback for debugging
+        
+        # Try to add notification about failed email
+        try:
+            from models import Notification, db
+            notification = Notification(
+                user_id=user.id,
+                message="Failed to send email. Please check your email address.",
+                read=False
+            )
+            db.session.add(notification)
+            db.session.commit()
+            print(f"Added failure notification for user {user.id}")
+        except:
+            pass
+            
         return False
 
 @app.route('/verify_email/<token>')
