@@ -177,9 +177,7 @@ translations = {
         'tour_button_skip': 'Skip Tour',
         'tour_button_next': 'Next',
         'tour_button_back': 'Back',
-        'tour_button_finish': 'Finish',
-        'save_money': 'Save Money',
-        'try_with': 'Try with a product from'
+        'tour_button_finish': 'Finish'
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -382,8 +380,6 @@ translations = {
         'tour_button_skip': 'إغلاق',
         'tour_button_next': 'التالي',
         'tour_button_back': 'السابق',
-        'tour_button_finish': 'إنهاء',
-        'save_money': 'وفر المال',
-        'try_with': 'جرب مع منتج من'
+        'tour_button_finish': 'إنهاء'
     }
 } 
