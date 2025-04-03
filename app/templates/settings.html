@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('settings_title') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1 class="mb-4">{{ _('settings_header') }}</h1>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">{{ _('update_email') }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="action" value="update_email">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ _('new_email') }}</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">{{ _('current_password') }}</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">{{ _('update_email_btn') }}</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">{{ _('update_password') }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="action" value="update_password">
+                        <div class="mb-3">
+                            <label for="current_password_pw" class="form-label">{{ _('current_password') }}</label>
+                            <input type="password" class="form-control" id="current_password_pw" name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">{{ _('new_password') }}</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">{{ _('confirm_password') }}</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">{{ _('update_password_btn') }}</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">{{ _('test_email_header') }}</h3>
+                </div>
+                <div class="card-body">
+                    <p>{{ _('test_email_description') }}</p>
+                    <a href="{{ url_for('test_email') }}" class="btn btn-primary">{{ _('send_test_email_btn') }}</a>
+                </div>
+            </div>
+            
+            <!-- Verification section for unverified users -->
+            {% if not current_user.email_verified %}
+            <div class="card mb-4 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="card-title mb-0">{{ _('email_verification') }}</h3>
+                </div>
+                <div class="card-body">
+                    <p>{{ _('verification_info') }}</p>
+                    <a href="{{ url_for('resend_verification') }}" class="btn btn-warning">{{ _('resend_verification_btn') }}</a>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Admin Tools Section -->
+            {% if current_user.is_admin %}
+            <div class="card mb-4 border-dark">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="card-title mb-0">{{ _('admin_tools') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ url_for('admin_email_test') }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ _('email_testing_tool') }}</h5>
+                                <small><i class="fas fa-envelope"></i></small>
+                            </div>
+                            <p class="mb-1">{{ _('test_email_description') }}</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

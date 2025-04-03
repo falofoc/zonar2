@@ -17,7 +17,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    language = db.Column(db.String(10), default='ar')  # Default to Arabic
+    language = db.Column(db.String(2), default='ar')  # Default to Arabic
     theme = db.Column(db.String(10), default='light')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reset_token = db.Column(db.String(100), nullable=True)
@@ -31,6 +31,9 @@ class User(db.Model, UserMixin):
     # Relationships
     products = db.relationship('Product', backref='user', lazy=True, cascade="all, delete-orphan")
     notifications = db.relationship('Notification', backref='user', lazy=True, cascade="all, delete-orphan")
+    
+    # New field
+    is_admin = db.Column(db.Boolean, default=False)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

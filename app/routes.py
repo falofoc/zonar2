@@ -6,6 +6,7 @@ import traceback
 from datetime import datetime
 from flask import render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_login import login_user, login_required, logout_user, current_user
+from functools import wraps
 
 from app import app, db, translate
 from app.models import User, Product, Notification
@@ -13,6 +14,16 @@ import trackers
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+# Admin only decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash("Admin access required", "danger")
+            return redirect(url_for('home'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Routes
 @app.route('/')
@@ -1062,4 +1073,82 @@ def resend_verification():
         traceback.print_exc()
         flash(translate('error_occurred'), 'danger')
         return redirect(url_for('home'))
+
+@app.route('/admin/email_test', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_email_test():
+    if request.method == 'POST':
+        try:
+            recipient = request.form.get('recipient')
+            subject = request.form.get('subject', 'Admin Test Email')
+            message_body = request.form.get('message', 'This is a test email from the admin panel.')
+            
+            # Validate inputs
+            if not recipient:
+                flash("Recipient email is required", "danger")
+                return render_template('admin_email_test.html', now=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                
+            # Email settings
+            sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
+            password = os.environ.get("MAIL_PASSWORD", "")
+            
+            # Server settings
+            mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+            mail_port = int(os.environ.get("MAIL_PORT", 587))
+            mail_use_tls = os.environ.get("MAIL_USE_TLS", "True").lower() in ['true', '1', 't', 'yes', 'y']
+            mail_use_ssl = os.environ.get("MAIL_USE_SSL", "False").lower() in ['true', '1', 't', 'yes', 'y']
+            
+            # Create message
+            message = MIMEMultipart()
+            message["Subject"] = subject
+            message["From"] = sender_email
+            message["To"] = recipient
+            
+            # Replace placeholder for current time
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            message_body = message_body.replace('{{ now }}', current_time)
+            
+            # Explicitly use UTF-8 for message content
+            message.attach(MIMEText(message_body, "plain", "utf-8"))
+            
+            # Create secure context
+            context = ssl.create_default_context()
+            
+            # Log details for debugging
+            print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
+            print(f"Sending email to {recipient}")
+            
+            # Send email with appropriate method
+            if mail_use_ssl:
+                print("Using SSL connection...")
+                with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
+                    print("Logging in...")
+                    server.login(sender_email, password)
+                    print("Sending email...")
+                    server.sendmail(sender_email, recipient, message.as_string())
+                    print("Email sent successfully!")
+            else:
+                print("Using TLS connection...")
+                with smtplib.SMTP(mail_server, mail_port) as server:
+                    server.ehlo()
+                    print("Starting TLS...")
+                    server.starttls(context=context)
+                    server.ehlo()
+                    print("Logging in...")
+                    server.login(sender_email, password)
+                    print("Sending email...")
+                    server.sendmail(sender_email, recipient, message.as_string())
+                    print("Email sent successfully!")
+            
+            flash("Test email sent successfully!", "success")
+            
+        except Exception as e:
+            import traceback
+            print(f"Error sending email: {e}")
+            traceback.print_exc()
+            flash(f"Error sending email: {str(e)}", "danger")
+    
+    # Always pass the current time for the template
+    return render_template('admin_email_test.html', now=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
