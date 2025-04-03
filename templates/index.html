@@ -911,7 +911,10 @@
             <div class="col-12">
                 <div class="empty-state">
                     <div class="empty-state-animation mb-4">
-                        <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_qm8eqzim.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: 0 auto;" loop autoplay></lottie-player>
+                        <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_qm8eqzim.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: 0 auto;" loop autoplay>
+                            <!-- Fallback image if Lottie fails to load -->
+                            <img src="{{ url_for('static', filename='img/empty-cart.svg') }}" alt="No products" style="width: 150px; height: 150px; margin: 0 auto; display: block;">
+                        </lottie-player>
                     </div>
                     
                     <h3 class="empty-state-title">{{ translate('no_products_yet') }}</h3>
@@ -957,7 +960,7 @@
             </div>
             
             <!-- Load Lottie Animation Library -->
-            <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+            <script src="{{ url_for('static', filename='js/lottie-player.min.js') }}"></script>
         {% endif %}
     </div>
 
