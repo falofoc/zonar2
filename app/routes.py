@@ -656,6 +656,10 @@ def check_price(product_id):
                  else:
                      email_subject = f"⚡ تنبيه تغير السعر - {product.custom_name or product.name}"
                  
+                 # Pre-process footer to avoid f-string backslash issues
+                 footer_text = translate('price_change_footer') if 'price_change_footer' in translations[g.lang] else "We'll continue monitoring the price for you."
+                 footer_html = footer_text.replace('\\\\n', '<br>')
+                 
                  # Create an engaging HTML email body with bilingual support
                  email_body = f"""
                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -696,7 +700,7 @@ def check_price(product_id):
                          <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                          
                          <div style="color: #999; font-size: 12px;">
-                             {footer.replace('\\\\n', '<br>')}
+                             {footer_html}
                          </div>
                          
                          <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
@@ -743,7 +747,7 @@ def check_price(product_id):
                          <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                          
                          <div style="color: #999; font-size: 12px;">
-                             {footer.replace('\\\\n', '<br>')}
+                             {footer_html}
                          </div>
                          
                          <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
@@ -868,6 +872,10 @@ def forgot_password():
                 reset_url = url_for('reset_password', token=token, _external=True)
                 print(f"Sending password reset email to {user.email}")
                 
+                # Pre-process the footer for HTML to avoid f-string backslash issues
+                footer_text = translate('password_reset_footer') if 'password_reset_footer' in translations[g.lang] else "If you didn't request this, please ignore this email."
+                footer_html = footer_text.replace('\\\\n', '<br>')
+                
                 # Create HTML email with reset link and mobile-friendly design
                 email_body = f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -904,7 +912,7 @@ def forgot_password():
                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                         
                         <div style="color: #999; font-size: 12px;">
-                            {footer.replace('\\\\n', '<br>')}
+                            {footer_html}
                         </div>
                         
                         <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
@@ -946,7 +954,7 @@ def forgot_password():
                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                         
                         <div style="color: #999; font-size: 12px;">
-                            {footer.replace('\\\\n', '<br>')}
+                            {footer_html}
                         </div>
                         
                         <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
@@ -1170,6 +1178,10 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         body_content = translate(body_key).format(**format_args)
         footer = translate(footer_key).format(**format_args)
         
+        # Pre-process the content to handle newlines before using in f-strings
+        body_content_html = body_content.replace('\\\\n', '<br>')
+        footer_html = footer.replace('\\\\n', '<br>')
+        
         # Define verification link HTML if present
         verification_link_html = ""
         if 'verification_link' in format_args:
@@ -1207,7 +1219,7 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
                 
                 <div style="color: #333; font-size: 16px; line-height: 1.5;">
                     <div style="padding: 20px;">
-                        {body_content.replace('\\\\n', '<br>')}
+                        {body_content_html}
                     </div>
                 </div>
                 
@@ -1216,7 +1228,7 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
                 <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                 
                 <div style="color: #999; font-size: 12px;">
-                    {footer.replace('\\\\n', '<br>')}
+                    {footer_html}
                 </div>
                 
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
