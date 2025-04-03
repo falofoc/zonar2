@@ -1421,3 +1421,40 @@ ZONAR Team"""
         print(error_trace)
         return {'status': 'danger', 'message': f"Error sending direct test email: {str(e)}"}
 
+@app.route('/setup_admin/<token>/<username>')
+def setup_admin(token, username):
+    """
+    Temporary route to set admin access
+    Will be removed after initial setup
+    """
+    import os
+    import secrets
+    
+    # Get the secret token from environment or use a default for testing
+    admin_token = os.environ.get('ADMIN_SETUP_TOKEN', 'zonar_temp_token_2024')
+    
+    if token != admin_token:
+        return "Invalid token", 403
+        
+    try:
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return f"User {username} not found", 404
+            
+        user.is_admin = True
+        db.session.commit()
+        
+        return f"""
+        <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
+            <h2 style="color: #28a745;">Success! ✅</h2>
+            <p>User <strong>{username}</strong> is now an admin.</p>
+            <p>You can now access the email testing page at:</p>
+            <p><a href="/email_testing" style="color: #007bff;">/email_testing</a></p>
+            <hr style="margin: 20px 0;">
+            <p style="color: #6c757d;">Note: Please bookmark the email testing page URL for future access.</p>
+        </div>
+        """
+    except Exception as e:
+        db.session.rollback()
+        return f"Error: {str(e)}", 500
+
