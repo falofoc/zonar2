@@ -260,20 +260,43 @@ def add_product():
             print("URL is required but was not provided")
             return jsonify({'success': False, 'error': translate('url_required')})
         
-        # Support for shortened Amazon URLs (amzn.eu)
-        if url.startswith('https://amzn.eu/'):
+        # Handle shortened Amazon URLs
+        import requests
+        
+        # First, clean the URL (remove spaces, etc.)
+        url = url.strip()
+        
+        # Check for shortened Amazon URLs
+        shortened_url_patterns = [
+            'amzn.eu', 'amzn.to', 'amzn.com', 
+            'amazon.sa/dp/', 'amazon.sa/gp/', 'amazon.sa/s?'
+        ]
+        
+        is_shortened = any(pattern in url for pattern in shortened_url_patterns)
+        
+        # If it's a shortened URL, follow redirects to get the full URL
+        if is_shortened:
             try:
-                import requests
-                # Follow the redirect to get the full amazon.sa URL
-                response = requests.head(url, allow_redirects=True)
-                url = response.url
-                print(f"Shortened URL expanded to: {url}")
+                print(f"Expanding shortened URL: {url}")
+                # Set a user agent to avoid being blocked
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                response = requests.head(url, headers=headers, allow_redirects=True)
+                if response.status_code == 200:
+                    url = response.url
+                    print(f"Expanded URL: {url}")
+                else:
+                    print(f"Failed to expand URL: Status code {response.status_code}")
             except Exception as e:
                 print(f"Error expanding shortened URL: {str(e)}")
-                return jsonify({'success': False, 'error': translate('invalid_url')})
+                # Continue with original URL if expansion fails
         
-        # Validate Amazon.sa URL
-        if not url.startswith('https://www.amazon.sa'):
+        # Validate that it's an Amazon.sa URL after expansion
+        valid_amazon_domains = ['amazon.sa', 'www.amazon.sa']
+        is_valid_amazon = any(domain in url for domain in valid_amazon_domains)
+        
+        if not is_valid_amazon:
             print(f"Invalid URL: {url} - not from amazon.sa")
             return jsonify({'success': False, 'error': translate('invalid_url')})
         
@@ -911,7 +934,7 @@ def forgot_password():
                 flash(message, 'success')
             
             # Redirect back to forgot password page after POST
-            return redirect(url_for('forgot_password'))
+            return redirect(url_for('forgot_password')) 
         
         # Render template for GET request
         return render_template('forgot_password.html', unread_count=0)
