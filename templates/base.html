@@ -963,7 +963,7 @@
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{{ 'dark-theme' if g.theme == 'dark' else '' }}">
+<body class="{{ 'dark-theme' if g.theme == 'dark' else '' }} {{ 'user-authenticated' if current_user.is_authenticated else '' }}">
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <!-- Navbar brand / home button - Use BUTTON instead of anchor -->

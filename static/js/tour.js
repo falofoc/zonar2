@@ -3,8 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if this is the user's first visit (or if they requested the tour)
     const showTour = localStorage.getItem('zonar_show_tour') === 'true' || new URLSearchParams(window.location.search).has('tour');
     
-    // Only show tour on main page
-    if (!showTour || !document.querySelector('.main-content')) {
+    // Only show tour on main page for authenticated users
+    const isAuthenticated = document.body.classList.contains('user-authenticated');
+    if (!showTour || !document.querySelector('.main-content') || !isAuthenticated) {
         return;
     }
     
@@ -17,7 +18,8 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             classes: 'shepherd-theme-arrows custom-shepherd-theme',
             scrollTo: true,
-            modalOverlayOpeningRadius: 4
+            modalOverlayOpeningRadius: 4,
+            highlightClass: 'shepherd-highlight'
         },
         exitOnEsc: true,
         keyboardNavigation: true

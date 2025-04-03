@@ -146,15 +146,25 @@
 
 /* Highlighted elements */
 .shepherd-target {
-    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.3);
+    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.3) !important;
     animation: pulse 2s infinite;
-    z-index: 9000;
+    z-index: 9000 !important;
     position: relative;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    outline: 3px solid var(--shepherd-highlight) !important;
+}
+
+.shepherd-highlight {
+    box-shadow: 0 0 0 6px rgba(255, 107, 0, 0.5) !important;
+    z-index: 9500 !important;
+    position: relative !important;
+    outline: 3px solid var(--shepherd-highlight) !important;
 }
 
 @keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.4);
+        box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.6);
     }
     70% {
         box-shadow: 0 0 0 10px rgba(255, 107, 0, 0);
