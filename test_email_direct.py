@@ -1,50 +1,76 @@
-import smtplib, ssl
+import smtplib
+import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import os
+from datetime import datetime
 
-# Email settings (hardcoded for testing)
-sender_email = "zoonarcom@gmail.com"
-password = "vnmlzqhuvwktbucj"  # App password
-receiver_email = "zoonarcom@gmail.com"  # Send to yourself for testing
+def test_email(connection_type='ssl'):
+    try:
+        # Email settings
+        sender_email = "zoonarcom@gmail.com"
+        receiver_email = "zoonarcom@gmail.com"  # Change this to your email
+        password = "vnml zqhu vwkt bucj"  # App password
+        
+        # Create message
+        message = MIMEMultipart()
+        timestamp = datetime.utcnow().isoformat()
+        message["Subject"] = f"ZONAR Email Test ({connection_type.upper()}) - {timestamp}"
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        
+        # Create body with Arabic test
+        body = f"""
+        Test Email from ZONAR
+        ---------------------
+        Connection Type: {connection_type.upper()}
+        Time: {timestamp}
+        
+        Arabic Test: مرحباً بكم في تطبيق زونار
+        
+        If you receive this email, the {connection_type.upper()} connection is working correctly.
+        """
+        
+        message.attach(MIMEText(body, "plain", "utf-8"))
+        
+        # Create secure context
+        context = ssl.create_default_context()
+        
+        if connection_type.lower() == 'ssl':
+            # Use SSL on port 465
+            print("Testing SSL connection (Port 465)...")
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+                print("Logging in...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully via SSL!")
+        else:
+            # Use TLS on port 587
+            print("Testing TLS connection (Port 587)...")
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                print("Starting TLS...")
+                server.starttls(context=context)
+                print("Logging in...")
+                server.login(sender_email, password)
+                print("Sending email...")
+                server.sendmail(sender_email, receiver_email, message.as_string())
+                print("Email sent successfully via TLS!")
+                
+        return True
+        
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
-# Create message
-message = MIMEMultipart()
-message["Subject"] = "Test Email from Zonar Direct Script"
-message["From"] = sender_email
-message["To"] = receiver_email
-
-# Create body
-body = """Hello,
-
-This is a test email from a direct Python script.
-If you received this email, it means your email credentials are working correctly.
-
-Best regards,
-ZONAR Team"""
-
-message.attach(MIMEText(body, "plain"))
-
-try:
-    # Create a secure SSL context
-    context = ssl.create_default_context()
+if __name__ == "__main__":
+    print("Testing SSL connection...")
+    ssl_result = test_email('ssl')
+    print("\nTesting TLS connection...")
+    tls_result = test_email('tls')
     
-    # Connect to Gmail SMTP server using SSL
-    print("Connecting to Gmail using SSL on port 465...")
-    server = smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context)
-    print("Connected to Gmail")
-    
-    # Login
-    print("Logging in...")
-    server.login(sender_email, password)
-    print("Login successful")
-    
-    # Send email
-    print("Sending email...")
-    server.sendmail(sender_email, receiver_email, message.as_string())
-    print("Email sent successfully!")
-    
-    # Close connection
-    server.quit()
-    
-except Exception as e:
-    print(f"Error sending email: {e}") 
+    print("\nTest Results:")
+    print(f"SSL Test: {'✅ Passed' if ssl_result else '❌ Failed'}")
+    print(f"TLS Test: {'✅ Passed' if tls_result else '❌ Failed'}") 
