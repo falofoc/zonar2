@@ -147,18 +147,7 @@ translations = {
         'verification_required': 'Please verify your email to receive notifications. Check your inbox or request a new verification email.',
         'verification_resent': 'A new verification email has been sent. Please check your inbox.',
         'email_already_verified': 'Your email is already verified.',
-        'resend_verification': 'Resend Verification Email',
-        'admin_email_test': 'Admin Email Test',
-        'admin_email_description': 'This page is only accessible to administrators. Use it to test the email functionality with custom recipients and content.',
-        'recipient_email': 'Recipient Email',
-        'email_subject': 'Subject',
-        'email_message': 'Message',
-        'email_config': 'Email Configuration',
-        'send_test_email': 'Send Test Email',
-        'back_to_dashboard': 'Back to Dashboard',
-        'admin_tools': 'Admin Tools',
-        'email_testing_tool': 'Email Testing Tool',
-        'test_email_description': 'Test email functionality with custom recipients and content.'
+        'resend_verification': 'Resend Verification Email'
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -331,17 +320,6 @@ translations = {
         'verification_required': 'يرجى التحقق من بريدك الإلكتروني لتلقي الإشعارات. تحقق من صندوق الوارد الخاص بك أو اطلب بريد تحقق جديد.',
         'verification_resent': 'تم إرسال بريد تحقق جديد. يرجى التحقق من صندوق الوارد الخاص بك.',
         'email_already_verified': 'تم التحقق من بريدك الإلكتروني بالفعل.',
-        'resend_verification': 'إعادة إرسال بريد التحقق',
-        'admin_email_test': 'اختبار البريد الإلكتروني للمسؤول',
-        'admin_email_description': 'هذه الصفحة متاحة فقط للمسؤولين. استخدمها لاختبار وظيفة البريد الإلكتروني مع مستلمين ومحتوى مخصص.',
-        'recipient_email': 'البريد الإلكتروني للمستلم',
-        'email_subject': 'الموضوع',
-        'email_message': 'الرسالة',
-        'email_config': 'إعدادات البريد الإلكتروني',
-        'send_test_email': 'إرسال بريد إلكتروني للاختبار',
-        'back_to_dashboard': 'العودة إلى لوحة التحكم',
-        'admin_tools': 'أدوات المسؤول',
-        'email_testing_tool': 'أداة اختبار البريد الإلكتروني',
-        'test_email_description': 'اختبار وظيفة البريد الإلكتروني مع مستلمين ومحتوى مخصص.'
+        'resend_verification': 'إعادة إرسال بريد التحقق'
     }
 } 
