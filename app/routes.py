@@ -1230,9 +1230,9 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         print(f"Preparing localized HTML email for {user.email} (Lang: {lang}) - Subject: {subject}")
         
         # Create plain text version as fallback
-        plain_text = f"{greeting}\n\n{body_content}\n\n{footer}"
+        plain_text = f"{greeting}" + "\n\n" + f"{body_content}" + "\n\n" + f"{footer}"
         if 'verification_link' in format_args:
-            plain_text += f"\n\n{translate('verify_email_link')}: {format_args['verification_link']}"
+            plain_text += "\n\n" + f"{translate('verify_email_link')}: {format_args['verification_link']}"
         
         # Use the central send_email function
         return send_email(user.email, subject, plain_text, html_body)
