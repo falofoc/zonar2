@@ -126,7 +126,16 @@ translations = {
         'reset_password_instructions': 'Enter the new password below.',
         'send_reset_link': 'Send Reset Link',
         'back_to_login': 'Back to Login',
-        'test_email': 'Test Email'
+        'test_email': 'Test Email',
+        'welcome_email_subject': 'Welcome to ZONAR - Price Tracking Made Easy',
+        'welcome_email_greeting': 'Hello {username},',
+        'welcome_email_body': 'Thank you for registering with ZONAR! Your account has been created successfully.\n\nWith ZONAR, you can track prices of products on Amazon.sa and get notified when prices drop. Start by adding your first product to track.',
+        'welcome_email_footer': 'Best regards,\nThe ZONAR Team',
+        
+        'tracking_email_subject': 'Product Tracking Started - {product_name}',
+        'tracking_email_greeting': 'Hello {username},',
+        'tracking_email_body': 'You have started tracking the price of "{product_name}" at {current_price} SAR.\n\nWe will notify you of any price changes according to your notification preferences.',
+        'tracking_email_footer': 'Best regards,\nThe ZONAR Team'
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -278,6 +287,15 @@ translations = {
         'reset_password_instructions': 'أدخل كلمة المرور الجديدة أدناه.',
         'send_reset_link': 'إرسال رابط إعادة التعيين',
         'back_to_login': 'العودة إلى تسجيل الدخول',
-        'test_email': 'اختبار البريد'
+        'test_email': 'اختبار البريد',
+        'welcome_email_subject': 'مرحباً بك في زونار - تتبع الأسعار بسهولة',
+        'welcome_email_greeting': 'مرحباً {username}،',
+        'welcome_email_body': 'شكراً لتسجيلك في زونار! تم إنشاء حسابك بنجاح.\n\nمع زونار، يمكنك تتبع أسعار المنتجات على أمازون السعودية والحصول على إشعارات عند انخفاض الأسعار. ابدأ بإضافة أول منتج للتتبع.',
+        'welcome_email_footer': 'مع أطيب التحيات،\nفريق زونار',
+        
+        'tracking_email_subject': 'بدأ تتبع المنتج - {product_name}',
+        'tracking_email_greeting': 'مرحباً {username}،',
+        'tracking_email_body': 'لقد بدأت بتتبع سعر "{product_name}" بسعر {current_price} ريال.\n\nسنقوم بإشعارك بأي تغييرات في السعر وفقاً لتفضيلات الإشعارات الخاصة بك.',
+        'tracking_email_footer': 'مع أطيب التحيات،\nفريق زونار'
     }
 } 

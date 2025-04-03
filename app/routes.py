@@ -10,6 +10,9 @@ from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db, translate
 from app.models import User, Product, Notification
 import trackers
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Routes
 @app.route('/')
@@ -170,6 +173,16 @@ def signup():
                 db.session.commit()
                 print("User saved to database successfully")
                 
+                # Send welcome email
+                print(f"Sending welcome email to {email}")
+                send_localized_email(
+                    user,
+                    subject_key="welcome_email_subject",
+                    greeting_key="welcome_email_greeting",
+                    body_key="welcome_email_body",
+                    footer_key="welcome_email_footer"
+                )
+                
                 print("Logging in new user")
                 login_user(user)
                 print("User logged in, redirecting to home")
@@ -273,6 +286,19 @@ def add_product():
             
             db.session.add(product)
             db.session.commit()
+            
+            # Send email about product tracking
+            product_name = custom_name or product_data['name']
+            print(f"Sending tracking started email for product {product_name} to {current_user.email}")
+            send_localized_email(
+                current_user,
+                subject_key="tracking_email_subject",
+                greeting_key="tracking_email_greeting",
+                body_key="tracking_email_body",
+                footer_key="tracking_email_footer",
+                product_name=product_name,
+                current_price=product_data['price']
+            )
             
             message = translate('product_added_success').format(product_name=custom_name or product_data['name'])
             print(f"Product added successfully: {message}")
@@ -543,10 +569,25 @@ def toggle_tracking(product_id):
         product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
         
         # Toggle tracking status
+        previous_status = product.tracking_enabled
         product.tracking_enabled = not product.tracking_enabled
         
         # Save changes
         db.session.commit()
+        
+        # Send email if tracking was just enabled
+        if not previous_status and product.tracking_enabled:
+            print(f"Sending tracking started email for product {product.id} to {current_user.email}")
+            product_name = product.custom_name or product.name
+            send_localized_email(
+                current_user,
+                subject_key="tracking_email_subject",
+                greeting_key="tracking_email_greeting",
+                body_key="tracking_email_body",
+                footer_key="tracking_email_footer",
+                product_name=product_name,
+                current_price=product.current_price
+            )
         
         # Return JSON response for AJAX
         return jsonify({
@@ -808,4 +849,74 @@ ZONAR Team"""
         flash(f"Error sending email: {str(e)}", "danger")
         print(f"Email error: {e}")
     return redirect(url_for("settings"))
+
+def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, **format_args):
+    """
+    Send an email to a user with localized content based on their language preference
+    
+    Args:
+        user: The user object (must have email and language attributes)
+        subject_key: Translation key for the subject
+        greeting_key: Translation key for the greeting
+        body_key: Translation key for the body
+        footer_key: Translation key for the footer
+        **format_args: Format arguments to be used in the translations
+    """
+    try:
+        import smtplib, ssl
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import os
+        from translations import translations
+        
+        # Determine the user's language
+        user_lang = getattr(user, 'language', 'ar')  # Default to Arabic if not set
+        if user_lang not in ['ar', 'en']:
+            user_lang = 'ar'  # Default to Arabic if invalid language
+        
+        # Get email settings from environment
+        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
+        password = os.environ.get("MAIL_PASSWORD", "vnmlzqhuvwktbucj")
+        receiver_email = user.email
+        
+        # Get translated content
+        subject = translations[user_lang].get(subject_key, translations['en'].get(subject_key, ""))
+        greeting = translations[user_lang].get(greeting_key, translations['en'].get(greeting_key, ""))
+        body = translations[user_lang].get(body_key, translations['en'].get(body_key, ""))
+        footer = translations[user_lang].get(footer_key, translations['en'].get(footer_key, ""))
+        
+        # Format with provided arguments
+        if format_args:
+            if "{username}" in greeting:
+                greeting = greeting.format(username=user.username, **format_args)
+            if any(f"{{{arg}}}" in body for arg in format_args):
+                body = body.format(**format_args)
+            if any(f"{{{arg}}}" in subject for arg in format_args):
+                subject = subject.format(**format_args)
+        
+        # Create message
+        message = MIMEMultipart()
+        message["Subject"] = subject
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        
+        # Combine all parts
+        email_content = f"{greeting}\n\n{body}\n\n{footer}"
+        message.attach(MIMEText(email_content, "plain"))
+        
+        # Create a secure SSL context
+        context = ssl.create_default_context()
+        
+        # Connect to Gmail SMTP server
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+            # Log in
+            server.login(sender_email, password)
+            # Send email
+            server.sendmail(sender_email, receiver_email, message.as_string())
+        
+        print(f"Localized email sent to {user.email} in {user_lang}")
+        return True
+    except Exception as e:
+        print(f"Error sending localized email: {e}")
+        return False
 
