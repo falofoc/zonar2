@@ -10,6 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     
+    <!-- Shepherd.js for Tour Guide -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tour.css') }}">
+    
     <!-- Force language debug info -->
     <script>
       console.log("Current language: {{ g.lang }}");
@@ -1058,6 +1062,11 @@
                         <a href="{{ url_for('settings') }}" class="nav-icon-btn ms-2" title="{{ translate('settings') }}">
                             <i class="bi bi-gear"></i>
                         </a>
+                        
+                        <!-- Tour Guide Button -->
+                        <button class="nav-icon-btn ms-2 tour-button" id="startTour" title="{{ translate('tour_guide') or 'Tour Guide' }}" onclick="localStorage.setItem('zonar_show_tour', 'true'); window.location.href='/?tour'">
+                            <i class="bi bi-info-circle"></i>
+                        </button>
                             
                         <!-- Sign-out Button (Logged In Only) -->
                         <form id="logout-form" action="{{ url_for('logout') }}" method="GET" style="display: inline;">
@@ -1508,6 +1517,10 @@
 
     </script>
     {% block extra_js %}{% endblock %}
+
+    <!-- Tour Guide Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
 
     <!-- Removed FAB HTML -->
 

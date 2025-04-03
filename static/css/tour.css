@@ -1,0 +1,204 @@
+/* ZONAR Tour Guide Styles */
+
+/* Custom theme for Shepherd */
+.custom-shepherd-theme {
+    --shepherd-bg: var(--card-bg, #FFFFFF);
+    --shepherd-text: var(--text-primary, #2D3436);
+    --shepherd-border: var(--border-color, rgba(255, 107, 0, 0.15));
+    --shepherd-highlight: var(--primary-color, #FF6B00);
+    --shepherd-highlight-hover: var(--primary-hover, #FF4500);
+    --shepherd-shadow: var(--shadow-lg, 0 10px 15px rgba(255, 107, 0, 0.15));
+}
+
+/* Base Tour Step Styles */
+.shepherd-element {
+    background-color: var(--shepherd-bg);
+    color: var(--shepherd-text);
+    border-radius: var(--border-radius-lg, 0.75rem);
+    border: 1px solid var(--shepherd-border);
+    box-shadow: var(--shepherd-shadow);
+    font-family: inherit;
+    max-width: 400px;
+    z-index: 9999;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+/* RTL Support */
+[dir="rtl"] .shepherd-element {
+    text-align: right;
+}
+
+/* Header styling */
+.shepherd-header {
+    background: linear-gradient(135deg, var(--primary-color, #FF6B00), var(--primary-hover, #FF4500));
+    color: white;
+    padding: 1rem;
+    border-radius: var(--border-radius-lg, 0.75rem) var(--border-radius-lg, 0.75rem) 0 0;
+}
+
+.shepherd-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    padding-right: 2rem;
+}
+
+[dir="rtl"] .shepherd-title {
+    padding-right: 0;
+    padding-left: 2rem;
+}
+
+/* Close button styling */
+.shepherd-cancel-icon {
+    color: white;
+    font-size: 1.5rem;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+[dir="rtl"] .shepherd-cancel-icon {
+    right: auto;
+    left: 1rem;
+}
+
+.shepherd-cancel-icon:hover {
+    opacity: 1;
+}
+
+/* Content area styling */
+.shepherd-text {
+    padding: 1.5rem;
+    line-height: 1.5;
+    font-size: 1rem;
+}
+
+/* Button area styling */
+.shepherd-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 1.5rem 1.5rem;
+}
+
+[dir="rtl"] .shepherd-footer {
+    justify-content: flex-start;
+}
+
+/* Button styling */
+.shepherd-button {
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--border-radius, 0.5rem);
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-left: 0.5rem;
+    border: none;
+}
+
+[dir="rtl"] .shepherd-button {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+.shepherd-button-primary {
+    background: var(--shepherd-highlight);
+    color: white;
+}
+
+.shepherd-button-primary:hover {
+    background: var(--shepherd-highlight-hover);
+}
+
+.shepherd-button-secondary {
+    background: transparent;
+    color: var(--shepherd-highlight);
+    border: 1px solid var(--shepherd-highlight);
+}
+
+.shepherd-button-secondary:hover {
+    background: rgba(255, 107, 0, 0.05);
+}
+
+/* Modal overlay */
+.shepherd-modal-overlay-container {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Arrow styling */
+.shepherd-arrow {
+    border-width: 8px;
+}
+
+.shepherd-arrow:before {
+    display: none;
+}
+
+/* Highlighted elements */
+.shepherd-target {
+    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.3);
+    animation: pulse 2s infinite;
+    z-index: 9000;
+    position: relative;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 107, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 0, 0);
+    }
+}
+
+/* Tour button in navbar */
+.tour-button {
+    color: var(--primary-color, #FF6B00);
+    background: transparent;
+    border: 1px solid var(--border-color, rgba(255, 107, 0, 0.15));
+    border-radius: var(--border-radius, 0.5rem);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.3s;
+}
+
+.tour-button:hover {
+    background: var(--brand-orange-100, #FFF0E6);
+    transform: translateY(-2px);
+}
+
+.tour-button i {
+    font-size: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .shepherd-element {
+        max-width: 90%;
+    }
+    
+    .shepherd-text {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .shepherd-footer {
+        padding: 0 1rem 1rem;
+    }
+} 
