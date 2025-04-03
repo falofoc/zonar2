@@ -1475,239 +1475,30 @@
     // Theme toggle functionality (Updated icon logic)
     function toggleTheme() {
         const body = document.body;
-        const themeToggle = document.getElementById('themeToggle');
-        const icon = themeToggle.querySelector('i');
         const isDarkTheme = body.classList.contains('dark-theme');
         
-        // Toggle dark theme class
+        // Log for debugging
+        console.log('toggleTheme called, current theme:', isDarkTheme ? 'dark' : 'light');
+        
+        // Toggle dark theme class immediately
         if (isDarkTheme) {
             // Switch to light theme
             body.classList.remove('dark-theme');
-            icon.classList.remove('bi-sun-fill');
-            icon.classList.add('bi-moon-stars'); // Moon for light theme
+            document.documentElement.setAttribute('data-theme', 'light');
             updateTheme('light'); // Save theme preference
         } else {
             // Switch to dark theme
             body.classList.add('dark-theme');
-            icon.classList.remove('bi-moon-stars');
-            icon.classList.add('bi-sun-fill'); // Sun for dark theme
+            document.documentElement.setAttribute('data-theme', 'dark');
             updateTheme('dark'); // Save theme preference
         }
         
-        // Log for debugging
-        console.log('Theme toggled to:', isDarkTheme ? 'light' : 'dark');
-    }
-
-    // Additional script to ensure all links work properly
-    window.addEventListener('load', function() {
-        // Direct fix for home logo
-        document.querySelector('.navbar-brand').addEventListener('click', function(e) {
-            e.preventDefault();
-            window.location.href = '/';
-        });
-        
-        // Fix for notifications dropdown
-        const notificationBtn = document.querySelector('.dropdown .nav-icon-btn[title="{{ translate("notifications") }}"]');
-        if (notificationBtn) {
-            notificationBtn.onclick = function(e) {
-                e.stopPropagation();
-                // Bootstrap will handle the dropdown, we just need to stop event bubbling
-            };
-        }
-        
-        // Fix for add product button
-        const addProductBtn = document.querySelector('.nav-icon-btn[title="{{ translate("add_product") }}"]');
-        if (addProductBtn) {
-            addProductBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                // Let Bootstrap handle the modal
-            });
-        }
-        
-        // Fix for theme toggle
-        const themeToggleBtn = document.getElementById('themeToggle');
-        if (themeToggleBtn) {
-            themeToggleBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleTheme();
-            });
-        }
-        
-        // Add Product Form Submission Handler
-        const addProductSubmitBtn = document.getElementById('add-product-btn');
-        if (addProductSubmitBtn) {
-            addProductSubmitBtn.addEventListener('click', function() {
-                // Get the form and error display element
-                const form = document.getElementById('add-product-form');
-                const errorDisplay = document.getElementById('add-product-error');
-                const spinner = addProductSubmitBtn.querySelector('.spinner-border');
-                
-                // Show spinner and disable button during request
-                spinner.classList.remove('d-none');
-                addProductSubmitBtn.disabled = true;
-                
-                // Clear previous errors
-                errorDisplay.classList.add('d-none');
-                errorDisplay.textContent = '';
-                
-                // Get form data
-                const formData = new FormData(form);
-                
-                // Submit the form via AJAX
-                fetch('/add_product', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Hide spinner
-                    spinner.classList.add('d-none');
-                    addProductSubmitBtn.disabled = false;
-                    
-                    if (data.success) {
-                        // Success! Show toast and reload the page
-                        if (typeof showToast === 'function') {
-                            showToast('success', data.message);
-                        } else {
-                            alert(data.message);
-                        }
-                        
-                        // Close modal and reload page
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
-                        if (modal) {
-                            modal.hide();
-                        }
-                        
-                        // Reload the page after a short delay
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    } else {
-                        // Error - display the error message
-                        errorDisplay.textContent = data.error;
-                        errorDisplay.classList.remove('d-none');
-                    }
-                })
-                .catch(error => {
-                    // Network or other error
-                    console.error('Add product error:', error);
-                    spinner.classList.add('d-none');
-                    addProductSubmitBtn.disabled = false;
-                    errorDisplay.textContent = 'An unexpected error occurred. Please try again.';
-                    errorDisplay.classList.remove('d-none');
-                });
-            });
-        }
-    });
-
-    // Function to get CSRF token (ensure it's defined)
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    // Function to refresh price (keep as is, styling updated via CSS)
-    function refreshPrice(productId) {
-        const button = event.currentTarget;
-        const icon = button.querySelector('i');
-        
-        icon.classList.remove('bi-arrow-repeat');
-        icon.classList.add('bi-arrow-clockwise'); // Use clockwise for active refresh
-        icon.style.animation = 'spin 1s linear infinite';
-        button.disabled = true;
-        
-        fetch(`/check_price/${productId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrf_token')
-            },
-            credentials: 'same-origin'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('success', data.message || 'Price refresh initiated!');
-                // Consider updating just the price field instead of full reload
-                setTimeout(() => window.location.reload(), 1500); // Reload after delay
-            } else {
-                showToast('error', data.error || 'Failed to refresh price');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('error', 'Failed to refresh price');
-        })
-        .finally(() => {
-            icon.style.animation = '';
-            icon.classList.remove('bi-arrow-clockwise');
-            icon.classList.add('bi-arrow-repeat'); // Reset icon
-            button.disabled = false;
-        });
-    }
-
-    // Function to show toast notifications (Updated style)
-    function showToast(type, message) {
-        const toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) return;
-        const iconClass = type === 'success' ? 'bi-check-circle-fill' :
-                          type === 'danger' || type === 'error' ? 'bi-exclamation-triangle-fill' :
-                          type === 'warning' ? 'bi-exclamation-triangle-fill' :
-                          'bi-info-circle-fill';
-        const bgClass = type === 'error' ? 'bg-danger' : `bg-${type}`;
-
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white ${bgClass} border-0 mb-2`;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        toast.setAttribute('aria-atomic', 'true');
-        toast.dataset.bsDelay = 5000; // 5 second duration
-        
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body d-flex align-items-center">
-                    <i class="${iconClass} me-2 fs-5"></i>
-                    <span>${message}</span>
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        `;
-        
-        toastContainer.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-        
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
+        // Update icon immediately
+        updateThemeIcon();
     }
 
     function updateTheme(theme) {
-        // Set theme class on body element
-        const body = document.body;
-        
-        if (theme === 'dark') {
-            body.classList.add('dark-theme');
-        } else {
-            body.classList.remove('dark-theme');
-        }
-        
-        // Set theme attribute on HTML for CSS variables
-        document.documentElement.setAttribute('data-theme', theme);
+        console.log('Saving theme preference:', theme);
         
         // Send theme preference to server to update in database
         fetch('/change_theme', {
@@ -1721,30 +1512,38 @@
         .then(response => response.json())
         .then(data => {
             console.log('Theme preference saved:', theme);
+            
+            // Set the cookie immediately as a fallback
+            document.cookie = `theme=${theme};path=/;max-age=31536000`;
         })
         .catch(error => {
             console.error('Error updating theme:', error);
             // Fallback: Set theme cookie directly
             document.cookie = `theme=${theme};path=/;max-age=31536000`;
         });
-        
-        // Update theme icon
-        updateThemeIcon();
     }
     
     function updateThemeIcon() {
         const body = document.body;
         const themeToggle = document.getElementById('themeToggle');
-        if (!themeToggle) return;
+        if (!themeToggle) {
+            console.error('Theme toggle button not found');
+            return;
+        }
         
         const icon = themeToggle.querySelector('i');
-        if (!icon) return;
+        if (!icon) {
+            console.error('Icon element not found in theme toggle button');
+            return;
+        }
         
-        // Clear existing classes
+        const isDarkTheme = body.classList.contains('dark-theme');
+        console.log('Updating icon for theme:', isDarkTheme ? 'dark' : 'light');
+        
+        // Clear existing classes and set the new one
         icon.className = 'bi';
         
-        // Set appropriate icon based on current theme
-        if (body.classList.contains('dark-theme')) {
+        if (isDarkTheme) {
             icon.classList.add('bi-sun-fill'); // Sun icon for dark theme
         } else {
             icon.classList.add('bi-moon-stars'); // Moon icon for light theme
@@ -1916,6 +1715,204 @@
         
         // Other initializations can go here
     });
+
+    // Additional script to ensure all links work properly
+    window.addEventListener('load', function() {
+        // Direct fix for home logo
+        document.querySelector('.navbar-brand').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/';
+        });
+        
+        // Fix for notifications dropdown
+        const notificationBtn = document.querySelector('.dropdown .nav-icon-btn[title="{{ translate("notifications") }}"]');
+        if (notificationBtn) {
+            notificationBtn.onclick = function(e) {
+                e.stopPropagation();
+                // Bootstrap will handle the dropdown, we just need to stop event bubbling
+            };
+        }
+        
+        // Fix for add product button
+        const addProductBtn = document.querySelector('.nav-icon-btn[title="{{ translate("add_product") }}"]');
+        if (addProductBtn) {
+            addProductBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Let Bootstrap handle the modal
+            });
+        }
+        
+        // Fix for theme toggle
+        const themeToggleBtn = document.getElementById('themeToggle');
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleTheme();
+            });
+        }
+        
+        // Add Product Form Submission Handler
+        const addProductSubmitBtn = document.getElementById('add-product-btn');
+        if (addProductSubmitBtn) {
+            addProductSubmitBtn.addEventListener('click', function() {
+                // Get the form and error display element
+                const form = document.getElementById('add-product-form');
+                const errorDisplay = document.getElementById('add-product-error');
+                const spinner = addProductSubmitBtn.querySelector('.spinner-border');
+                
+                // Show spinner and disable button during request
+                spinner.classList.remove('d-none');
+                addProductSubmitBtn.disabled = true;
+                
+                // Clear previous errors
+                errorDisplay.classList.add('d-none');
+                errorDisplay.textContent = '';
+                
+                // Get form data
+                const formData = new FormData(form);
+                
+                // Submit the form via AJAX
+                fetch('/add_product', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide spinner
+                    spinner.classList.add('d-none');
+                    addProductSubmitBtn.disabled = false;
+                    
+                    if (data.success) {
+                        // Success! Show toast and reload the page
+                        if (typeof showToast === 'function') {
+                            showToast('success', data.message);
+                        } else {
+                            alert(data.message);
+                        }
+                        
+                        // Close modal and reload page
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                        
+                        // Reload the page after a short delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        // Error - display the error message
+                        errorDisplay.textContent = data.error;
+                        errorDisplay.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    // Network or other error
+                    console.error('Add product error:', error);
+                    spinner.classList.add('d-none');
+                    addProductSubmitBtn.disabled = false;
+                    errorDisplay.textContent = 'An unexpected error occurred. Please try again.';
+                    errorDisplay.classList.remove('d-none');
+                });
+            });
+        }
+    });
+
+    // Function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Function to refresh price
+    function refreshPrice(productId) {
+        const button = event.currentTarget;
+        const icon = button.querySelector('i');
+        
+        icon.classList.remove('bi-arrow-repeat');
+        icon.classList.add('bi-arrow-clockwise'); // Use clockwise for active refresh
+        icon.style.animation = 'spin 1s linear infinite';
+        button.disabled = true;
+        
+        fetch(`/check_price/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrf_token')
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('success', data.message || 'Price refresh initiated!');
+                // Consider updating just the price field instead of full reload
+                setTimeout(() => window.location.reload(), 1500); // Reload after delay
+            } else {
+                showToast('error', data.error || 'Failed to refresh price');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('error', 'Failed to refresh price');
+        })
+        .finally(() => {
+            icon.style.animation = '';
+            icon.classList.remove('bi-arrow-clockwise');
+            icon.classList.add('bi-arrow-repeat'); // Reset icon
+            button.disabled = false;
+        });
+    }
+
+    // Function to show toast notifications
+    function showToast(type, message) {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) return;
+        const iconClass = type === 'success' ? 'bi-check-circle-fill' :
+                          type === 'danger' || type === 'error' ? 'bi-exclamation-triangle-fill' :
+                          type === 'warning' ? 'bi-exclamation-triangle-fill' :
+                          'bi-info-circle-fill';
+        const bgClass = type === 'error' ? 'bg-danger' : `bg-${type}`;
+
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white ${bgClass} border-0 mb-2`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        toast.dataset.bsDelay = 5000; // 5 second duration
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="${iconClass} me-2 fs-5"></i>
+                    <span>${message}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
 
     </script>
     {% block extra_js %}{% endblock %}
