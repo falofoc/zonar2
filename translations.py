@@ -177,9 +177,7 @@ translations = {
         'tour_button_skip': 'Skip Tour',
         'tour_button_next': 'Next',
         'tour_button_back': 'Back',
-        'tour_button_finish': 'Finish',
-        'invalid_url': 'Invalid Amazon.sa URL. Please make sure the URL starts with https://www.amazon.sa or https://amzn.eu/',
-        'url_expansion_error': 'Error processing the shortened URL. Please try using the full Amazon.sa URL instead.'
+        'tour_button_finish': 'Finish'
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -260,7 +258,7 @@ translations = {
         'not_found': 'لم يتم العثور على الصفحة المطلوبة.',
         'method_not_allowed': 'الطريقة غير مسموح بها للرابط المطلوب.',
         'url_required': 'يرجى إدخال رابط المنتج',
-        'invalid_url': 'رابط أمازون السعودية غير صالح. يرجى التأكد من أن الرابط يبدأ بـ https://www.amazon.sa أو https://amzn.eu/',
+        'invalid_url': 'رابط أمازون غير صحيح. يرجى التأكد من استخدام رابط من موقع أمازون السعودية',
         'product_exists': 'هذا المنتج موجود بالفعل في قائمة التتبع الخاصة بك',
         'fetch_error': 'تعذر الحصول على بيانات المنتج. يرجى التأكد من صحة الرابط والمحاولة مرة أخرى.',
         'price_not_found': 'تعذر العثور على سعر المنتج. يرجى التأكد من صحة الرابط والمحاولة مرة أخرى.',
@@ -382,7 +380,6 @@ translations = {
         'tour_button_skip': 'إغلاق',
         'tour_button_next': 'التالي',
         'tour_button_back': 'السابق',
-        'tour_button_finish': 'إنهاء',
-        'url_expansion_error': 'حدث خطأ في معالجة الرابط المختصر. يرجى استخدام رابط أمازون السعودية الكامل بدلاً من ذلك.'
+        'tour_button_finish': 'إنهاء'
     }
 } 

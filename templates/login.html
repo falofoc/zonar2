@@ -109,53 +109,63 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 5rem;">
+<div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
-            <div class="auth-card">
-                <div class="auth-card-header">
-                    <h3 class="auth-card-title">{{ translate('login') }}</h3>
-                </div>
-                <div class="auth-card-body">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="card-title text-center mb-4" style="color: #FF6B00;">{{ translate('login') }}</h2>
+                    
+                    <!-- Flash messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
-                    
-                    <form id="loginForm" method="POST">
+
+                    <!-- Login Form -->
+                    <form method="POST" action="{{ url_for('login') }}" id="login-form">
                         <div class="mb-3">
                             <label for="username" class="form-label">{{ translate('username') }}</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
+                            <input type="text" class="form-control" id="username" name="username" required>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">{{ translate('password') }}</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <div class="text-end mt-1">
-                                <a href="{{ url_for('forgot_password') }}" class="auth-link small">{{ translate('forgot_password') }}</a>
-                            </div>
+                            <input type="password" class="form-control" id="password" name="password" required>
                         </div>
-                        <div class="mb-3 form-check form-switch">
+                        <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="remember" name="remember">
                             <label class="form-check-label" for="remember">{{ translate('remember_me') }}</label>
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="auth-btn" id="loginButton">
-                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                                <i class="bi bi-box-arrow-in-right me-2"></i>{{ translate('login') }}
-                            </button>
-                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">{{ translate('login') }}</button>
                     </form>
-                    <div class="text-center mt-4">
-                        <p>{{ translate('no_account') }} <a href="{{ url_for('signup') }}" class="auth-link">{{ translate('signup') }}</a></p>
+
+                    <div class="text-center mb-3">
+                        <a href="{{ url_for('forgot_password') }}">{{ translate('forgot_password') }}</a>
+                    </div>
+
+                    <!-- Separator -->
+                    <div class="text-center mt-3 mb-3 d-flex align-items-center">
+                        <hr class="flex-grow-1">
+                        <span class="mx-2 text-muted">{{ translate('or') }}</span>
+                        <hr class="flex-grow-1">
+                    </div>
+
+                    <!-- Firebase Google Sign-In Button -->
+                    <button id="google-signin-btn" class="btn btn-light border w-100 mb-3">
+                        <img src="https://www.google.com/favicon.ico" alt="Google" style="width: 18px; margin-right: 8px;">
+                        {{ translate('login_with_google') }}
+                    </button>
+                    
+                    <!-- Add other Firebase providers here if needed (e.g., Apple) -->
+
+                    <div class="text-center mt-3">
+                        <p>{{ translate('no_account') }} <a href="{{ url_for('register') }}">{{ translate('register_here') }}</a></p>
                     </div>
                 </div>
             </div>
@@ -163,66 +173,8 @@
     </div>
 </div>
 
-<script>
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const form = this;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const spinner = submitBtn.querySelector('.spinner-border');
-    
-    // Disable submit button and show loading state
-    submitBtn.disabled = true;
-    spinner.classList.remove('d-none');
-    
-    const formData = new FormData(form);
-    
-    fetch('/login', {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (response.redirected) {
-            window.location.href = response.url;
-        } else if (response.ok) {
-            return response.json().then(data => {
-                if (data.success) {
-                    window.location.href = data.redirect || '/';
-                } else {
-                    showError(form, data.message || 'Invalid username or password');
-                }
-            });
-        } else {
-            return response.json().then(data => {
-                showError(form, data.message || 'An error occurred. Please try again.');
-            }).catch(() => {
-                window.location.href = '/';
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showError(form, 'An error occurred. Please try again.');
-    })
-    .finally(() => {
-        // Re-enable submit button
-        submitBtn.disabled = false;
-        spinner.classList.add('d-none');
-    });
-});
+<!-- Include Firebase SDKs -->
+<script type="module" src="{{ url_for('static', filename='js/firebase-init.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/firebase-auth.js') }}"></script>
 
-function showError(form, message) {
-    let alert = form.querySelector('.alert-danger');
-    if (!alert) {
-        alert = document.createElement('div');
-        alert.className = 'alert alert-danger mt-3';
-        form.insertBefore(alert, form.firstChild);
-    }
-    alert.textContent = message;
-    alert.classList.remove('d-none');
-}
-</script>
 {% endblock %} 

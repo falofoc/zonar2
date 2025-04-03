@@ -10,7 +10,9 @@ from flask_cors import CORS  # Add CORS support
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
-from flask_mail import Mail
+from flask_mail import Mail, Message
+import firebase_admin
+from firebase_admin import credentials, auth
 
 # Load environment variables
 load_dotenv()
@@ -46,6 +48,7 @@ app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'False').lower() in 
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', None)
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', None)
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', None)
+app.config['MAIL_DEBUG'] = os.environ.get('MAIL_DEBUG', 'false').lower() == 'true' # Log email sending errors
 
 # Security settings with improved session handling
 app.config.update(
@@ -165,6 +168,17 @@ def before_request():
     g.is_english = (g.lang == 'en')
     print(f"CURRENT STATE: AR={g.is_arabic}, EN={g.is_english}")
 
+    # Fetch unread notifications count for authenticated users
+    if current_user.is_authenticated:
+        try:
+            unread_count = Notification.query.filter_by(user_id=current_user.id, read=False).count()
+        except Exception as e:
+            print(f"Error fetching notification count: {e}")
+            unread_count = 0 # Default to 0 on error
+        g.unread_count = unread_count
+    else:
+        g.unread_count = 0
+
 # Now import the rest of the app components
 try:
     from . import models, routes
@@ -192,4 +206,108 @@ with app.app_context():
 @login_manager.user_loader
 def load_user(id):
     from app.models import User
-    return User.query.get(int(id)) 
+    return User.query.get(int(id))
+
+def create_app():
+    load_dotenv() # Load environment variables from .env file
+
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'a_very_secret_key' # Replace with a strong secret key
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+    
+    # Mail Configuration
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in ('true', '1', 't')
+    app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'false').lower() in ('true', '1', 't')
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_DEBUG'] = os.environ.get('MAIL_DEBUG', 'false').lower() == 'true' # Log email sending errors
+    
+    # Ensure necessary email variables are set
+    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
+        print("WARNING: MAIL_USERNAME or MAIL_PASSWORD environment variables are not set. Email features may not work.")
+
+    # Firebase Admin SDK Initialization
+    try:
+        # Path to your service account key file (from environment variable)
+        cred_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        if cred_path:
+            if os.path.exists(cred_path):
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+                print("Firebase Admin SDK initialized successfully using service account file.")
+            else:
+                print(f"WARNING: Service account key file not found at path specified in GOOGLE_APPLICATION_CREDENTIALS: {cred_path}")
+                print("Firebase Admin SDK will not be initialized.")
+        else:
+            print("WARNING: GOOGLE_APPLICATION_CREDENTIALS environment variable not set.")
+            print("Firebase Admin SDK will not be initialized.")
+    except Exception as e:
+        print(f"ERROR initializing Firebase Admin SDK: {e}")
+        print(traceback.format_exc())
+
+    # Initialize extensions
+    db.init_app(app)
+    migrate = Migrate(app, db)
+    login_manager = LoginManager(app)
+    CORS(app) # Enable CORS for all routes
+    mail = Mail(app)
+
+    login_manager.login_view = 'login' # Redirect to login page if user is not logged in
+    login_manager.login_message = translations['en']['login_required_message'] # Default message
+    login_manager.login_message_category = 'info'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    @app.before_request
+    def before_request():
+        g.lang = request.accept_languages.best_match(['en', 'ar']) or 'ar' # Default to Arabic
+        if current_user.is_authenticated and hasattr(current_user, 'language') and current_user.language:
+            g.lang = current_user.language
+            
+        # Fetch unread notifications count for authenticated users
+        if current_user.is_authenticated:
+            try:
+                unread_count = Notification.query.filter_by(user_id=current_user.id, read=False).count()
+            except Exception as e:
+                print(f"Error fetching notification count: {e}")
+                unread_count = 0 # Default to 0 on error
+            g.unread_count = unread_count
+        else:
+            g.unread_count = 0
+
+    @app.context_processor
+    def inject_global_vars():
+        return {
+            'translate': lambda key: translations.get(g.lang, translations['ar']).get(key, key),
+            'current_lang': g.lang,
+            'unread_count': getattr(g, 'unread_count', 0), # Provide default value
+            'GOOGLE_CLIENT_ID': os.environ.get('GOOGLE_CLIENT_ID') # Make Google Client ID available
+        }
+
+    # Register routes
+    from . import routes
+    app.register_blueprint(routes.bp)
+
+    # Initialize scheduler if not already initialized
+    if not scheduler.running:
+        print("Initializing scheduler...")
+        try:
+            scheduler.init_app(app)
+            scheduler.start()
+            print("Scheduler started successfully.")
+        except Exception as e:
+            print(f"Error initializing or starting scheduler: {e}")
+            print(traceback.format_exc())
+    else:
+        print("Scheduler is already running.")
+
+    return app
+
+# Initialize extensions globally for use in routes etc.
+mail = Mail() 
