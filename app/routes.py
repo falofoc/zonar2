@@ -22,72 +22,238 @@ import time
 def home():
     try:
         if current_user.is_authenticated:
-            # Check for flash messages in session
-            if 'flash_message' in session:
-                flash_data = session.pop('flash_message')
-                flash(flash_data['message'], flash_data['category'])
-            
-            # Show email verification reminder if email is not verified
-            if not current_user.email_verified:
-                flash(translate('verification_required'), 'warning')
-            
-            # Get search query
-            search_query = request.args.get('search', '').strip()
-            
-            # Get page number from query parameters, default to 1
-            page = request.args.get('page', 1, type=int)
-            per_page = 5  # Number of products per page
-            
-            # Base query for user's products
-            print(f"Querying products for user ID: {current_user.id}")
-            query = Product.query.filter_by(user_id=current_user.id)
-            
-            # Apply search if query exists
-            if search_query:
-                search_term = f"%{search_query}%"
-                query = query.filter(
-                    db.or_(
-                        Product.name.ilike(search_term),
-                        Product.custom_name.ilike(search_term)
-                    )
+            # Redirect to user's dashboard
+            return redirect(url_for('user_dashboard'))
+        else:
+            # Redirect to public home page
+            return redirect(url_for('public_home'))
+    except Exception as e:
+        print(f"Error in home route: {e}")
+        traceback.print_exc()
+        return redirect(url_for('login'))
+
+@app.route('/public_home')
+def public_home():
+    try:
+        # Get search query
+        search_query = request.args.get('search', '').strip()
+        
+        # Get page number and set items per page
+        page = request.args.get('page', 1, type=int)
+        per_page = 10  # Maximum 10 products per page as requested
+        
+        # Get sorting parameter
+        sort_by = request.args.get('sort_by', 'discount')  # Default sort by discount
+        
+        # Base query for all products
+        query = Product.query
+        
+        # Apply search if query exists
+        if search_query:
+            search_term = f"%{search_query}%"
+            query = query.filter(
+                db.or_(
+                    Product.name.ilike(search_term),
+                    Product.custom_name.ilike(search_term)
                 )
+            )
+        
+        # Apply sorting
+        if sort_by == 'price_low':
+            query = query.order_by(Product.current_price.asc())
+        elif sort_by == 'price_high':
+            query = query.order_by(Product.current_price.desc())
+        elif sort_by == 'newest':
+            query = query.order_by(Product.created_at.desc())
+        else:  # Default: sort by discount percentage (requires special handling)
+            # We need to get all products to calculate discount
+            all_products = query.all()
             
-            # Order by creation date (newest first) and paginate
-            products = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+            # Calculate discount percentage for each product
+            products_with_discount = []
+            for product in all_products:
+                price_history = json.loads(product.price_history)
+                
+                # Filter out duplicates where price didn't change
+                unique_prices = []
+                last_price = None
+                for entry in price_history:
+                    if last_price != entry['price']:
+                        unique_prices.append(entry)
+                        last_price = entry['price']
+                
+                # If we have at least 2 price points
+                if len(unique_prices) >= 2:
+                    # Sort by date, newest first
+                    sorted_history = sorted(unique_prices, key=lambda x: x['date'], reverse=True)
+                    
+                    # Get current and previous prices
+                    current_price = product.current_price
+                    highest_price = max(entry['price'] for entry in price_history)
+                    
+                    # Calculate discount percentage
+                    if highest_price > current_price:
+                        discount_percent = ((highest_price - current_price) / highest_price) * 100
+                    else:
+                        discount_percent = 0
+                    
+                    products_with_discount.append((product, discount_percent))
+                else:
+                    products_with_discount.append((product, 0))  # No discount
             
-            # Log product count for debugging
-            product_count = query.count()
-            print(f"Found {product_count} products for user {current_user.id}")
+            # Sort by discount percentage (highest first)
+            products_with_discount.sort(key=lambda x: x[1], reverse=True)
             
-            # For empty state message
-            has_products = product_count > 0
-            print(f"User has products: {has_products}")
+            # Extract just the products in sorted order
+            sorted_products = [p[0] for p in products_with_discount]
             
-            # Get notifications
+            # Manual pagination
+            total_products = len(sorted_products)
+            total_pages = (total_products + per_page - 1) // per_page
+            start_idx = (page - 1) * per_page
+            end_idx = min(start_idx + per_page, total_products)
+            
+            paginated_products = sorted_products[start_idx:end_idx]
+            
+            # Get any unread notifications for authenticated user
+            unread_count = 0
+            if current_user.is_authenticated:
+                notifications = Notification.query.filter_by(
+                    user_id=current_user.id, 
+                    read=False
+                ).all()
+                unread_count = len(notifications)
+            else:
+                notifications = []
+            
+            # Create a pagination object for template compatibility
+            class Pagination:
+                def __init__(self, items, page, per_page, total):
+                    self.items = items
+                    self.page = page
+                    self.per_page = per_page
+                    self.total = total
+                    self.pages = total_pages
+                
+                def iter_pages(self, left_edge=2, left_current=2, right_current=3, right_edge=2):
+                    last = 0
+                    for num in range(1, self.pages + 1):
+                        if (num <= left_edge or
+                            (num > self.page - left_current - 1 and num < self.page + right_current) or
+                            num > self.pages - right_edge):
+                            if last + 1 != num:
+                                yield None
+                            yield num
+                            last = num
+            
+            pagination = Pagination(paginated_products, page, per_page, total_products)
+            
+            return render_template(
+                'public_home.html',
+                products=pagination,
+                notifications=notifications,
+                search_query=search_query,
+                unread_count=unread_count,
+                sort_by=sort_by,
+                email_verified=current_user.is_authenticated and current_user.email_verified,
+                has_products=total_products > 0
+            )
+        
+        # For non-discount sorting, use standard SQLAlchemy pagination
+        products = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        # Get unread notifications for authenticated users
+        unread_count = 0
+        if current_user.is_authenticated:
             notifications = Notification.query.filter_by(
                 user_id=current_user.id, 
                 read=False
             ).order_by(Notification.created_at.desc()).all()
-            
-            # Get unread count
             unread_count = len(notifications)
-            
-            return render_template(
-                'index.html',
-                products=products,
-                notifications=notifications,
-                search_query=search_query,
-                unread_count=unread_count,
-                email_verified=current_user.email_verified,
-                has_products=has_products
-            )
         else:
-            # For non-authenticated users show login page with proper language support
-            print("User not authenticated, showing login page")
-            return redirect(url_for('login'))
+            notifications = []
+        
+        return render_template(
+            'public_home.html',
+            products=products,
+            notifications=notifications,
+            search_query=search_query,
+            unread_count=unread_count,
+            sort_by=sort_by,
+            email_verified=current_user.is_authenticated and current_user.email_verified,
+            has_products=products.total > 0
+        )
     except Exception as e:
-        print(f"Error in home route: {e}")
-        traceback.print_exc()  # Add full traceback for better debugging
+        print(f"Error in public_home route: {e}")
+        traceback.print_exc()
+        return redirect(url_for('login'))
+
+@app.route('/dashboard')
+@login_required
+def user_dashboard():
+    try:
+        # Check for flash messages in session
+        if 'flash_message' in session:
+            flash_data = session.pop('flash_message')
+            flash(flash_data['message'], flash_data['category'])
+        
+        # Show email verification reminder if email is not verified
+        if not current_user.email_verified:
+            flash(translate('verification_required'), 'warning')
+        
+        # Get search query
+        search_query = request.args.get('search', '').strip()
+        
+        # Get page number from query parameters, default to 1
+        page = request.args.get('page', 1, type=int)
+        per_page = 5  # Number of products per page
+        
+        # Base query for user's products
+        print(f"Querying products for user ID: {current_user.id}")
+        query = Product.query.filter_by(user_id=current_user.id)
+        
+        # Apply search if query exists
+        if search_query:
+            search_term = f"%{search_query}%"
+            query = query.filter(
+                db.or_(
+                    Product.name.ilike(search_term),
+                    Product.custom_name.ilike(search_term)
+                )
+            )
+        
+        # Order by creation date (newest first) and paginate
+        products = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+        
+        # Log product count for debugging
+        product_count = query.count()
+        print(f"Found {product_count} products for user {current_user.id}")
+        
+        # For empty state message
+        has_products = product_count > 0
+        print(f"User has products: {has_products}")
+        
+        # Get notifications
+        notifications = Notification.query.filter_by(
+            user_id=current_user.id, 
+            read=False
+        ).order_by(Notification.created_at.desc()).all()
+        
+        # Get unread count
+        unread_count = len(notifications)
+        
+        return render_template(
+            'index.html',
+            products=products,
+            notifications=notifications,
+            search_query=search_query,
+            unread_count=unread_count,
+            email_verified=current_user.email_verified,
+            has_products=has_products
+        )
+    except Exception as e:
+        print(f"Error in user_dashboard route: {e}")
+        traceback.print_exc()
         return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
