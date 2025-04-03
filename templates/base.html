@@ -1103,6 +1103,325 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
         }
+        
+        /* Enhanced Creative Empty State */
+        .empty-state-container {
+            background: linear-gradient(135deg, #fff5e6, #ffffff);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 107, 0, 0.1);
+            padding: 3rem 2rem;
+            margin: 3rem auto;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dark-theme .empty-state-container {
+            background: linear-gradient(135deg, #2a2a2a, #323232);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .empty-state-animation {
+            height: 200px;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .rocket-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .rocket {
+            position: absolute;
+            width: 80px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            animation: rocket-float 4s ease-in-out infinite;
+        }
+        
+        .rocket-body {
+            height: 80px;
+            width: 40px;
+            background: linear-gradient(135deg, #FF6B00, #FF9800);
+            border-radius: 50% 50% 0 0;
+            position: relative;
+            margin: 0 auto;
+        }
+        
+        .window {
+            height: 15px;
+            width: 15px;
+            background-color: #FFECB3;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .rocket-fin {
+            position: absolute;
+            height: 25px;
+            width: 15px;
+            background-color: #FF6B00;
+            bottom: 0;
+        }
+        
+        .rocket-fin-left {
+            left: -15px;
+            border-radius: 0 0 0 100%;
+        }
+        
+        .rocket-fin-right {
+            right: -15px;
+            border-radius: 0 0 100% 0;
+        }
+        
+        .rocket-flames {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+        }
+        
+        .flame {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 30px;
+            background: linear-gradient(to top, #FF9800, transparent);
+            border-radius: 50% 50% 20% 20%;
+            animation: flicker 0.5s infinite alternate;
+        }
+        
+        .flame:nth-child(2) {
+            width: 15px;
+            height: 25px;
+            left: 40%;
+            animation-delay: 0.1s;
+        }
+        
+        .flame:nth-child(3) {
+            width: 15px;
+            height: 25px;
+            left: 60%;
+            animation-delay: 0.2s;
+        }
+        
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        .star1 {
+            width: 4px;
+            height: 4px;
+            top: 20%;
+            left: 20%;
+        }
+        
+        .star2 {
+            width: 6px;
+            height: 6px;
+            top: 30%;
+            left: 70%;
+            animation-delay: 0.5s;
+        }
+        
+        .star3 {
+            width: 3px;
+            height: 3px;
+            top: 70%;
+            left: 25%;
+            animation-delay: 1s;
+        }
+        
+        .star4 {
+            width: 5px;
+            height: 5px;
+            top: 40%;
+            left: 90%;
+            animation-delay: 1.5s;
+        }
+        
+        .star5 {
+            width: 4px;
+            height: 4px;
+            top: 80%;
+            left: 80%;
+            animation-delay: 2s;
+        }
+        
+        .empty-state-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .empty-state-title {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.5;
+        }
+        
+        .empty-state-features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .feature {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 150px;
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FF9800, #FF6B00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 16px rgba(255, 107, 0, 0.2);
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .feature-text {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .add-first-product-btn {
+            background: linear-gradient(135deg, #FF6B00, #FF9800);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(255, 107, 0, 0.3);
+            margin-bottom: 1.5rem;
+        }
+        
+        .add-first-product-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(255, 107, 0, 0.4);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        .sample-product {
+            margin-top: 2rem;
+            opacity: 0.8;
+        }
+        
+        .sample-tip {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .sample-tip a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        /* Animations */
+        @keyframes rocket-float {
+            0%, 100% {
+                transform: translate(-50%, -50%);
+            }
+            50% {
+                transform: translate(-50%, -60%);
+            }
+        }
+        
+        @keyframes flicker {
+            0%, 100% {
+                opacity: 1;
+                height: 30px;
+            }
+            50% {
+                opacity: 0.8;
+                height: 25px;
+            }
+        }
+        
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 107, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 0, 0);
+            }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .empty-state-container {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state-title {
+                font-size: 1.8rem;
+            }
+            
+            .empty-state-features {
+                gap: 1rem;
+            }
+            
+            .feature-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
 
     </style>
     {% block extra_css %}{% endblock %}
