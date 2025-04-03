@@ -392,6 +392,17 @@
         margin-right: 0;
     }
     
+    .empty-state-icon {
+        display: inline-block;
+        width: 120px;
+        height: 120px;
+        line-height: 120px;
+        border-radius: 50%;
+        background: rgba(255, 107, 0, 0.1);
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+    }
+    
     .benefit-card {
         background: rgba(255, 107, 0, 0.05);
         border-radius: var(--border-radius);
@@ -716,7 +727,7 @@
     </div>
 
     <div class="row mt-4">
-        {% if products %}
+        {% if has_products %}
             {% for product in products %}
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="product-card">
@@ -908,18 +919,15 @@
             </div>
             {% endfor %}
         {% else %}
-            <div class="col-12">
-                <div class="empty-state">
-                    <div class="empty-state-animation mb-4">
-                        <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_qm8eqzim.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: 0 auto;" loop autoplay>
-                            <!-- Fallback image if Lottie fails to load -->
-                            <img src="{{ url_for('static', filename='img/empty-cart.svg') }}" alt="No products" style="width: 150px; height: 150px; margin: 0 auto; display: block;">
-                        </lottie-player>
+            <div class="col-12 mt-4">
+                <div class="empty-state py-5">
+                    <div class="empty-state-icon mb-4">
+                        <i class="bi bi-cart text-primary" style="font-size: 5rem;"></i>
                     </div>
                     
-                    <h3 class="empty-state-title">{{ translate('no_products_yet') }}</h3>
+                    <h3 class="empty-state-title mb-3">{{ translate('no_products_yet') }}</h3>
                     
-                    <p class="empty-state-text">{{ translate('start_tracking_message') }}</p>
+                    <p class="empty-state-text mb-4">{{ translate('start_tracking_message') }}</p>
                     
                     <div class="empty-state-benefits mb-4">
                         <div class="row justify-content-center">
@@ -946,7 +954,7 @@
                     
                     <div class="mt-4">
                         <button class="add-product-btn" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                            <i class="bi bi-plus-circle"></i>{{ translate('add_first_product') }}
+                            <i class="bi bi-plus-circle me-2"></i>{{ translate('add_first_product') }}
                         </button>
                     </div>
                     
@@ -958,9 +966,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Load Lottie Animation Library -->
-            <script src="{{ url_for('static', filename='js/lottie-player.min.js') }}"></script>
         {% endif %}
     </div>
 

@@ -58,6 +58,10 @@ def home():
             product_count = query.count()
             print(f"Found {product_count} products for user {current_user.id}")
             
+            # For empty state message
+            has_products = product_count > 0
+            print(f"User has products: {has_products}")
+            
             # Get notifications
             notifications = Notification.query.filter_by(
                 user_id=current_user.id, 
@@ -73,7 +77,8 @@ def home():
                 notifications=notifications,
                 search_query=search_query,
                 unread_count=unread_count,
-                email_verified=current_user.email_verified
+                email_verified=current_user.email_verified,
+                has_products=has_products
             )
         else:
             # For non-authenticated users show login page with proper language support
@@ -192,7 +197,7 @@ def signup():
                 
                 # Send verification email using the refactored function
                 verification_link = url_for('verify_email', token=verification_token, _external=True)
-                print(f"Sending verification email to {email} with link: {verification_link}")
+                print(f"Sending verification email to {email}")
                 send_localized_email(
                     user,
                     subject_key="verification_email_subject",
@@ -1123,45 +1128,17 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         return False
 
 @app.route('/verify_email/<token>')
-@app.route('/verify_email', methods=['GET'])
-def verify_email(token=None):
+def verify_email(token):
     try:
-        # Get token either from path parameter or query parameter
-        if token is None:
-            token = request.args.get('token')
-            
-        if not token:
-            flash(translate('verification_failed'), 'danger')
-            return redirect(url_for('home'))
-            
-        # Clean up token (handle potential URL encoding issues)
-        token = token.strip()
-        
-        # Try base64 decoding if the token appears to be base64 encoded
-        import base64
-        try:
-            if '+' in token or '/' in token or '=' in token:
-                # This might be base64 encoded - try to decode
-                decoded_token = base64.urlsafe_b64decode(token.encode()).decode()
-                print(f"Decoded token: {decoded_token}")
-                # If decoding succeeded, use the decoded token
-                token = decoded_token
-        except Exception as decode_error:
-            print(f"Not a valid base64 token, proceeding with original: {decode_error}")
-            # Not base64, continue with original token
-            pass
-                
         # Find user with this verification token
         user = User.query.filter_by(verification_token=token).first()
         
         if not user:
-            print(f"No user found with token: {token}")
             flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
         # Check if token is valid
         if not user.verify_verification_token(token):
-            print(f"Token validation failed for user: {user.username}")
             flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
@@ -1191,7 +1168,6 @@ def resend_verification():
         
         # Send verification email using the refactored function
         verification_link = url_for('verify_email', token=verification_token, _external=True)
-        print(f"Resending verification email to {current_user.email} with link: {verification_link}")
         send_localized_email(
             current_user,
             subject_key="verification_email_subject",
@@ -1398,8 +1374,8 @@ Testing Arabic characters: مرحباً بكم في تطبيق زونار
 def send_test_verification_email(receiver_email, language):
     """Send a test verification email"""
     try:
-        # Create a verification link with query parameter
-        verification_link = url_for('verify_email', token="test-verification-token", _external=True)
+        # Create a fake verification link
+        verification_link = url_for('home', _external=True) + "?test=verification"
         
         # Create a temporary user object for the send_localized_email function
         class TempUser:

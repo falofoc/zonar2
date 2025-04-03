@@ -1,26 +1,30 @@
 <!DOCTYPE html>
-<html lang="{{ g.lang }}" dir="{{ 'rtl' if g.lang == 'ar' else 'ltr' }}">
+<html lang="{{ 'ar' if g.lang == 'ar' else 'en' }}" dir="{{ 'rtl' if g.lang == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zonar - زونار</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <title>{{ translate('app_name') }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap RTL CSS for Arabic -->
+    {% if g.lang == 'ar' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% endif %}
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    
+    <!-- Lottie Player for animations -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Shepherd.js for Tour Guide -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tour.css') }}">
-    
-    <!-- Force language debug info -->
-    <script>
-      console.log("Current language: {{ g.lang }}");
-      console.log("Is Arabic: {{ g.is_arabic }}");
-      console.log("Direction: {{ 'rtl' if g.lang == 'ar' else 'ltr' }}");
-    </script>
-    
+    <!-- Custom CSS -->
     <style>
         /* Set direction and font directly in CSS for Arabic */
         {% if g.lang == 'ar' %}
@@ -572,161 +576,24 @@
             color: var(--text-primary);
             padding: 1rem 1.5rem;
         }
-        
-        /* Empty State Styles */
-        .empty-state {
-            background: var(--card-bg);
-            border-radius: var(--border-radius-lg);
-            padding: 2rem;
-            text-align: center;
-            box-shadow: var(--shadow);
-            margin: 2rem auto;
-            max-width: 800px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .empty-state-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        .empty-state-text {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .empty-state-benefits {
-            margin: 1.5rem 0;
-        }
-        
-        .benefit-card {
-            background: var(--bg-color);
-            border-radius: var(--border-radius);
-            padding: 1.25rem 1rem;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            height: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        .benefit-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow);
-        }
-        
-        .benefit-card i {
-            font-size: 2rem;
-            color: var(--primary-color);
-            margin-bottom: 0.75rem;
-        }
-        
-        .benefit-card h5 {
-            font-size: 1rem;
-            color: var(--text-primary);
-            margin: 0;
-        }
-        
-        .empty-state-help {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-        
-        .help-text {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .add-product-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .add-product-btn:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-        
-        .add-product-btn i {
-            font-size: 1.2rem;
-        }
-        
-        .version-badge {
-            display: inline-block;
-            background: var(--brand-orange-100);
-            color: var(--primary-color);
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--border-radius);
-            font-size: 0.8rem;
-            margin-top: 1rem;
-        }
-        
-        /* Ensure the animation player is responsive */
-        .empty-state-animation {
-            max-width: 250px;
-            margin: 0 auto 2rem;
-        }
-        
-        /* Mobile responsiveness for empty state */
-        @media (max-width: 768px) {
-            .empty-state {
-                padding: 1.5rem;
-                margin: 1rem auto;
-            }
-            
-            .empty-state-title {
-                font-size: 1.5rem;
-            }
-            
-            .empty-state-text {
-                font-size: 1rem;
-            }
-            
-            .benefit-card {
-                padding: 1rem 0.75rem;
-                margin-bottom: 1rem;
-            }
-            
-            .benefit-card i {
-                font-size: 1.75rem;
-            }
-        }
-        
         .modal-title {
             font-weight: 600;
         }
-        
         .modal-header .btn-close {
             filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
         }
-        
         .dark-theme .modal-header .btn-close {
-            filter: invert(1) grayscale(1) brightness(2);
+             filter: invert(1) grayscale(1) brightness(2);
         }
-        
         .modal-content {
             border-radius: var(--border-radius-lg);
             border: 1px solid var(--border-color);
             background-color: var(--card-bg);
             box-shadow: var(--shadow-lg);
         }
-        
         .modal-body {
             padding: 1.5rem;
         }
-        
         .modal-footer {
             background-color: var(--bg-color);
             border-top: 1px solid var(--border-color);
@@ -734,8 +601,526 @@
             border-bottom-left-radius: var(--border-radius);
             border-bottom-right-radius: var(--border-radius);
         }
+        .modal-footer .btn {
+             padding: 0.6rem 1.2rem;
+             font-size: 0.95rem;
+        }
+
+        /* Input group styling in modal */
+         .modal-body .input-group {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        .modal-body .input-group .input-group-text {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+        .modal-body .input-group .form-control {
+            border: none;
+            box-shadow: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: transparent;
+        }
+        .modal-body .input-group:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--brand-orange-100);
+        }
+        .dark-theme .modal-body .input-group {
+            border-color: rgba(255, 107, 0, 0.3);
+        }
+        .dark-theme .modal-body .input-group .form-control,
+        .dark-theme .modal-body .input-group .input-group-text {
+            color: var(--text-primary);
+        }
+
+        /* ... (rest of styles) ... */
+
+        /* Remove FAB styles */
+        /* .fab-add-product { ... } */
+
+        /* Fire-themed Loading Animation */
+        .spinner-border {
+            border-color: var(--primary-color);
+            border-right-color: transparent;
+        }
+
+        @keyframes fireSpinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notification Fire Animation */
+        .toast {
+            animation: slideInToast 0.3s ease-out;
+        }
+
+        @keyframes slideInToast {
+            from {
+                transform: translateX(100%);
+            opacity: 0;
+        }
+            to {
+                transform: translateX(0);
+            opacity: 1;
+        }
+        }
+
+        /* Fire-themed Button Hover Effect */
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        /* Update link colors */
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color var(--transition-base);
+        }
+
+        a:hover {
+            color: var(--primary-hover);
+        }
+
+        /* Update btn-info to use orange */
+        .btn-info {
+            background-color: var(--brand-orange-300);
+            border-color: var(--brand-orange-400);
+            color: var(--text-primary);
+        }
+
+        .btn-info:hover {
+            background-color: var(--brand-orange-400);
+            border-color: var(--brand-orange-500);
+            color: white;
+        }
+
+        /* Update text-info to use orange */
+        .text-info {
+            color: var(--primary-color) !important;
+        }
+
+        /* Update form focus states */
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+        }
+        
+        /* Update dropdown active states */
+        .dropdown-item.active,
+        .dropdown-item:active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Update nav-link active states */
+        .nav-link.active {
+            color: var(--primary-color);
+        }
+        
+        /* Update pagination */
+        .page-link {
+            color: var(--primary-color);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update list group active state */
+        .list-group-item.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update progress bars */
+        .progress-bar {
+            background-color: var(--primary-color);
+        }
+
+        /* Update alerts */
+        .alert-info {
+            background-color: var(--brand-orange-100);
+            border-color: var(--brand-orange-200);
+            color: var(--brand-orange-700);
+        }
+
+        /* Update badges */
+        .bg-info {
+            background-color: var(--primary-color) !important;
+        }
+
+        /* Update checkboxes and radios */
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update switches */
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Update input focus */
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+        }
+
+        /* Update accordion */
+        .accordion-button:not(.collapsed) {
+            color: var(--primary-color);
+            background-color: var(--brand-orange-100);
+        }
+
+        .accordion-button:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+        }
+
+        /* Update spinners */
+        .spinner-border.text-info {
+            color: var(--primary-color) !important;
+        }
+
+        /* Update tooltips */
+        .tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: var(--primary-color);
+        }
+
+        .tooltip-inner {
+            background-color: var(--primary-color);
+        }
+
+        /* Update popovers */
+        .popover {
+            border-color: var(--brand-orange-200);
+        }
+
+        .popover-header {
+            background-color: var(--brand-orange-100);
+            border-bottom-color: var(--brand-orange-200);
+        }
+
+        /* Dark theme adjustments */
+        .dark-theme {
+            --info-color: var(--brand-orange-400);
+            
+            .alert-info {
+                background-color: rgba(255, 107, 0, 0.1);
+            border-color: rgba(255, 107, 0, 0.2);
+                color: var(--brand-orange-300);
+            }
+            
+            .form-control:focus {
+                box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+            }
+        }
+
+        /* Custom styling for the close (X) button */
+        .btn-close {
+            filter: invert(56%) sepia(93%) saturate(1683%) hue-rotate(360deg) brightness(103%) contrast(105%) !important;
+            opacity: 0.8;
+            transition: opacity var(--transition-base);
+        }
+        
+        .btn-close:hover {
+            opacity: 1;
+            filter: invert(56%) sepia(93%) saturate(1683%) hue-rotate(360deg) brightness(103%) contrast(105%) !important;
+        }
+        
+        .dark-theme .btn-close {
+            filter: invert(56%) sepia(93%) saturate(1683%) hue-rotate(360deg) brightness(103%) contrast(105%) !important;
+            opacity: 0.8;
+        }
+        
+        /* Alert close button */
+        .alert .btn-close {
+            padding: 0.75rem;
+        }
+
+        /* Position close buttons on the left side */
+        .modal-header {
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+        
+        .modal-header .modal-title {
+            margin-right: auto;
+        }
+        
+        [dir="rtl"] .modal-header .modal-title {
+            margin-left: auto;
+            margin-right: 0;
+        }
+        
+        .alert-dismissible {
+            padding-right: var(--bs-alert-padding-x);
+            padding-left: calc(1.5em + var(--bs-alert-padding-x));
+        }
+        
+        .alert-dismissible .btn-close {
+            position: absolute;
+            left: 0;
+            right: auto;
+            padding: 1.25rem var(--bs-alert-padding-x);
+            transform: translateY(-50%);
+            top: 50%;
+        }
+        
+        [dir="rtl"] .alert-dismissible .btn-close {
+            right: 0;
+            left: auto;
+        }
+
+        /* Search Box Styling */
+        .search-container {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        /* Manual update prices button styling */
+        .btn-refresh {
+            background: var(--gradient-fire);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4em;
+        }
+
+        .btn-refresh:hover {
+            background: var(--gradient-sunset);
+            transform: scale(1.05);
+        }
+
+        .btn-refresh i {
+            font-size: 1.1em;
+        }
+
+        /* Form switch styling */
+        .form-check.form-switch {
+            padding-left: 2.5em;
+        }
+
+        [dir="rtl"] .form-check.form-switch {
+            padding-right: 2.5em;
+            padding-left: 0;
+        }
+
+        .form-switch .form-check-input {
+            width: 2.5em;
+            margin-left: -2.5em;
+            background-color: var(--brand-orange-200);
+            border-color: var(--brand-orange-300);
+        }
+
+        [dir="rtl"] .form-switch .form-check-input {
+            margin-right: -2.5em;
+            margin-left: 0;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-hover);
+        }
+
+        .form-switch .form-check-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Floating Action Button for mobile */
+        .floating-add-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #FF6B00, #FF9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
+            z-index: 999;
+            border: none;
+            font-size: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .floating-add-btn:hover, .floating-add-btn:focus {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 6px 16px rgba(255, 107, 0, 0.5);
+            color: white;
+        }
+        
+        .floating-add-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .floating-add-btn .version-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: white;
+            color: #FF6B00;
+            border-radius: 12px;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            line-height: 1;
+        }
+        
+        /* Show on mobile only */
+        @media (min-width: 992px) {
+            .floating-add-btn {
+                display: none;
+            }
+        }
+        
+        [dir="rtl"] .floating-add-btn {
+            right: auto;
+            left: 24px;
+        }
+        
+        /* Floating notification badge */
+        .floating-notification-btn {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: 48px;
+            height: 48px;
+            background: white;
+            color: #FF6B00;
+            border: 2px solid #FF6B00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            font-size: 1.3rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .floating-notification-btn:hover, .floating-notification-btn:focus {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+        }
+        
+        .floating-notification-btn .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            padding: 1px 5px;
+            line-height: 1.2;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        /* Show on mobile only */
+        @media (min-width: 992px) {
+            .floating-notification-btn {
+                display: none;
+            }
+        }
+        
+        [dir="rtl"] .floating-notification-btn {
+            left: auto;
+            right: 24px;
+        }
+        
+        /* Empty state message */
+        .empty-state-message {
+            background-color: var(--card-bg);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        
+        .empty-state-message h4 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .empty-state-message p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-state-message .btn {
+            background: linear-gradient(135deg, #FF6B00, #FF9800);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            transition: all 0.3s;
+        }
+        
+        .empty-state-message .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+        }
+
     </style>
     {% block extra_css %}{% endblock %}
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    
+    <!-- Lottie Player for animations -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="{{ 'dark-theme' if g.theme == 'dark' else '' }} {{ 'user-authenticated' if current_user.is_authenticated else '' }}">
     <nav class="navbar navbar-expand-lg">
