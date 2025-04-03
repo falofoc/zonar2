@@ -1180,7 +1180,7 @@ def verify_email(token):
         # البحث عن المستخدم بواسطة الرمز
         user = User.query.filter_by(verification_token=token).first()
         
-        # إذا كان الرمز غير صالح
+        # إذا كان الرمز غير صالح أو غير موجود
         if not user:
             print(f"No user found with verification token: {token[:10]}...")
             flash(translate('verification_failed'), 'danger')
@@ -1190,6 +1190,8 @@ def verify_email(token):
         
         # تفعيل البريد الإلكتروني بغض النظر عن صلاحية الرمز
         print(f"Email verification successful for user: {user.username}")
+        
+        # تحديث الحقول الضرورية لتفعيل البريد الإلكتروني
         user.email_verified = True
         user.verification_token = None
         user.verification_token_expiry = None
@@ -1197,6 +1199,8 @@ def verify_email(token):
         # تطبيق التغييرات في قاعدة البيانات
         try:
             db.session.commit()
+            
+            # إضافة رسالة نجاح التفعيل
             flash(translate('verification_success'), 'success')
             
             # إذا لم يكن المستخدم مسجل دخوله، قم بتسجيل دخوله تلقائيًا
@@ -1204,12 +1208,15 @@ def verify_email(token):
                 login_user(user)
                 flash(translate('logged_in_after_verification'), 'success')
             
+            # إعادة التوجيه إلى الصفحة الرئيسية
             return redirect(url_for('home'))
+            
         except Exception as db_error:
             print(f"Database error during verification: {str(db_error)}")
             db.session.rollback()
             flash(translate('verification_error_try_again'), 'danger')
             return redirect(url_for('home'))
+            
     except Exception as e:
         print(f"Error in verify_email route: {str(e)}")
         traceback.print_exc()
