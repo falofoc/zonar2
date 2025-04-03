@@ -872,8 +872,8 @@ def forgot_password():
                 mail.send(msg)
                 print(f"Password reset email sent to {user.email}")
 
-                     message = translate('reset_email_sent')
-                     category = 'success'
+                message = translate('reset_email_sent')
+                category = 'success'
 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': True, 'message': message})
@@ -887,7 +887,7 @@ def forgot_password():
                 flash(message, 'success')
             
             # Redirect back to forgot password page after POST
-            return redirect(url_for('forgot_password')) 
+            return redirect(url_for('forgot_password'))
         
         # Render template for GET request
         return render_template('forgot_password.html', unread_count=0)
