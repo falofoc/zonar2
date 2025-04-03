@@ -882,13 +882,13 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         lang = user.language if hasattr(user, 'language') and user.language else g.lang
         
         # Translate components
-        subject = translate(subject_key, lang=lang).format(username=user.username, **format_args)
-        greeting = translate(greeting_key, lang=lang).format(username=user.username, **format_args)
-        body_content = translate(body_key, lang=lang).format(**format_args)
-        footer = translate(footer_key, lang=lang).format(**format_args)
+        subject = translate(subject_key).format(username=user.username, **format_args)
+        greeting = translate(greeting_key).format(username=user.username, **format_args)
+        body_content = translate(body_key).format(**format_args)
+        footer = translate(footer_key).format(**format_args)
         
         # Construct email body
-        full_body = f"{greeting}\\n\\n{body_content}\\n\\n{footer}"
+        full_body = f"{greeting}\n\n{body_content}\n\n{footer}"
         
         print(f"Preparing localized email for {user.email} (Lang: {lang}) - Subject: {subject}")
         
