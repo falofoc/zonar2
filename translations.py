@@ -1,7 +1,3 @@
-"""
-This file contains translations for the application.
-"""
-
 translations = {
     'en': {
         'app_name': 'Amazon.sa Price Tracker',
@@ -217,6 +213,19 @@ translations = {
         'hunted': 'HUNTED',
         'hunted_tooltip': 'Price has dropped or reached target',
         'price_drop_save': 'Save {amount}',
+        
+        # Public Home Page
+        'discover_best_deals': 'Discover Best Deals',
+        'public_home_subtitle': 'Track Amazon Saudi Arabia prices effortlessly',
+        'join_now': 'Join Now',
+        'search_products': 'Search products',
+        'biggest_discount': 'Biggest Discount',
+        'price_low_to_high': 'Price: Low to High',
+        'price_high_to_low': 'Price: High to Low',
+        'newest': 'Newest',
+        'sort_by': 'Sort by',
+        'no_products_found': 'No Products Found',
+        'no_products_description': 'We couldn\'t find any products matching your criteria.',
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -438,9 +447,14 @@ translations = {
         'add_to_home_screen': 'إضافة إلى الشاشة الرئيسية',
         'add_to_home_screen_ios': 'اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"',
         'add_to_home_screen_android': 'اضغط على قائمة الإعدادات ثم "إضافة إلى الشاشة الرئيسية"',
-        'verify_email_button': 'تحقق من بريدك الإلكتروني',
-        'if_button_doesnt_work': 'إذا لم يعمل الزر، يمكنك نسخ الرابط التالي ولصقه في متصفحك:',
-        'verify_email_link': 'تحقق من بريدك الإلكتروني على:',
+        'account_created': 'Account created successfully! Welcome to ZONAR',
+        'account_created_with_verification': 'Your account has been created successfully and a verification email has been sent. Please check your email to activate all account features.',
+        'account_created_without_verification': 'Your account has been created successfully, but we could not send the verification email. Please contact support or try resending the verification email later.',
+        'passwords_dont_match': 'Passwords do not match',
+        'email_exists': 'Email already registered',
+        'verify_email_button': 'Verify Email Address',
+        'if_button_doesnt_work': 'If the button doesn\'t work, copy and paste this link into your browser:',
+        'verify_email_link': 'Verify your email at:',
         
         # Email verification badge
         'verified': 'تم التحقق',
@@ -452,8 +466,18 @@ translations = {
         'hunted': 'تم اصطياده',
         'hunted_tooltip': 'انخفض السعر أو وصل للهدف',
         'price_drop_save': 'وفر {amount}',
+        
+        # Public Home Page
+        'discover_best_deals': 'اكتشف أفضل العروض',
+        'public_home_subtitle': 'تتبع أسعار أمازون السعودية بسهولة',
+        'join_now': 'انضم الآن',
+        'search_products': 'البحث عن المنتجات',
+        'biggest_discount': 'أكبر خصم',
+        'price_low_to_high': 'السعر: من الأقل إلى الأعلى',
+        'price_high_to_low': 'السعر: من الأعلى إلى الأقل',
+        'newest': 'الأحدث',
+        'sort_by': 'ترتيب حسب',
+        'no_products_found': 'لم يتم العثور على منتجات',
+        'no_products_description': 'لم نتمكن من العثور على أي منتجات تطابق معايير البحث.',
     }
-}
-
-# Do not modify existing code below this line
-# Make sure the translations variable is properly defined above 
+} 
