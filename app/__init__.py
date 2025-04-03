@@ -13,6 +13,7 @@ from flask_migrate import Migrate
 from flask_mail import Mail
 from logging.handlers import RotatingFileHandler
 import logging
+from translations import TRANSLATIONS as translations_dict
 
 # Load environment variables
 load_dotenv()
