@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ translate('bot_settings') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-cog me-2"></i>{{ translate('bot_settings') }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('bot_settings') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">{{ translate('general_settings') }}</h5>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="enabled" name="enabled" {% if settings.enabled %}checked{% endif %}>
+                                        <label class="form-check-label" for="enabled">{{ translate('enable_bot') }}</label>
+                                    </div>
+                                    <small class="text-muted">{{ translate('enable_bot_description') }}</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="run_time" class="form-label">{{ translate('daily_run_time') }}</label>
+                                    <input type="time" class="form-control" id="run_time" name="run_time" value="{{ settings.run_time }}">
+                                    <small class="text-muted">{{ translate('daily_run_time_description') }}</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="max_products" class="form-label">{{ translate('max_products') }}</label>
+                                    <input type="number" class="form-control" id="max_products" name="max_products" min="1" max="50" value="{{ settings.max_products }}">
+                                    <small class="text-muted">{{ translate('max_products_description') }}</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="min_discount" class="form-label">{{ translate('min_discount_percent') }}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="min_discount" name="min_discount" min="1" max="99" value="{{ settings.min_discount }}">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="text-muted">{{ translate('min_discount_percent_description') }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="mb-3">{{ translate('advanced_settings') }}</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="bot_username" class="form-label">{{ translate('bot_username') }}</label>
+                                    <input type="text" class="form-control" id="bot_username" name="bot_username" value="{{ settings.bot_username }}">
+                                    <small class="text-muted">{{ translate('bot_username_description') }}</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bot_email" class="form-label">{{ translate('bot_email') }}</label>
+                                    <input type="email" class="form-control" id="bot_email" name="bot_email" value="{{ settings.bot_email }}">
+                                    <small class="text-muted">{{ translate('bot_email_description') }}</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bot_password" class="form-label">{{ translate('bot_password') }}</label>
+                                    <input type="password" class="form-control" id="bot_password" name="bot_password" placeholder="••••••••">
+                                    <small class="text-muted">{{ translate('bot_password_description') }}</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="cleanup_old_products" name="cleanup_old_products" {% if settings.cleanup_old_products %}checked{% endif %}>
+                                        <label class="form-check-label" for="cleanup_old_products">{{ translate('cleanup_old_products') }}</label>
+                                    </div>
+                                    <small class="text-muted">{{ translate('cleanup_old_products_description') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h5 class="mb-3">{{ translate('product_categories') }}</h5>
+                            <div class="row">
+                                {% for category in categories %}
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="category_{{ category.id }}" name="categories" value="{{ category.id }}" 
+                                            {% if category.id in settings.categories %}checked{% endif %}>
+                                        <label class="form-check-label" for="category_{{ category.id }}">{{ category.name }}</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">{{ translate('categories_description') }}</small>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('bot_interface') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>{{ translate('back') }}
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#resetConfirmModal">
+                                    <i class="fas fa-undo me-2"></i>{{ translate('reset_defaults') }}
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>{{ translate('save_settings') }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-labelledby="resetConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetConfirmModalLabel">{{ translate('confirm_reset') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ translate('reset_confirmation_message') }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
+                <form action="{{ url_for('reset_bot_settings') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">{{ translate('reset') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

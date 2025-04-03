@@ -255,3 +255,47 @@ with app.app_context():
     db.create_all()
 
 from app import routes 
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    
+    # Initialize extensions with the app
+    db.init_app(app)
+    migrate.init_app(app, db)
+    login_manager.init_app(app)
+    
+    # Load translations
+    with app.app_context():
+        # Import translations here to avoid circular import
+        from translations import TRANSLATIONS
+        try:
+            # Import bot translations if available
+            from bot_translations import BOT_TRANSLATIONS
+            # Merge bot translations with main translations
+            for lang in BOT_TRANSLATIONS:
+                if lang in TRANSLATIONS:
+                    TRANSLATIONS[lang].update(BOT_TRANSLATIONS[lang])
+        except ImportError:
+            # Bot translations not available
+            pass
+        
+        app.config['TRANSLATIONS'] = TRANSLATIONS
+    
+    # Import routes
+    from app.routes import init_routes
+    init_routes(app)
+    
+    # Register blueprints
+    try:
+        # Register bot blueprint if available
+        from bot_routes import bot_bp
+        app.register_blueprint(bot_bp)
+    except ImportError:
+        # Bot routes not available
+        pass
+    
+    # Set up login manager
+    login_manager.login_view = 'login'
+    
+    # ... (rest of the function) ... 

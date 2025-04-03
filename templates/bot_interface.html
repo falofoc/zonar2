@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ translate('amazon_bot_title') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-robot me-2"></i>{{ translate('amazon_bot_title') }}</h4>
+                </div>
+                <div class="card-body">
+                    <p>{{ translate('amazon_bot_description') }}</p>
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="btn-group">
+                            <a href="{{ url_for('run_bot') }}" class="btn btn-success">
+                                <i class="fas fa-play me-2"></i>{{ translate('run_bot_now') }}
+                            </a>
+                            <a href="{{ url_for('bot_settings') }}" class="btn btn-primary">
+                                <i class="fas fa-cog me-2"></i>{{ translate('bot_settings') }}
+                            </a>
+                            <a href="{{ url_for('view_bot_logs') }}" class="btn btn-secondary">
+                                <i class="fas fa-list-alt me-2"></i>{{ translate('view_logs') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Status -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>{{ translate('bot_status') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <span class="badge bg-{{ 'success' if bot_active else 'danger' }} p-2">
+                                <i class="fas fa-{{ 'check' if bot_active else 'times' }}"></i>
+                            </span>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ translate('status') }}: {{ translate('active') if bot_active else translate('inactive') }}</h5>
+                        </div>
+                    </div>
+                    
+                    <p>{{ translate('next_scheduled_run') }}: <strong>{{ next_run }}</strong></p>
+                    <p>{{ translate('last_run') }}: <strong>{{ last_run }}</strong></p>
+                    <p>{{ translate('products_added_today') }}: <strong>{{ products_added_today }}</strong></p>
+                    <p>{{ translate('total_products_added') }}: <strong>{{ total_products_added }}</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>{{ translate('bot_statistics') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>{{ translate('success_rate') }}</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ success_rate }}%" 
+                                aria-valuenow="{{ success_rate }}" aria-valuemin="0" aria-valuemax="100">{{ success_rate }}%</div>
+                        </div>
+                    </div>
+                    
+                    <p>{{ translate('pages_checked') }}: <strong>{{ pages_checked }}</strong></p>
+                    <p>{{ translate('products_found') }}: <strong>{{ products_found }}</strong></p>
+                    <p>{{ translate('average_discount') }}: <strong>{{ average_discount }}%</strong></p>
+                    
+                    {% if last_error %}
+                    <div class="alert alert-danger">
+                        <strong>{{ translate('last_error') }}:</strong> {{ last_error }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Added Products -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-tags me-2"></i>{{ translate('recently_added_products') }}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ translate('product') }}</th>
+                                    <th>{{ translate('price') }}</th>
+                                    <th>{{ translate('discount') }}</th>
+                                    <th>{{ translate('added_at') }}</th>
+                                    <th>{{ translate('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in recent_products %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if product.image_url %}
+                                            <img src="{{ product.image_url }}" alt="{{ product.name }}" class="me-2" style="width: 40px; height: 40px; object-fit: contain;">
+                                            {% else %}
+                                            <div class="me-2 bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-box text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="{{ product.url }}" target="_blank" class="text-decoration-none">{{ product.name }}</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ product.current_price }} SAR</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ product.discount }}%</span>
+                                    </td>
+                                    <td>{{ product.created_at }}</td>
+                                    <td>
+                                        <a href="{{ url_for('product_details', product_id=product.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">{{ translate('no_products_found') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('home') }}" class="btn btn-primary">{{ translate('view_all_products') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

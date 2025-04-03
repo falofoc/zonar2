@@ -1,4 +1,5 @@
-translations = {
+# Main translations dictionary
+TRANSLATIONS = {
     'en': {
         'app_name': 'Amazon.sa Price Tracker',
         'add_product': 'Add Product',
@@ -507,4 +508,30 @@ translations = {
         'disclaimer_tracking_only': 'زونار هو فقط لأغراض تتبع الأسعار. قد تتغير الأسعار في أي وقت.',
         'disclaimer_prices_change': 'قد تتغير أسعار أمازون السعودية في أي وقت. زونار هو أداة تتبع فقط وليس مرتبطًا بأمازون.',
     }
-} 
+}
+
+# Try to import and merge bot translations
+try:
+    from bot_translations import BOT_TRANSLATIONS
+    
+    # Merge bot translations with main translations
+    for lang in BOT_TRANSLATIONS:
+        if lang in TRANSLATIONS:
+            TRANSLATIONS[lang].update(BOT_TRANSLATIONS[lang])
+except ImportError:
+    # Bot translations not available, that's fine
+    pass
+
+def translate(key, language=None):
+    """
+    Get translation for a key in the specified language.
+    If language is not specified, uses the current user's language preference.
+    """
+    # Get the default language
+    if language is None:
+        from flask import g
+        language = getattr(g, 'language', 'ar')  # Default to Arabic if not set
+    
+    # Get translation or return key if not found
+    translations = TRANSLATIONS.get(language, TRANSLATIONS['ar'])
+    return translations.get(key, key) 

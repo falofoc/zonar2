@@ -30,6 +30,7 @@ ZONAR is a comprehensive web application for tracking product prices on Amazon S
 - تخزين الصور محلياً لتجنب مشاكل انتهاء الروابط
 - خدمة مجدولة للتحقق التلقائي من الأسعار
 - تبويب مخصص لمشاهدة أفضل العروض
+- روبوت تلقائي لإضافة أفضل العروض اليومية (أكثر من 10% خصم) من أمازون السعودية
 
 </div>
 
@@ -45,6 +46,7 @@ ZONAR is a comprehensive web application for tracking product prices on Amazon S
 - Local image storage to avoid link expiration issues
 - Scheduled service for automatic price checking
 - Dedicated tab for viewing best deals
+- Automated bot that adds daily best deals (over 10% discount) from Amazon Saudi Arabia
 
 ---
 
@@ -193,6 +195,25 @@ supervisorctl status
    cmd /c "cd /d D:\path\to\zonar2 && D:\path\to\zonar2\venv\Scripts\python.exe scheduler.py >> D:\path\to\zonar2\logs\scheduler.log 2>&1"
    ```
 
+### 9. إعداد روبوت أمازون التلقائي (اختياري)
+
+لإعداد الروبوت الذي يضيف منتجات أمازون السعودية المخفضة تلقائيًا:
+
+```bash
+# تثبيت المكتبات الإضافية
+pip install schedule
+
+# تشغيل الروبوت يدويًا للاختبار
+python amazon_bot.py
+
+# إعداد الروبوت كخدمة
+python setup_bot.py
+```
+
+اتبع التعليمات المقدمة بواسطة الأداة لإعداد الروبوت كخدمة خدمة نظام.
+
+للمزيد من المعلومات، راجع `AMAZON_BOT_README.md`.
+
 </div>
 
 ## Setup and Running Guide
@@ -319,6 +340,25 @@ supervisorctl status
    ```
    cmd /c "cd /d D:\path\to\zonar2 && D:\path\to\zonar2\venv\Scripts\python.exe scheduler.py >> D:\path\to\zonar2\logs\scheduler.log 2>&1"
    ```
+
+### 9. Setting up Amazon Automatic Bot (Optional)
+
+To set up the bot that automatically adds discounted Amazon.sa products:
+
+```bash
+# Install additional requirements
+pip install schedule
+
+# Run the bot manually for testing
+python amazon_bot.py
+
+# Set up the bot as a service
+python setup_bot.py
+```
+
+Follow the instructions provided by the tool to set up the bot as a system service.
+
+For more information, see `AMAZON_BOT_README.md`.
 
 ---
 

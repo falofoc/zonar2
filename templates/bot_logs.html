@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ translate('view_logs') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-list-alt me-2"></i>{{ translate('bot_logs') }}</h4>
+                    <div>
+                        <a href="{{ url_for('download_logs') }}" class="btn btn-sm btn-light">
+                            <i class="fas fa-download me-1"></i>{{ translate('download_logs') }}
+                        </a>
+                        <a href="{{ url_for('clear_logs') }}" class="btn btn-sm btn-danger ms-2" onclick="return confirm('{{ translate('confirm_clear_logs') }}')">
+                            <i class="fas fa-trash me-1"></i>{{ translate('clear_logs') }}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group">
+                                <a href="{{ url_for('view_bot_logs', log_type='bot') }}" class="btn btn-outline-primary {{ 'active' if log_type == 'bot' else '' }}">
+                                    {{ translate('bot_log') }}
+                                </a>
+                                <a href="{{ url_for('view_bot_logs', log_type='scheduler') }}" class="btn btn-outline-primary {{ 'active' if log_type == 'scheduler' else '' }}">
+                                    {{ translate('scheduler_log') }}
+                                </a>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <label for="log-level" class="me-2">{{ translate('filter_by_level') }}:</label>
+                                <select id="log-level" class="form-select form-select-sm" style="width: auto" onchange="filterLogs(this.value)">
+                                    <option value="all" {{ 'selected' if level == 'all' else '' }}>{{ translate('all_levels') }}</option>
+                                    <option value="info" {{ 'selected' if level == 'info' else '' }}>INFO</option>
+                                    <option value="warning" {{ 'selected' if level == 'warning' else '' }}>WARNING</option>
+                                    <option value="error" {{ 'selected' if level == 'error' else '' }}>ERROR</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="log-container bg-dark p-3 rounded" style="height: 500px; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
+                        {% if log_entries %}
+                            {% for entry in log_entries %}
+                                <div class="log-entry {{ entry.level.lower() }}-log">
+                                    <span class="log-timestamp text-secondary">{{ entry.timestamp }}</span>
+                                    <span class="log-level level-{{ entry.level.lower() }}">{{ entry.level }}</span>
+                                    <span class="log-message {{ 'text-danger' if entry.level == 'ERROR' else 'text-warning' if entry.level == 'WARNING' else 'text-light' }}">{{ entry.message }}</span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center">{{ translate('no_logs_found') }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-info me-2">INFO</span> {{ info_count }}
+                            <span class="badge bg-warning ms-3 me-2">WARNING</span> {{ warning_count }}
+                            <span class="badge bg-danger ms-3 me-2">ERROR</span> {{ error_count }}
+                        </div>
+                        
+                        <div>
+                            {% if total_pages > 1 %}
+                            <nav aria-label="Log pagination">
+                                <ul class="pagination pagination-sm mb-0">
+                                    <li class="page-item {{ 'disabled' if page == 1 else '' }}">
+                                        <a class="page-link" href="{{ url_for('view_bot_logs', log_type=log_type, page=page-1, level=level) }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    
+                                    {% for p in range(1, total_pages + 1) %}
+                                        {% if p == page %}
+                                            <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                                        {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+                                            <li class="page-item"><a class="page-link" href="{{ url_for('view_bot_logs', log_type=log_type, page=p, level=level) }}">{{ p }}</a></li>
+                                        {% elif p == 4 and page > 5 or p == total_pages - 3 and page < total_pages - 4 %}
+                                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    <li class="page-item {{ 'disabled' if page == total_pages else '' }}">
+                                        <a class="page-link" href="{{ url_for('view_bot_logs', log_type=log_type, page=page+1, level=level) }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('bot_interface') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>{{ translate('back_to_dashboard') }}
+                        </a>
+                        <a href="{{ url_for('view_bot_logs', log_type=log_type, refresh=1) }}" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-2"></i>{{ translate('refresh') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .log-entry {
+        line-height: 1.5;
+        margin-bottom: 2px;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    .log-timestamp {
+        color: #6c757d;
+        margin-right: 10px;
+    }
+    .log-level {
+        display: inline-block;
+        width: 80px;
+        font-weight: bold;
+        text-align: center;
+        margin-right: 10px;
+        border-radius: 3px;
+        padding: 0 5px;
+    }
+    .level-info {
+        background-color: #0dcaf0;
+        color: #000;
+    }
+    .level-warning {
+        background-color: #ffc107;
+        color: #000;
+    }
+    .level-error {
+        background-color: #dc3545;
+        color: #fff;
+    }
+</style>
+
+<script>
+    function filterLogs(level) {
+        window.location.href = "{{ url_for('view_bot_logs', log_type=log_type) }}" + "?level=" + level;
+    }
+</script>
+{% endblock %} 

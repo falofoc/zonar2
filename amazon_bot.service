@@ -1,0 +1,14 @@
+[Unit]
+Description=Amazon.sa Bot Service
+After=network.target
+
+[Service]
+User=faresalzahrani
+WorkingDirectory=/Users/faresalzahrani/Documents
+Environment="BOT_PASSWORD=!i^u&#sr8ofs7*(w"
+ExecStart=/usr/bin/python3 /Users/faresalzahrani/Documents/amazonsa2/bot_scheduler_direct.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

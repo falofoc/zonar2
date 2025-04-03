@@ -1,0 +1,72 @@
+2025-04-03 20:04:46,096 INFO: Starting Amazon.sa bot
+2025-04-03 20:04:46,291 ERROR: Error running Amazon bot: A 'SQLAlchemy' instance has already been registered on this Flask app. Import and use that instance instead.
+2025-04-03 20:06:31,355 INFO: Starting Amazon.sa bot
+2025-04-03 20:06:31,356 INFO: Creating new bot user
+2025-04-03 20:06:31,427 INFO: Bot user created successfully with ID: 2
+2025-04-03 20:06:31,427 INFO: Checking deal page: https://www.amazon.sa/-/en/deals-and-promotions/b/?ie=UTF8&node=15195542031
+2025-04-03 20:06:31,844 ERROR: Error scraping deal page https://www.amazon.sa/-/en/deals-and-promotions/b/?ie=UTF8&node=15195542031: 404 Client Error: Not Found for url: https://www.amazon.sa/-/en/deals-and-promotions/b/?ie=UTF8&node=15195542031
+2025-04-03 20:06:31,845 INFO: Checking deal page: https://www.amazon.sa/-/en/gp/goldbox
+2025-04-03 20:06:36,867 INFO: Checking deal page: https://www.amazon.sa/-/ar/deals-and-promotions/b/?ie=UTF8&node=15195542031
+2025-04-03 20:06:37,161 ERROR: Error scraping deal page https://www.amazon.sa/-/ar/deals-and-promotions/b/?ie=UTF8&node=15195542031: 404 Client Error: Not Found for url: https://www.amazon.sa/-/ar/deals-and-promotions/b/?ie=UTF8&node=15195542031
+2025-04-03 20:06:37,162 INFO: Checking deal page: https://www.amazon.sa/-/ar/gp/goldbox
+2025-04-03 20:06:41,414 WARNING: No suitable products found
+2025-04-03 20:08:10,747 INFO: Starting Amazon.sa bot
+2025-04-03 20:08:10,747 INFO: Bot user already exists with ID: 2
+2025-04-03 20:08:10,748 INFO: Checking deal page: https://www.amazon.sa/-/en/gp/goldbox
+2025-04-03 20:08:15,213 INFO: Checking deal page: https://www.amazon.sa/-/ar/gp/goldbox
+2025-04-03 20:08:19,372 INFO: Checking deal page: https://www.amazon.sa/s?k=discount&rh=p_n_deal_type%3A26931847031
+2025-04-03 20:08:25,081 INFO: Checking deal page: https://www.amazon.sa/-/en/deals?ref_=nav_cs_gb
+2025-04-03 20:08:30,080 INFO: Checking deal page: https://www.amazon.sa/-/ar/deals?ref_=nav_cs_gb
+2025-04-03 20:08:34,836 INFO: Checking deal page: https://www.amazon.sa/gcx/-/gfhz/?categoryId=departments&scrollState=eyJpdGVtSW5kZXgiOjAsInNjcm9sbE9mZnNldCI6MH0%3D&ingress=0
+2025-04-03 20:08:39,809 INFO: Checking deal page: https://www.amazon.sa/gp/bestsellers/?ref_=nav_cs_bestsellers
+2025-04-03 20:08:45,594 INFO: Checking deal page: https://www.amazon.sa/-/en/s?k=sale&ref=nb_sb_noss_1
+2025-04-03 20:08:52,029 INFO: Checking deal page: https://www.amazon.sa/-/ar/s?k=sale&ref=nb_sb_noss_1
+2025-04-03 20:08:57,847 INFO: Searching additional category: electronics
+2025-04-03 20:08:59,551 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B08D9G7JX9
+2025-04-03 20:08:59,551 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B07XCM3X1F
+2025-04-03 20:08:59,551 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B07MWRHBQ9
+2025-04-03 20:08:59,551 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B08X6LYPHK
+2025-04-03 20:08:59,551 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B0B7MLB5K2
+2025-04-03 20:08:59,551 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B09WYW3ZMK
+2025-04-03 20:08:59,551 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B07MWRTZ4V
+2025-04-03 20:08:59,552 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B08VH1VX9Z
+2025-04-03 20:08:59,552 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B0B9YS2NX1
+2025-04-03 20:08:59,552 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B08DFYGC6V
+2025-04-03 20:08:59,552 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B09Y3JZ9T1
+2025-04-03 20:08:59,552 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B09NZQLDVK
+2025-04-03 20:08:59,552 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B073VCT41J
+2025-04-03 20:08:59,552 INFO: Found potential product in electronics category: https://www.amazon.sa/dp/B093Z293ZN
+2025-04-03 20:09:03,065 INFO: Searching additional category: home
+2025-04-03 20:09:04,879 INFO: Found potential product in home category: https://www.amazon.sa/dp/B09XBK8HHJ
+2025-04-03 20:09:04,879 INFO: Found potential product in home category: https://www.amazon.sa/dp/B09W9HF3L1
+2025-04-03 20:09:04,879 INFO: Found potential product in home category: https://www.amazon.sa/dp/B09QWCW5WQ
+2025-04-03 20:09:04,879 INFO: Found potential product in home category: https://www.amazon.sa/dp/B0BP1GP16Y
+2025-04-03 20:09:04,880 INFO: Found potential product in home category: https://www.amazon.sa/dp/B09RPY6VSN
+2025-04-03 20:09:04,880 INFO: Found potential product in home category: https://www.amazon.sa/dp/B0D95QQLPV
+2025-04-03 20:09:08,614 INFO: Found 20 potential products
+2025-04-03 20:09:08,615 INFO: Adding product: https://www.amazon.sa/dp/B09QWCW5WQ
+2025-04-03 20:09:19,487 INFO: Confirmed discount of 53.8% for https://www.amazon.sa/dp/B09QWCW5WQ
+2025-04-03 20:09:19,492 INFO: Product added successfully: مبخرة كهربائية قابلة للشحن صغيرة الحجم من الراتنج للبخور والموقد والمكاتب والديكور المنزلي والبخور العربية من اشاس with ID 1
+2025-04-03 20:10:03,438 INFO: Adding product: https://www.amazon.sa/dp/B09NZQLDVK
+2025-04-03 20:10:21,749 WARNING: Failed to fetch product data for https://www.amazon.sa/dp/B09NZQLDVK
+2025-04-03 20:10:25,755 INFO: Adding product: https://www.amazon.sa/dp/B0D95QQLPV
+2025-04-03 20:10:35,089 INFO: Confirmed discount of 12.3% for https://www.amazon.sa/dp/B0D95QQLPV
+2025-04-03 20:10:35,090 INFO: Product added successfully: مرآة أرضية قائمة بذاتها وكاملة الطول مقاس 155 × 45 سم بإطار من خليط معدني من الالومنيوم وتصميم مائل على مسند، مرآة لكامل الجسم مناسبة لغرفة المعيشة والنوم من سكاي-تاتش - أبيض with ID 2
+2025-04-03 20:10:37,210 INFO: Adding product: https://www.amazon.sa/dp/B07MWRHBQ9
+2025-04-03 20:10:46,614 INFO: Product https://www.amazon.sa/dp/B07MWRHBQ9 has insufficient discount (8.0%), skipping
+2025-04-03 20:10:49,287 INFO: Adding product: https://www.amazon.sa/dp/B073VCT41J
+2025-04-03 20:11:09,200 WARNING: Failed to fetch product data for https://www.amazon.sa/dp/B073VCT41J
+2025-04-03 20:11:12,421 INFO: Adding product: https://www.amazon.sa/dp/B08VH1VX9Z
+2025-04-03 20:11:30,448 INFO: Confirmed discount of 22.2% for https://www.amazon.sa/dp/B08VH1VX9Z
+2025-04-03 20:11:30,449 INFO: Product added successfully: كاميرا واي فاي داخلية من ايزفيز HD 1920 x 1080 مراقبة للاطفال والحيوانات الاليفة - رؤية ليلية 10 متر تعمل اليكسا ومساعد جوجل ابيض لاسلكي with ID 3
+2025-04-03 20:11:33,768 INFO: Adding product: https://www.amazon.sa/dp/B093Z293ZN
+2025-04-03 20:11:52,145 WARNING: Failed to fetch product data for https://www.amazon.sa/dp/B093Z293ZN
+2025-04-03 20:11:55,111 INFO: Adding product: https://www.amazon.sa/dp/B09Y3JZ9T1
+2025-04-03 20:12:13,007 WARNING: Failed to fetch product data for https://www.amazon.sa/dp/B09Y3JZ9T1
+2025-04-03 20:12:15,840 INFO: Adding product: https://www.amazon.sa/dp/B09W9HF3L1
+2025-04-03 20:12:35,504 INFO: Confirmed discount of 74.1% for https://www.amazon.sa/dp/B09W9HF3L1
+2025-04-03 20:12:35,505 INFO: Product added successfully: خطافات منشفة لاصقة سوداء شديدة التحمل من فوتوسنو تثبت على الحائط، دش للحمام والمطبخ 4 عبوات، ستانلس ستيل with ID 4
+2025-04-03 20:12:37,567 INFO: Adding product: https://www.amazon.sa/dp/B09RPY6VSN
+2025-04-03 20:12:56,405 INFO: Confirmed discount of 27.1% for https://www.amazon.sa/dp/B09RPY6VSN
+2025-04-03 20:12:56,406 INFO: Product added successfully: 4 قطع من وسادات مضادة للاهتزاز للغسالة والمجفف والغاء الضوضاء من سكاي تاتش، حامل غسالة لمنع التحرك والاهتزاز والمشي للمنزل، رمادي with ID 5
+2025-04-03 20:12:59,786 INFO: Bot run complete. Added 5 new products
