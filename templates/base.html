@@ -1267,6 +1267,46 @@
                         <button class="nav-icon-btn ms-2" id="enable-notifications" title="{{ translate('enable_notifications') or 'Enable Notifications' }}">
                             <i class="bi bi-bell-fill"></i>
                         </button>
+                        
+                        <!-- User dropdown menu -->
+                        <div class="dropdown ms-2">
+                            <button class="nav-icon-btn user-menu-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle"></i>
+                                <span class="username">{{ current_user.username }}</span>
+                                {% if current_user.email_verified %}
+                                    <span class="badge bg-success rounded-pill ms-1" data-bs-toggle="tooltip" 
+                                          title="{{ translate('email_verified_tooltip') or 'Your email is verified' }}">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark rounded-pill ms-1" data-bs-toggle="tooltip"
+                                          title="{{ translate('email_not_verified_tooltip') or 'Please verify your email' }}">
+                                        <i class="bi bi-exclamation-circle-fill"></i>
+                                    </span>
+                                {% endif %}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><span class="dropdown-item-text text-muted">{{ current_user.email }}</span></li>
+                                {% if not current_user.email_verified %}
+                                <li>
+                                    <a class="dropdown-item text-warning" href="{{ url_for('resend_verification') }}">
+                                        <i class="bi bi-envelope-exclamation me-2"></i> {{ translate('resend_verification') }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('settings') }}">
+                                        <i class="bi bi-gear me-2"></i> {{ translate('settings') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="handleLogout(event)">
+                                        <i class="bi bi-box-arrow-right me-2"></i> {{ translate('logout') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                             
                         <!-- Sign-out Button (Logged In Only) -->
                         <form id="logout-form" action="{{ url_for('logout') }}" method="GET" style="display: inline;">
@@ -1717,6 +1757,25 @@
             document.getElementById('logout-form').submit();
         }
     }
+
+    // Run these initializations when the page is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all tooltips on the page
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Check and update theme icon on page load
+        updateThemeIcon();
+        
+        // Add click handler for theme toggle button
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            toggleTheme();
+        });
+        
+        // Other initializations can go here
+    });
 
     </script>
     {% block extra_js %}{% endblock %}

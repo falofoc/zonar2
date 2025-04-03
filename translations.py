@@ -202,6 +202,12 @@ translations = {
         'verify_email_button': 'Verify Email Address',
         'if_button_doesnt_work': 'If the button doesn\'t work, copy and paste this link into your browser:',
         'verify_email_link': 'Verify your email at:',
+        
+        # Email verification badge
+        'verified': 'Verified',
+        'not_verified': 'Not Verified',
+        'email_verified_tooltip': 'Your email is verified',
+        'email_not_verified_tooltip': 'Please verify your email to enable all features',
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -426,5 +432,11 @@ translations = {
         'verify_email_button': 'تحقق من بريدك الإلكتروني',
         'if_button_doesnt_work': 'إذا لم يعمل الزر، يمكنك نسخ الرابط التالي ولصقه في متصفحك:',
         'verify_email_link': 'تحقق من بريدك الإلكتروني على:',
+        
+        # Email verification badge
+        'verified': 'تم التحقق',
+        'not_verified': 'غير مُتحقق',
+        'email_verified_tooltip': 'تم التحقق من بريدك الإلكتروني',
+        'email_not_verified_tooltip': 'يرجى التحقق من بريدك الإلكتروني لتفعيل كافة الميزات',
     }
 } 
