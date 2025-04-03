@@ -7,8 +7,8 @@ from datetime import datetime
 from flask import render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_login import login_user, login_required, logout_user, current_user
 
-from app import app, translate, supabase
-from app.supabase_models import SupabaseUser, SupabaseProduct, SupabaseNotification
+from app import app, db, translate
+from app.models import User, Product, Notification
 import trackers
 import smtplib, ssl
 from email.mime.text import MIMEText
@@ -29,7 +29,7 @@ def home():
             
             # Show email verification reminder if email is not verified
             if not current_user.email_verified:
-                flash(translate('verification_required'), 'warning')
+        flash(translate('verification_required'), 'warning')
             
             # Get search query
             search_query = request.args.get('search', '').strip()
@@ -38,80 +38,43 @@ def home():
             page = request.args.get('page', 1, type=int)
             per_page = 5  # Number of products per page
             
-            # Get products from Supabase
+            # Base query for user's products
             print(f"Querying products for user ID: {current_user.id}")
-            
-            # Get all user products
-            query = supabase.table('products').select('*').eq('user_id', current_user.id)
+            query = Product.query.filter_by(user_id=current_user.id)
             
             # Apply search if query exists
             if search_query:
                 search_term = f"%{search_query}%"
-                query = query.or_(f"name.ilike.{search_term},custom_name.ilike.{search_term}")
+                query = query.filter(
+                    db.or_(
+                        Product.name.ilike(search_term),
+                        Product.custom_name.ilike(search_term)
+                    )
+                )
             
-            # Order by creation date (newest first)
-            query = query.order('created_at', desc=True)
-            
-            # Execute the query
-            result = query.execute()
-            products = result.data if result.data else []
-            
-            # Implement manual pagination since Supabase doesn't have built-in pagination
-            total_products = len(products)
-            start_idx = (page - 1) * per_page
-            end_idx = start_idx + per_page
-            paginated_products = products[start_idx:end_idx]
-            
-            # Create a pagination object to mimic SQLAlchemy's pagination
-            class PaginationObject:
-                def __init__(self, items, page, per_page, total):
-                    self.items = items
-                    self.page = page
-                    self.per_page = per_page
-                    self.total = total
-                    self.pages = (total + per_page - 1) // per_page
-                    
-                def iter_pages(self, left_edge=2, left_current=2, right_current=3, right_edge=2):
-                    last = 0
-                    for num in range(1, self.pages + 1):
-                        if num <= left_edge or \
-                           (num > self.page - left_current - 1 and num < self.page + right_current) or \
-                           num > self.pages - right_edge:
-                            if last + 1 != num:
-                                yield None
-                            yield num
-                            last = num
-            
-            pagination = PaginationObject(
-                items=paginated_products,
-                page=page,
-                per_page=per_page,
-                total=total_products
-            )
+            # Order by creation date (newest first) and paginate
+            products = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
             
             # Log product count for debugging
-            print(f"Found {total_products} products for user {current_user.id}")
+            product_count = query.count()
+            print(f"Found {product_count} products for user {current_user.id}")
             
             # For empty state message
-            has_products = total_products > 0
+            has_products = product_count > 0
             print(f"User has products: {has_products}")
             
             # Get notifications
-            notifications_result = supabase.table('notifications') \
-                .select('*') \
-                .eq('user_id', current_user.id) \
-                .eq('read', False) \
-                .order('created_at', desc=True) \
-                .execute()
-            
-            notifications = notifications_result.data if notifications_result.data else []
+            notifications = Notification.query.filter_by(
+                user_id=current_user.id, 
+                read=False
+            ).order_by(Notification.created_at.desc()).all()
             
             # Get unread count
             unread_count = len(notifications)
             
             return render_template(
                 'index.html',
-                products=pagination,
+                products=products,
                 notifications=notifications,
                 search_query=search_query,
                 unread_count=unread_count,
@@ -144,42 +107,35 @@ def login():
                 flash('Please provide both username and password', 'danger')
                 return render_template('login.html', unread_count=0)
                 
-            # Query user by username from Supabase
-            response = supabase.table('users').select('*').eq('username', username).execute()
+            user = User.query.filter_by(username=username).first()
             
-            # Check if we found a user
-            if response.data and len(response.data) > 0:
-                # Create SupabaseUser object
-                user = SupabaseUser(response.data[0])
+            if user and user.check_password(password):
+                # Improved login with persistent session
+                login_user(user, remember=remember)
+                session.permanent = True  # Make session permanent
                 
-                if user.check_password(password):
-                    # Improved login with persistent session
-                    login_user(user, remember=remember)
-                    session.permanent = True  # Make session permanent
+                # Set session cookie expiration to 30 days for remembered users
+                if remember:
+                    from datetime import timedelta
+                    app.permanent_session_lifetime = timedelta(days=30)
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True,
+                        'message': 'Logged in successfully!',
+                        'redirect': url_for('home')
+                    })
                     
-                    # Set session cookie expiration to 30 days for remembered users
-                    if remember:
-                        from datetime import timedelta
-                        app.permanent_session_lifetime = timedelta(days=30)
-                    
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return jsonify({
-                            'success': True,
-                            'message': 'Logged in successfully!',
-                            'redirect': url_for('home')
-                        })
-                        
-                    flash('Logged in successfully!', 'success')
-                    next_page = request.args.get('next')
-                    if not next_page or not next_page.startswith('/'):
-                        next_page = url_for('home')
-                    return redirect(next_page)
-            
-            # If we get here, either user not found or password incorrect
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'success': False, 'message': 'Invalid username or password'})
-            flash('Invalid username or password', 'danger')
-            return render_template('login.html', unread_count=0)
+                flash('Logged in successfully!', 'success')
+                next_page = request.args.get('next')
+                if not next_page or not next_page.startswith('/'):
+                    next_page = url_for('home')
+                return redirect(next_page)
+            else:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({'success': False, 'message': 'Invalid username or password'})
+                flash('Invalid username or password', 'danger')
+                return render_template('login.html', unread_count=0)
         
         return render_template('login.html', unread_count=0)
     except Exception as e:
@@ -213,14 +169,14 @@ def signup():
                 return redirect(url_for('signup'))
             
             # Check for existing username
-            existing_user = SupabaseUser.query.filter_by(username=username).first()
+            existing_user = User.query.filter_by(username=username).first()
             if existing_user:
                 print(f"Username {username} already exists")
                 flash('Username already exists', 'danger')
                 return redirect(url_for('signup'))
                 
             # Check for existing email
-            existing_email = SupabaseUser.query.filter_by(email=email).first()
+            existing_email = User.query.filter_by(email=email).first()
             if existing_email:
                 print(f"Email {email} already registered")
                 flash('Email already registered', 'danger')
@@ -228,7 +184,7 @@ def signup():
             
             print("Creating new user...")
             try:
-                user = SupabaseUser(username=username, email=email)
+                user = User(username=username, email=email)
                 user.set_password(password)
                 
                 # Generate verification token
@@ -376,7 +332,7 @@ def add_product():
             return jsonify({'success': False, 'error': translate('invalid_url')})
         
         # Check if product already exists for this user
-        existing_product = SupabaseProduct.query.filter_by(user_id=current_user.id, url=url).first()
+        existing_product = Product.query.filter_by(user_id=current_user.id, url=url).first()
         if existing_product:
             print(f"Product already exists for user {current_user.id}")
             return jsonify({'success': False, 'error': translate('product_exists')})
@@ -407,7 +363,7 @@ def add_product():
         
         # Create new product
         try:
-            product = SupabaseProduct(
+            product = Product(
                 url=url,
                 name=product_data['name'],
                 custom_name=custom_name,
@@ -442,7 +398,7 @@ def add_product():
             else:
                 print(f"Email not verified for user {current_user.id}. Skipping email notification.")
                 # Add notification in the app to remind user to verify email
-                notification = SupabaseNotification(
+                notification = Notification(
                     message=translate('verification_required'),
                     user_id=current_user.id,
                     read=False
@@ -536,7 +492,7 @@ def get_buy_link(product_id):
     """
     try:
         # Verify the product exists and belongs to this user
-        product = SupabaseProduct.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
         
         # Log the click if needed
         print(f"User {current_user.username} clicked to buy product {product.id}: {product.name}")
@@ -556,7 +512,7 @@ def edit_product(product_id):
     """
     try:
         # Verify the product exists and belongs to this user
-        product = SupabaseProduct.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
         
         # Get form data
         custom_name = request.form.get('custom_name')
@@ -609,7 +565,7 @@ def delete_product(product_id):
     """
     try:
         # Find product and verify ownership
-        product = SupabaseProduct.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
         
         # Get product name for confirmation message
         product_name = product.custom_name or product.name
@@ -638,7 +594,7 @@ def check_price(product_id):
     """
     try:
         # Verify the product exists and belongs to this user
-        product = SupabaseProduct.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
         
         print(f"Manually checking price for product {product_id}: {product.name}")
         
@@ -812,7 +768,7 @@ def check_price(product_id):
 
             # Create and save notification in DB regardless of email status (if should_notify)
             if should_notify:
-                notification = SupabaseNotification(
+                notification = Notification(
                     message=notification_message,
                     user_id=current_user.id,
                     read=False
@@ -845,7 +801,7 @@ def toggle_tracking(product_id):
     """
     try:
         # Verify the product exists and belongs to this user
-        product = SupabaseProduct.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
         
         # Toggle tracking status
         previous_status = product.tracking_enabled
@@ -871,13 +827,13 @@ def toggle_tracking(product_id):
             else:
                 print(f"Email not verified for user {current_user.id}. Skipping email notification.")
                 # Add notification in the app to remind user to verify email
-                notification = SupabaseNotification(
+                notification = Notification(
                     message=translate('verification_required'),
                     user_id=current_user.id,
                     read=False
                 )
                 db.session.add(notification)
-                db.session.commit()
+        db.session.commit()
         
         # Return JSON response for AJAX
         return jsonify({
@@ -905,12 +861,12 @@ def forgot_password():
                 flash(translate('provide_email'), 'danger')
                 return render_template('forgot_password.html', unread_count=0)
                 
-            user = SupabaseUser.query.filter_by(email=email).first()
+            user = User.query.filter_by(email=email).first()
             
             if user:
                 # Generate a reset token
                 token = user.generate_reset_token()
-                db.session.commit()
+        db.session.commit()
                 
                 # Send password reset email using the refactored function
                 reset_url = url_for('reset_password', token=token, _external=True)
@@ -1054,7 +1010,7 @@ def reset_password(token):
             return redirect(url_for('login'))
             
         # Find user with this token
-        user = SupabaseUser.query.filter_by(reset_token=token).first()
+        user = User.query.filter_by(reset_token=token).first()
         
         if not user or not user.verify_reset_token(token):
             flash(translate('invalid_expired_token'), 'danger')
@@ -1075,7 +1031,7 @@ def reset_password(token):
             # Update the password
             user.set_password(password)
             user.clear_reset_token()
-            db.session.commit()
+        db.session.commit()
             
             flash(translate('password_updated'), 'success')
             return redirect(url_for('login'))
@@ -1108,14 +1064,14 @@ def settings():
                     return redirect(url_for('settings'))
                 
                 # Check if email is already in use by another user
-                existing_user = SupabaseUser.query.filter_by(email=email).first()
+                existing_user = User.query.filter_by(email=email).first()
                 if existing_user and existing_user.id != current_user.id:
                     flash(translate('email_already_used'), 'danger')
                     return redirect(url_for('settings'))
                 
                 # Update email
                 current_user.email = email
-                db.session.commit()
+        db.session.commit()
                 
                 flash(translate('email_updated'), 'success')
                 return redirect(url_for('settings'))
@@ -1141,7 +1097,7 @@ def settings():
                 
                 # Update password
                 current_user.set_password(new_password)
-                db.session.commit()
+        db.session.commit()
                 
                 flash(translate('password_updated'), 'success')
                 return redirect(url_for('settings'))
@@ -1313,14 +1269,14 @@ def verify_email(token):
         # تتبع أفضل للحالات المختلفة
         if not token or len(token) < 10:
             print(f"Invalid token format provided: {token}")
-            flash(translate('verification_failed'), 'danger')
+        flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
         # إضافة المزيد من التتبع
         print(f"Looking for user with verification token starting with: {token[:10]}...")
         
         # البحث عن المستخدم بواسطة الرمز
-        user = SupabaseUser.query.filter_by(verification_token=token).first()
+        user = User.query.filter_by(verification_token=token).first()
         
         # إذا كان الرمز غير صالح
         if not user:
@@ -1328,7 +1284,7 @@ def verify_email(token):
             # محاولة البحث بطريقة أخرى
             print("Trying partial token match...")
             # البحث بالأحرف الأولى من الرمز (قد تكون مشكلة في الرابط)
-            users_with_tokens = SupabaseUser.query.filter(SupabaseUser.verification_token.isnot(None)).all()
+            users_with_tokens = User.query.filter(User.verification_token.isnot(None)).all()
             for u in users_with_tokens:
                 if u.verification_token and u.verification_token.startswith(token[:20]):
                     print(f"Found possible matching user: {u.username} with token starting with {u.verification_token[:10]}")
@@ -1338,7 +1294,7 @@ def verify_email(token):
             # إذا لم يتم العثور على مستخدم
             if not user:
                 print("No matching users found with similar tokens")
-            flash(translate('verification_failed'), 'danger')
+        flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
         print(f"Found user: {user.username}, Email: {user.email}")
@@ -1346,7 +1302,7 @@ def verify_email(token):
         # التحقق من صلاحية الرمز
         if user.verification_token_expiry and datetime.utcnow() > user.verification_token_expiry:
             print(f"Token expired for user: {user.username}")
-            flash(translate('verification_failed'), 'danger')
+        flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
         # تفعيل البريد الإلكتروني
@@ -1410,17 +1366,17 @@ def resend_verification():
             
             # إرسال بريد التحقق باستخدام الوظيفة المعاد تشكيلها
             email_sent = send_localized_email(
-                current_user,
-                subject_key="verification_email_subject",
-                greeting_key="verification_email_greeting",
-                body_key="verification_email_body",
-                footer_key="verification_email_footer",
-                verification_link=verification_link
-            )
+            current_user,
+            subject_key="verification_email_subject",
+            greeting_key="verification_email_greeting",
+            body_key="verification_email_body",
+            footer_key="verification_email_footer",
+            verification_link=verification_link
+        )
         
             if email_sent:
                 print(f"Verification email sent successfully to: {current_user.email}")
-                flash(translate('verification_resent'), 'success')
+            flash(translate('verification_resent'), 'success')
             else:
                 print(f"Failed to send verification email to: {current_user.email}")
                 # استعادة التغييرات إذا فشل إرسال البريد
@@ -1808,7 +1764,7 @@ def setup_admin(token, username):
         return "Invalid token", 403
         
     try:
-        user = SupabaseUser.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first()
         if not user:
             return f"User {username} not found", 404
             

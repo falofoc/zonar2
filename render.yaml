@@ -27,6 +27,12 @@ services:
         value: true
       - key: MAIL_USE_SSL
         value: false
+      - key: SUPABASE_URL
+        sync: false  # Secret value set via Render dashboard
+      - key: SUPABASE_KEY
+        sync: false  # Secret value set via Render dashboard
+      - key: SUPABASE_SERVICE_KEY
+        sync: false  # Secret value set via Render dashboard
     disk:
       name: database-backup
       mountPath: /opt/render/project/src/.backup
@@ -58,4 +64,19 @@ cron:
         fromService:
           name: zonar-amazon-tracker
           type: web
-          envVarKey: SECRET_KEY 
+          envVarKey: SECRET_KEY
+      - key: SUPABASE_URL
+        fromService:
+          name: zonar-amazon-tracker
+          type: web
+          envVarKey: SUPABASE_URL
+      - key: SUPABASE_KEY
+        fromService:
+          name: zonar-amazon-tracker
+          type: web
+          envVarKey: SUPABASE_KEY
+      - key: SUPABASE_SERVICE_KEY
+        fromService:
+          name: zonar-amazon-tracker
+          type: web
+          envVarKey: SUPABASE_SERVICE_KEY 

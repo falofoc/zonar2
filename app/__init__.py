@@ -25,12 +25,6 @@ print(f"Database directory: {instance_path}")
 
 # For Render deployment, use /tmp directory if we're in production
 is_production = os.environ.get('RENDER', False)
-if is_production:
-    db_path = '/tmp/amazon_tracker.db'
-    print(f"Using production database path: {db_path}")
-else:
-    db_path = os.path.join(instance_path, "amazon_tracker.db")
-    print(f"Using local database path: {db_path}")
 
 # Generate a more secure secret key
 import secrets
@@ -54,17 +48,11 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,  # Enable HTTPOnly for security
     SESSION_COOKIE_SAMESITE='Lax',   # Use Lax for better security while still allowing cross-site
     PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # Longer session lifetime
-    SQLALCHEMY_DATABASE_URI=f'sqlite:///{db_path}',
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    WTF_CSRF_ENABLED=False,
     DEBUG=not is_production
 )
 
 # Initialize Flask-Mail
 mail = Mail(app)
-
-# Print database URI for debugging
-print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
 # Initialize CORS with very permissive settings for development
 CORS(app, 
@@ -78,14 +66,16 @@ CORS(app,
      }},
      supports_credentials=True)
 
-# Initialize database and login manager with relaxed settings
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+# Initialize login manager with relaxed settings
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"  # Enable strong session protection
+
+# Initialize Supabase client
+from .supabase_client import get_supabase_client
+supabase = get_supabase_client()
 
 # Import all other components AFTER the app is created
 import sys
@@ -165,31 +155,78 @@ def before_request():
     g.is_english = (g.lang == 'en')
     print(f"CURRENT STATE: AR={g.is_arabic}, EN={g.is_english}")
 
-# Now import the rest of the app components
-try:
-    from . import models, routes
-except ImportError:
-    # Handle case when relative import fails
-    import app.models
-    import app.routes
-
-def init_db():
-    """Initialize the database and create all tables"""
-    print("Initializing database...")
-    with app.app_context():
-        db.create_all()
-        print("Database tables created successfully!")
-
-# Initialize database if it doesn't exist
-with app.app_context():
-    try:
-        db.create_all()
-        print("Database initialized successfully")
-    except Exception as e:
-        print(f"Error initializing database: {e}")
-        traceback.print_exc()
+# Import Supabase models
+from .supabase_models import SupabaseUser, SupabaseProduct, SupabaseNotification
 
 @login_manager.user_loader
 def load_user(id):
-    from app.models import User
-    return User.query.get(int(id)) 
+    return SupabaseUser.get_by_id(int(id))
+
+# Initialize Supabase tables if they don't exist
+def init_supabase_tables():
+    """
+    Create Supabase tables if they don't exist
+    """
+    try:
+        # Check if tables exist by attempting to select from them
+        # If they don't exist, this will raise an exception
+        supabase.table('users').select('id').limit(1).execute()
+        supabase.table('products').select('id').limit(1).execute()
+        supabase.table('notifications').select('id').limit(1).execute()
+        print("Supabase tables already exist")
+    except Exception as e:
+        print(f"Error checking tables: {e}")
+        print("Creating Supabase tables...")
+        
+        try:
+            # Create users table
+            supabase.table('users').insert({
+                'id': 0,  # This is a dummy record that will be deleted
+                'username': 'dummy',
+                'email': 'dummy@example.com',
+                'password_hash': 'dummy',
+                'language': 'ar',
+                'theme': 'light',
+                'created_at': datetime.utcnow().isoformat(),
+                'email_verified': False,
+                'is_admin': False
+            }).execute()
+            
+            # Create products table
+            supabase.table('products').insert({
+                'id': 0,  # This is a dummy record that will be deleted
+                'url': 'https://example.com',
+                'name': 'Dummy Product',
+                'current_price': 0.0,
+                'user_id': 0,
+                'created_at': datetime.utcnow().isoformat()
+            }).execute()
+            
+            # Create notifications table
+            supabase.table('notifications').insert({
+                'id': 0,  # This is a dummy record that will be deleted
+                'message': 'Dummy notification',
+                'read': False,
+                'created_at': datetime.utcnow().isoformat(),
+                'user_id': 0
+            }).execute()
+            
+            # Delete dummy records
+            supabase.table('users').delete().eq('id', 0).execute()
+            supabase.table('products').delete().eq('id', 0).execute()
+            supabase.table('notifications').delete().eq('id', 0).execute()
+            
+            print("Supabase tables created successfully!")
+        except Exception as e:
+            print(f"Error creating tables: {e}")
+            traceback.print_exc()
+
+# Initialize Supabase tables
+init_supabase_tables()
+
+# Now import the routes
+try:
+    from . import routes
+except ImportError:
+    # Handle case when relative import fails
+    import app.routes 
