@@ -2,6 +2,38 @@
 
 {% block extra_css %}
 <style>
+    /* Email Verification Banner */
+    .verification-banner {
+        background-color: var(--brand-orange-100);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-left: 4px solid var(--warning-color);
+    }
+    
+    .verification-banner p {
+        margin-bottom: 0;
+        color: var(--text-primary);
+    }
+    
+    .verification-banner .btn {
+        white-space: nowrap;
+        margin-left: var(--spacing-md);
+    }
+    
+    [dir="rtl"] .verification-banner {
+        border-left: none;
+        border-right: 4px solid var(--warning-color);
+    }
+    
+    [dir="rtl"] .verification-banner .btn {
+        margin-left: 0;
+        margin-right: var(--spacing-md);
+    }
+
     /* Search Box Styling */
     .search-container {
         margin-bottom: var(--spacing-lg);
@@ -569,6 +601,14 @@
 {% block content %}
 <div class="container" style="padding-top: 2rem;">
     {% if current_user.is_authenticated %}
+    
+    {% if not email_verified %}
+    <div class="verification-banner">
+        <p><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ translate('verification_required') }}</p>
+        <a href="{{ url_for('resend_verification') }}" class="btn btn-sm btn-warning">{{ translate('resend_verification') }}</a>
+    </div>
+    {% endif %}
+    
     <div class="search-container">
         <div class="search-form mx-auto" style="max-width: 600px;">
             <form action="{{ url_for('home') }}" method="GET">

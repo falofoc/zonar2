@@ -135,7 +135,19 @@ translations = {
         'tracking_email_subject': 'Product Tracking Started - {product_name}',
         'tracking_email_greeting': 'Hello {username},',
         'tracking_email_body': 'You have started tracking the price of "{product_name}" at {current_price} SAR.\n\nWe will notify you of any price changes according to your notification preferences.',
-        'tracking_email_footer': 'Best regards,\nThe ZONAR Team'
+        'tracking_email_footer': 'Best regards,\nThe ZONAR Team',
+        
+        'verification_email_subject': 'Verify Your Email - ZONAR Account',
+        'verification_email_greeting': 'Hello {username},',
+        'verification_email_body': 'Please verify your email address to activate all features of your ZONAR account.\n\nClick the link below to verify your email:\n{verification_link}\n\nThis link is valid for 24 hours.',
+        'verification_email_footer': 'If you did not create this account, please ignore this email.\n\nBest regards,\nThe ZONAR Team',
+        
+        'verification_success': 'Your email has been verified successfully! You can now receive email notifications.',
+        'verification_failed': 'Email verification failed. The verification link may be expired or invalid.',
+        'verification_required': 'Please verify your email to receive notifications. Check your inbox or request a new verification email.',
+        'verification_resent': 'A new verification email has been sent. Please check your inbox.',
+        'email_already_verified': 'Your email is already verified.',
+        'resend_verification': 'Resend Verification Email'
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -296,6 +308,18 @@ translations = {
         'tracking_email_subject': 'بدأ تتبع المنتج - {product_name}',
         'tracking_email_greeting': 'مرحباً {username}،',
         'tracking_email_body': 'لقد بدأت بتتبع سعر "{product_name}" بسعر {current_price} ريال.\n\nسنقوم بإشعارك بأي تغييرات في السعر وفقاً لتفضيلات الإشعارات الخاصة بك.',
-        'tracking_email_footer': 'مع أطيب التحيات،\nفريق زونار'
+        'tracking_email_footer': 'مع أطيب التحيات،\nفريق زونار',
+        
+        'verification_email_subject': 'تحقق من بريدك الإلكتروني - حساب زونار',
+        'verification_email_greeting': 'مرحباً {username}،',
+        'verification_email_body': 'يرجى التحقق من عنوان بريدك الإلكتروني لتفعيل جميع ميزات حساب زونار الخاص بك.\n\nانقر على الرابط أدناه للتحقق من بريدك الإلكتروني:\n{verification_link}\n\nهذا الرابط صالح لمدة 24 ساعة.',
+        'verification_email_footer': 'إذا لم تقم بإنشاء هذا الحساب، يرجى تجاهل هذا البريد الإلكتروني.\n\nمع أطيب التحيات،\nفريق زونار',
+        
+        'verification_success': 'تم التحقق من بريدك الإلكتروني بنجاح! يمكنك الآن تلقي إشعارات البريد الإلكتروني.',
+        'verification_failed': 'فشل التحقق من البريد الإلكتروني. قد تكون رابط التحقق منتهي الصلاحية أو غير صالح.',
+        'verification_required': 'يرجى التحقق من بريدك الإلكتروني لتلقي الإشعارات. تحقق من صندوق الوارد الخاص بك أو اطلب بريد تحقق جديد.',
+        'verification_resent': 'تم إرسال بريد تحقق جديد. يرجى التحقق من صندوق الوارد الخاص بك.',
+        'email_already_verified': 'تم التحقق من بريدك الإلكتروني بالفعل.',
+        'resend_verification': 'إعادة إرسال بريد التحقق'
     }
 } 

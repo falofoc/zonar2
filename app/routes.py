@@ -24,6 +24,10 @@ def home():
                 flash_data = session.pop('flash_message')
                 flash(flash_data['message'], flash_data['category'])
             
+            # Show email verification reminder if email is not verified
+            if not current_user.email_verified:
+                flash(translate('verification_required'), 'warning')
+            
             # Get search query
             search_query = request.args.get('search', '').strip()
             
@@ -66,7 +70,8 @@ def home():
                 products=products,
                 notifications=notifications,
                 search_query=search_query,
-                unread_count=unread_count
+                unread_count=unread_count,
+                email_verified=current_user.email_verified
             )
         else:
             # For non-authenticated users show login page with proper language support
@@ -167,11 +172,27 @@ def signup():
             try:
                 user = User(username=username, email=email)
                 user.set_password(password)
+                
+                # Generate verification token
+                verification_token = user.generate_verification_token()
+                
                 print("User object created, adding to session")
                 db.session.add(user)
                 print("Committing to database")
                 db.session.commit()
                 print("User saved to database successfully")
+                
+                # Send verification email
+                verification_link = url_for('verify_email', token=verification_token, _external=True)
+                print(f"Sending verification email to {email}")
+                send_localized_email(
+                    user,
+                    subject_key="verification_email_subject",
+                    greeting_key="verification_email_greeting",
+                    body_key="verification_email_body",
+                    footer_key="verification_email_footer",
+                    verification_link=verification_link
+                )
                 
                 # Send welcome email
                 print(f"Sending welcome email to {email}")
@@ -186,7 +207,7 @@ def signup():
                 print("Logging in new user")
                 login_user(user)
                 print("User logged in, redirecting to home")
-                flash('Account created successfully! Welcome to ZONAR - زونار', 'success')
+                flash(translate('account_created') + ' ' + translate('verification_required'), 'success')
                 return redirect(url_for('home'))
             except Exception as inner_e:
                 print(f"Error during user creation/database operation: {inner_e}")
@@ -287,18 +308,29 @@ def add_product():
             db.session.add(product)
             db.session.commit()
             
-            # Send email about product tracking
-            product_name = custom_name or product_data['name']
-            print(f"Sending tracking started email for product {product_name} to {current_user.email}")
-            send_localized_email(
-                current_user,
-                subject_key="tracking_email_subject",
-                greeting_key="tracking_email_greeting",
-                body_key="tracking_email_body",
-                footer_key="tracking_email_footer",
-                product_name=product_name,
-                current_price=product_data['price']
-            )
+            # Send email about product tracking if email is verified
+            if current_user.email_verified:
+                product_name = custom_name or product_data['name']
+                print(f"Sending tracking started email for product {product_name} to {current_user.email}")
+                send_localized_email(
+                    current_user,
+                    subject_key="tracking_email_subject",
+                    greeting_key="tracking_email_greeting",
+                    body_key="tracking_email_body",
+                    footer_key="tracking_email_footer",
+                    product_name=product_name,
+                    current_price=product_data['price']
+                )
+            else:
+                print(f"Email not verified for user {current_user.id}. Skipping email notification.")
+                # Add notification in the app to remind user to verify email
+                notification = Notification(
+                    message=translate('verification_required'),
+                    user_id=current_user.id,
+                    read=False
+                )
+                db.session.add(notification)
+                db.session.commit()
             
             message = translate('product_added_success').format(product_name=custom_name or product_data['name'])
             print(f"Product added successfully: {message}")
@@ -575,19 +607,30 @@ def toggle_tracking(product_id):
         # Save changes
         db.session.commit()
         
-        # Send email if tracking was just enabled
+        # Send email if tracking was just enabled and email is verified
         if not previous_status and product.tracking_enabled:
-            print(f"Sending tracking started email for product {product.id} to {current_user.email}")
-            product_name = product.custom_name or product.name
-            send_localized_email(
-                current_user,
-                subject_key="tracking_email_subject",
-                greeting_key="tracking_email_greeting",
-                body_key="tracking_email_body",
-                footer_key="tracking_email_footer",
-                product_name=product_name,
-                current_price=product.current_price
-            )
+            if current_user.email_verified:
+                print(f"Sending tracking started email for product {product.id} to {current_user.email}")
+                product_name = product.custom_name or product.name
+                send_localized_email(
+                    current_user,
+                    subject_key="tracking_email_subject",
+                    greeting_key="tracking_email_greeting",
+                    body_key="tracking_email_body",
+                    footer_key="tracking_email_footer",
+                    product_name=product_name,
+                    current_price=product.current_price
+                )
+            else:
+                print(f"Email not verified for user {current_user.id}. Skipping email notification.")
+                # Add notification in the app to remind user to verify email
+                notification = Notification(
+                    message=translate('verification_required'),
+                    user_id=current_user.id,
+                    read=False
+                )
+                db.session.add(notification)
+                db.session.commit()
         
         # Return JSON response for AJAX
         return jsonify({
@@ -919,4 +962,62 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
     except Exception as e:
         print(f"Error sending localized email: {e}")
         return False
+
+@app.route('/verify_email/<token>')
+def verify_email(token):
+    try:
+        # Find user with this verification token
+        user = User.query.filter_by(verification_token=token).first()
+        
+        if not user:
+            flash(translate('verification_failed'), 'danger')
+            return redirect(url_for('home'))
+        
+        # Check if token is valid
+        if not user.verify_verification_token(token):
+            flash(translate('verification_failed'), 'danger')
+            return redirect(url_for('home'))
+        
+        # Mark email as verified and clear token
+        user.clear_verification_token()
+        db.session.commit()
+        
+        flash(translate('verification_success'), 'success')
+        return redirect(url_for('home'))
+    except Exception as e:
+        print(f"Error in verify_email route: {str(e)}")
+        traceback.print_exc()
+        flash(translate('error_occurred'), 'danger')
+        return redirect(url_for('home'))
+
+@app.route('/resend_verification')
+@login_required
+def resend_verification():
+    try:
+        if current_user.email_verified:
+            flash(translate('email_already_verified'), 'info')
+            return redirect(url_for('home'))
+        
+        # Generate new verification token
+        verification_token = current_user.generate_verification_token()
+        db.session.commit()
+        
+        # Send verification email
+        verification_link = url_for('verify_email', token=verification_token, _external=True)
+        send_localized_email(
+            current_user,
+            subject_key="verification_email_subject",
+            greeting_key="verification_email_greeting",
+            body_key="verification_email_body",
+            footer_key="verification_email_footer",
+            verification_link=verification_link
+        )
+        
+        flash(translate('verification_resent'), 'success')
+        return redirect(url_for('home'))
+    except Exception as e:
+        print(f"Error in resend_verification route: {str(e)}")
+        traceback.print_exc()
+        flash(translate('error_occurred'), 'danger')
+        return redirect(url_for('home'))
 

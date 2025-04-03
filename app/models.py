@@ -23,6 +23,11 @@ class User(db.Model, UserMixin):
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     
+    # Email verification fields
+    email_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(100), nullable=True)
+    verification_token_expiry = db.Column(db.DateTime, nullable=True)
+    
     # Relationships
     products = db.relationship('Product', backref='user', lazy=True, cascade="all, delete-orphan")
     notifications = db.relationship('Notification', backref='user', lazy=True, cascade="all, delete-orphan")
@@ -39,6 +44,12 @@ class User(db.Model, UserMixin):
         self.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
         return self.reset_token
     
+    def generate_verification_token(self):
+        """Generate an email verification token valid for 24 hours"""
+        self.verification_token = secrets.token_urlsafe(32)
+        self.verification_token_expiry = datetime.utcnow() + timedelta(hours=24)
+        return self.verification_token
+    
     def verify_reset_token(self, token):
         """Verify if the password reset token is valid"""
         if self.reset_token != token:
@@ -47,10 +58,24 @@ class User(db.Model, UserMixin):
             return False
         return True
     
+    def verify_verification_token(self, token):
+        """Verify if the email verification token is valid"""
+        if self.verification_token != token:
+            return False
+        if datetime.utcnow() > self.verification_token_expiry:
+            return False
+        return True
+    
     def clear_reset_token(self):
         """Clear the password reset token after use"""
         self.reset_token = None
         self.reset_token_expiry = None
+    
+    def clear_verification_token(self):
+        """Clear the email verification token after use"""
+        self.verification_token = None
+        self.verification_token_expiry = None
+        self.email_verified = True
         
     def __repr__(self):
         return f'<User {self.username}>'
