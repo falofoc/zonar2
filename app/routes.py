@@ -794,31 +794,37 @@ def forgot_password():
                 reset_url = url_for('reset_password', token=token, _external=True)
                 print(f"Sending password reset email to {user.email}")
                 
-                # Create HTML email with reset link
+                # Create HTML email with reset link and mobile-friendly design
                 email_body = f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <!-- Arabic Version -->
-                    <div dir="rtl" style="text-align: right;">
+                    <div dir="rtl" style="text-align: right; background-color: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         <h2 style="color: #FF6B00; margin-bottom: 20px;">مرحباً {user.username}،</h2>
                         
-                        <p style="margin-bottom: 20px;">
+                        <p style="margin-bottom: 20px; color: #333; font-size: 16px;">
                             لقد تلقينا طلباً لإعادة تعيين كلمة المرور لحسابك في زونار.
                         </p>
                         
-                        <p style="margin-bottom: 20px;">
+                        <p style="margin-bottom: 20px; color: #333; font-size: 16px;">
                             لإعادة تعيين كلمة المرور، يرجى النقر على الزر أدناه:
                         </p>
                         
-                        <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
-                            إعادة تعيين كلمة المرور
-                        </a>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                                إعادة تعيين كلمة المرور
+                            </a>
+                        </div>
                         
                         <p style="color: #666; font-size: 14px; margin-top: 20px;">
-                            هذا الرابط صالح لمدة ساعة واحدة فقط.
+                            إذا لم تتمكن من النقر على الزر، يمكنك نسخ ولصق الرابط التالي في متصفحك:
+                        </p>
+                        
+                        <p style="background-color: #f5f5f5; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 14px;">
+                            {reset_url}
                         </p>
                         
                         <p style="color: #666; font-size: 14px;">
-                            إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذا البريد الإلكتروني.
+                            هذا الرابط صالح لمدة ساعة واحدة فقط. إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذا البريد الإلكتروني.
                         </p>
                         
                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
@@ -830,27 +836,33 @@ def forgot_password():
                     </div>
 
                     <!-- English Version -->
-                    <div dir="ltr" style="text-align: left; margin-top: 40px; border-top: 2px solid #EEE; padding-top: 20px;">
+                    <div dir="ltr" style="text-align: left; margin-top: 40px; background-color: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         <h2 style="color: #FF6B00; margin-bottom: 20px;">Hello {user.username},</h2>
                         
-                        <p style="margin-bottom: 20px;">
+                        <p style="margin-bottom: 20px; color: #333; font-size: 16px;">
                             We received a request to reset your password for your ZONAR account.
                         </p>
                         
-                        <p style="margin-bottom: 20px;">
+                        <p style="margin-bottom: 20px; color: #333; font-size: 16px;">
                             To reset your password, please click the button below:
                         </p>
                         
-                        <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
-                            Reset Password
-                        </a>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                                Reset Password
+                            </a>
+                        </div>
                         
                         <p style="color: #666; font-size: 14px; margin-top: 20px;">
-                            This link is valid for one hour only.
+                            If you can't click the button, copy and paste this link into your browser:
+                        </p>
+                        
+                        <p style="background-color: #f5f5f5; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 14px;">
+                            {reset_url}
                         </p>
                         
                         <p style="color: #666; font-size: 14px;">
-                            If you did not request a password reset, please ignore this email.
+                            This link is valid for one hour only. If you did not request a password reset, please ignore this email.
                         </p>
                         
                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
