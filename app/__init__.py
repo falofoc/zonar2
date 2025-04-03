@@ -93,34 +93,7 @@ import os
 # Add the parent directory to sys.path to make imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Now import translations should work
-try:
-    # First try to import from our dedicated translations module
-    try:
-        from app.translations_module import translations
-    except ImportError:
-        # If that fails, try to import directly
-        try:
-            from translations import translations
-        except ImportError as e:
-            # If that fails, try to import it as a module and get the translations dict
-            try:
-                import translations
-                translations = translations.translations
-            except (ImportError, AttributeError):
-                # As a fallback, create a basic translation dictionary
-                print(f"ERROR IMPORTING TRANSLATIONS: {e}")
-                translations = {
-                    'en': {'app_name': 'Amazon.sa Price Tracker'},
-                    'ar': {'app_name': 'متتبع أسعار أمازون السعودية'}
-                }
-                print("Using fallback translations dictionary")
-except Exception as e:
-    print(f"CRITICAL ERROR IMPORTING TRANSLATIONS: {e}")
-    # Initialize an empty dict as absolute fallback
-    translations = {
-        'en': {'app_name': 'Amazon.sa Price Tracker'},
-        'ar': {'app_name': 'متتبع أسعار أمازون السعودية'}
-    }
+from translations import translations
 
 # This defines the translate function that's used in templates
 def translate(key):
@@ -161,6 +134,15 @@ def translate(key):
 def utility_processor():
     """Add helper functions to template context"""
     return dict(translate=translate)
+
+# Add custom Jinja2 filters
+@app.template_filter('from_json')
+def from_json_filter(value):
+    """Convert a JSON string to a Python object"""
+    try:
+        return json.loads(value)
+    except (ValueError, TypeError):
+        return []
 
 @app.before_request
 def before_request():
