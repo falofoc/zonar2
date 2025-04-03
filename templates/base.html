@@ -1479,18 +1479,25 @@
         const body = document.body;
         const themeToggle = document.getElementById('themeToggle');
         const icon = themeToggle.querySelector('i');
+        const isDarkTheme = body.classList.contains('dark-theme');
         
-        if (body.classList.contains('dark-theme')) {
+        // Toggle dark theme class
+        if (isDarkTheme) {
+            // Switch to light theme
             body.classList.remove('dark-theme');
             icon.classList.remove('bi-sun-fill');
             icon.classList.add('bi-moon-stars'); // Moon for light theme
-            updateTheme('light');
+            updateTheme('light'); // Save theme preference
         } else {
+            // Switch to dark theme
             body.classList.add('dark-theme');
             icon.classList.remove('bi-moon-stars');
             icon.classList.add('bi-sun-fill'); // Sun for dark theme
-            updateTheme('dark');
+            updateTheme('dark'); // Save theme preference
         }
+        
+        // Log for debugging
+        console.log('Theme toggled to:', isDarkTheme ? 'light' : 'dark');
     }
 
     // Additional script to ensure all links work properly
@@ -1692,6 +1699,18 @@
     }
 
     function updateTheme(theme) {
+        // Set theme class on body element
+        const body = document.body;
+        
+        if (theme === 'dark') {
+            body.classList.add('dark-theme');
+        } else {
+            body.classList.remove('dark-theme');
+        }
+        
+        // Set theme attribute on HTML for CSS variables
+        document.documentElement.setAttribute('data-theme', theme);
+        
         // Send theme preference to server to update in database
         fetch('/change_theme', {
             method: 'POST',
@@ -1702,14 +1721,14 @@
             body: JSON.stringify({ theme: theme })
         })
         .then(response => response.json())
+        .then(data => {
+            console.log('Theme preference saved:', theme);
+        })
         .catch(error => {
             console.error('Error updating theme:', error);
             // Fallback: Set theme cookie directly
             document.cookie = `theme=${theme};path=/;max-age=31536000`;
         });
-        
-        // Update HTML root attribute for CSS variables
-        document.documentElement.setAttribute('data-theme', theme);
         
         // Update theme icon
         updateThemeIcon();
@@ -1875,6 +1894,19 @@
         const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+        
+        // Initialize theme from user preference
+        const currentTheme = "{{ g.theme }}";
+        console.log('Current theme from server:', currentTheme);
+        
+        // Apply theme class to body if it's not already set
+        if (currentTheme === 'dark' && !document.body.classList.contains('dark-theme')) {
+            document.body.classList.add('dark-theme');
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else if (currentTheme === 'light' && document.body.classList.contains('dark-theme')) {
+            document.body.classList.remove('dark-theme');
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
         
         // Check and update theme icon on page load
         updateThemeIcon();
