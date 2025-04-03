@@ -13,6 +13,8 @@ import trackers
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from flask_mail import Message
+from app import mail
 
 # Routes
 @app.route('/')
@@ -182,7 +184,7 @@ def signup():
                 db.session.commit()
                 print("User saved to database successfully")
                 
-                # Send verification email
+                # Send verification email using the refactored function
                 verification_link = url_for('verify_email', token=verification_token, _external=True)
                 print(f"Sending verification email to {email}")
                 send_localized_email(
@@ -194,7 +196,7 @@ def signup():
                     verification_link=verification_link
                 )
                 
-                # Send welcome email
+                # Send welcome email using the refactored function
                 print(f"Sending welcome email to {email}")
                 send_localized_email(
                     user,
@@ -330,7 +332,6 @@ def add_product():
                     read=False
                 )
                 db.session.add(notification)
-                db.session.commit()
             
             message = translate('product_added_success').format(product_name=custom_name or product_data['name'])
             print(f"Product added successfully: {message}")
@@ -553,26 +554,39 @@ def check_price(product_id):
         
         # Create notification if price changed and notifications are enabled
         if new_price != old_price:
-            if product.notify_on_any_change or (product.target_price and new_price <= product.target_price):
-                # Create notification message based on price change
-                if new_price < old_price:
-                    message = f"{product.custom_name or product.name}: {translate('price_dropped')} {new_price}."
-                else:
-                    message = f"{product.custom_name or product.name}: {translate('price_increased')} {new_price}."
-                
-                # If target price reached, add special notification
-                if product.target_price and new_price <= product.target_price:
-                    message += f" {translate('target_reached')}!"
-                
-                # Create and save notification
+            should_notify = False
+            notification_message = ""
+            
+            # Determine message based on price change
+            if new_price < old_price:
+                notification_message = f"{product.custom_name or product.name}: {translate('price_dropped')} {new_price}."
+                should_notify = True # Notify on any drop or target reach
+            elif new_price > old_price and product.notify_on_any_change:
+                 notification_message = f"{product.custom_name or product.name}: {translate('price_increased')} {new_price}."
+                 should_notify = True # Notify on increase only if user opted in
+            
+            # Check target price
+            if product.target_price and new_price <= product.target_price:
+                notification_message += f" {translate('target_reached')}!"
+                should_notify = True # Always notify if target reached
+            
+            # Send email and create DB notification if needed and email is verified
+            if should_notify and current_user.email_verified:
+                 print(f"Sending price change notification email to {current_user.email} for product {product.id}")
+                 # Use the central send_email function (or adapt send_localized_email)
+                 email_subject = translate('price_change_subject').format(product_name=product.custom_name or product.name)
+                 send_email(current_user.email, email_subject, notification_message)
+
+            # Create and save notification in DB regardless of email status (if should_notify)
+            if should_notify:
                 notification = Notification(
-                    message=message,
+                    message=notification_message,
                     user_id=current_user.id,
                     read=False
                 )
                 db.session.add(notification)
-        
-        # Save changes
+
+        # Save changes (including potential notification)
         db.session.commit()
         
         return jsonify({
@@ -665,62 +679,46 @@ def forgot_password():
                 token = user.generate_reset_token()
                 db.session.commit()
                 
-                # Send password reset email
+                # Send password reset email using the refactored function
                 reset_url = url_for('reset_password', token=token, _external=True)
-                subject = translate('password_reset')
+                print(f"Sending password reset email to {user.email}")
                 
-                # Create the email body
-                body = f"""
-                {translate('reset_email_greeting')} {user.username},
-                
-                {translate('reset_email_body')}
-                
-                {reset_url}
-                
-                {translate('reset_email_expiry')}
-                
-                {translate('reset_email_footer')}
-                """
-                
-                # Send the email
-                from flask_mail import Message
-                from app import mail
-                
-                try:
-                    msg = Message(subject=subject, recipients=[user.email], body=body)
-                    mail.send(msg)
-                    
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return jsonify({
-                            'success': True,
-                            'message': translate('reset_email_sent')
-                        })
-                    flash(translate('reset_email_sent'), 'success')
-                except Exception as e:
-                    print(f"Email sending error: {e}")
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return jsonify({
-                            'success': False,
-                            'message': translate('email_error')
-                        })
-                    flash(translate('email_error'), 'danger')
+                # Use send_localized_email for consistency
+                email_sent = send_localized_email(
+                    user,
+                    subject_key="password_reset_subject",
+                    greeting_key="reset_email_greeting",
+                    body_key="reset_email_body",
+                    footer_key="reset_email_footer",
+                    reset_url=reset_url
+                )
+
+                if email_sent:
+                     message = translate('reset_email_sent')
+                     category = 'success'
+                else:
+                     message = translate('email_error')
+                     category = 'danger'
+
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                     return jsonify({'success': email_sent, 'message': message})
+                flash(message, category)
+
             else:
                 # Always inform that email was sent, even if user doesn't exist (security best practice)
+                message = translate('reset_email_sent')
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return jsonify({
-                        'success': True,
-                        'message': translate('reset_email_sent')
-                    })
-                flash(translate('reset_email_sent'), 'success')
+                    return jsonify({'success': True, 'message': message}) # Pretend success
+                flash(message, 'success')
             
-            return render_template('forgot_password.html', unread_count=0)
+            # Redirect back to forgot password page after POST
+            return redirect(url_for('forgot_password')) 
         
+        # Render template for GET request
         return render_template('forgot_password.html', unread_count=0)
     except Exception as e:
         print(f"Error in forgot_password route: {e}")
         traceback.print_exc()
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': translate('error_occurred')})
         flash(translate('error_occurred'), 'danger')
         return render_template('forgot_password.html', unread_count=0)
 
@@ -838,202 +836,68 @@ def settings():
 @login_required
 def test_email():
     try:
-        import smtplib, ssl
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        import os
-        
-        # Email settings
-        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
-        password = os.environ.get("MAIL_PASSWORD", "vnmlzqhuvwktbucj")
-        receiver_email = current_user.email
-        
-        # Create message
-        message = MIMEMultipart()
-        message["Subject"] = "Test Email from ZONAR"
-        message["From"] = sender_email
-        message["To"] = receiver_email
-        
-        # Create body
-        body = f"""Hello {current_user.username},
-
-This is a test email from your ZONAR account.
-
-If you received this email, it means your email configuration is working correctly.
-
-Best regards,
-ZONAR Team"""
-        
-        # Explicitly use UTF-8 encoding for the message
-        message.attach(MIMEText(body, "plain", "utf-8"))
-        
-        # Create a secure SSL context
-        context = ssl.create_default_context()
-        
-        # Get server settings from environment
-        mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-        mail_port = int(os.environ.get("MAIL_PORT", 465))
-        mail_use_tls = os.environ.get("MAIL_USE_TLS", "False").lower() in ['true', '1', 't', 'yes', 'y']
-        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "True").lower() in ['true', '1', 't', 'yes', 'y']
-        
-        print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
-        
-        # Connect to server based on configuration
-        if mail_use_ssl:
-            print("Using SSL connection...")
-            with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
-                print("Logging in...")
-                server.login(sender_email, password)
-                print("Sending email...")
-                server.sendmail(sender_email, receiver_email, message.as_string())
-                print("Email sent successfully")
+        subject = "Zonar Test Email"
+        body = f"This is a test email sent from the Zonar app to {current_user.email}."
+        if send_email(current_user.email, subject, body):
+            flash("Test email sent successfully!", "success")
         else:
-            print("Using TLS connection...")
-            with smtplib.SMTP(mail_server, mail_port) as server:
-                server.ehlo()
-                print("Starting TLS...")
-                server.starttls(context=context)
-                server.ehlo()
-                print("Logging in...")
-                server.login(sender_email, password)
-                print("Sending email...")
-                server.sendmail(sender_email, receiver_email, message.as_string())
-                print("Email sent successfully")
-        
-        flash("Test email sent successfully! Please check your inbox.", "success")
+            flash("Failed to send test email. Check logs and configuration.", "danger")
+        return redirect(url_for('settings'))
     except Exception as e:
-        flash(f"Error sending email: {str(e)}", "danger")
-        print(f"Email error: {e}")
-        import traceback
+        flash(f"Error sending test email: {str(e)}", "danger")
         traceback.print_exc()
-    return redirect(url_for("settings"))
+        return redirect(url_for('settings'))
 
-def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, **format_args):
-    """
-    Send an email to a user with localized content based on their language preference
-    
-    Args:
-        user: The user object (must have email and language attributes)
-        subject_key: Translation key for the subject
-        greeting_key: Translation key for the greeting
-        body_key: Translation key for the body
-        footer_key: Translation key for the footer
-        **format_args: Format arguments to be used in the translations
-    """
+def send_email(to, subject, body):
+    """Sends an email using Flask-Mail configuration."""
     try:
-        import smtplib, ssl
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        import os
-        from translations import translations
+        # Ensure MAIL_USERNAME and MAIL_PASSWORD are set
+        sender = app.config.get('MAIL_USERNAME')
+        password = app.config.get('MAIL_PASSWORD')
         
-        # Determine the user's language
-        user_lang = getattr(user, 'language', 'ar')  # Default to Arabic if not set
-        if user_lang not in ['ar', 'en']:
-            user_lang = 'ar'  # Default to Arabic if invalid language
-        
-        # Get email settings from environment
-        sender_email = os.environ.get("MAIL_USERNAME", "zoonarcom@gmail.com")
-        password = os.environ.get("MAIL_PASSWORD", "vnmlzqhuvwktbucj")
-        receiver_email = user.email
-        
-        # Email server settings - Use environment variables directly
-        mail_server = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-        mail_port = int(os.environ.get("MAIL_PORT", 465))
-        mail_use_tls = os.environ.get("MAIL_USE_TLS", "False").lower() in ['true', '1', 't', 'yes', 'y']
-        mail_use_ssl = os.environ.get("MAIL_USE_SSL", "True").lower() in ['true', '1', 't', 'yes', 'y']
-        
-        print(f"Email Config: Server={mail_server}, Port={mail_port}, TLS={mail_use_tls}, SSL={mail_use_ssl}")
-        print(f"Sending email to {receiver_email} with language {user_lang}")
-        
-        # Get translated content
-        subject = translations[user_lang].get(subject_key, translations['en'].get(subject_key, ""))
-        greeting = translations[user_lang].get(greeting_key, translations['en'].get(greeting_key, ""))
-        body = translations[user_lang].get(body_key, translations['en'].get(body_key, ""))
-        footer = translations[user_lang].get(footer_key, translations['en'].get(footer_key, ""))
-        
-        # Format with provided arguments
-        if format_args:
-            if "{username}" in greeting:
-                greeting = greeting.format(username=user.username, **format_args)
-            if any(f"{{{arg}}}" in body for arg in format_args):
-                body = body.format(**format_args)
-            if any(f"{{{arg}}}" in subject for arg in format_args):
-                subject = subject.format(**format_args)
-        
-        # Create message
-        message = MIMEMultipart()
-        message["Subject"] = subject
-        message["From"] = sender_email
-        message["To"] = receiver_email
-        message["Reply-To"] = sender_email
-        
-        # Combine all parts
-        email_content = f"{greeting}\n\n{body}\n\n{footer}"
-        
-        # Explicitly use UTF-8 for message content to handle Arabic characters
-        message.attach(MIMEText(email_content, "plain", "utf-8"))
-        
-        print(f"Email prepared with subject: {subject}")
-        
-        # Create a secure context
-        context = ssl.create_default_context()
-        
-        # Decide between SSL and TLS based on configuration
-        if mail_use_ssl:
-            print(f"Using SSL connection on port {mail_port}")
-            with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
-                print("Logging in to email server...")
-                server.login(sender_email, password)
-                print("Sending email...")
-                server.sendmail(sender_email, receiver_email, message.as_string())
-                print(f"Email sent successfully to {receiver_email}")
-        else:
-            print(f"Using TLS connection on port {mail_port}")
-            with smtplib.SMTP(mail_server, mail_port) as server:
-                server.ehlo()
-                server.starttls(context=context)
-                server.ehlo()
-                print("Logging in to email server...")
-                server.login(sender_email, password)
-                print("Sending email...")
-                server.sendmail(sender_email, receiver_email, message.as_string())
-                print(f"Email sent successfully to {receiver_email}")
-        
-        # Add a notification in the app
-        try:
-            from models import Notification, db
-            notification = Notification(
-                user_id=user.id,
-                message=f"Email sent: {subject}",
-                read=False
-            )
-            db.session.add(notification)
-            db.session.commit()
-            print(f"Added notification for user {user.id}")
-        except Exception as e:
-            print(f"Failed to add notification: {e}")
-        
+        if not sender or not password:
+            print("ERROR: MAIL_USERNAME or MAIL_PASSWORD not configured in Flask app config.")
+            # Optionally, you could raise an exception here in production
+            # raise ValueError("Email credentials not configured")
+            return False # Indicate failure
+
+        print(f"Attempting to send email from {sender} to {to} with subject: {subject}")
+        msg = Message(
+            subject=subject,
+            recipients=[to],
+            body=body,
+            sender=sender # Use configured sender
+        )
+        mail.send(msg)
+        print(f"Email sent successfully to {to}")
         return True
     except Exception as e:
-        import traceback
-        print(f"Error sending localized email: {e}")
-        traceback.print_exc()  # Print full traceback for debugging
+        print(f"ERROR sending email to {to}: {str(e)}")
+        traceback.print_exc()
+        return False
+
+def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, **format_args):
+    """Sends localized email using the send_email helper."""
+    try:
+        lang = user.language if hasattr(user, 'language') and user.language else g.lang
         
-        # Try to add notification about failed email
-        try:
-            from models import Notification, db
-            notification = Notification(
-                user_id=user.id,
-                message="Failed to send email. Please check your email address.",
-                read=False
-            )
-            db.session.add(notification)
-            db.session.commit()
-            print(f"Added failure notification for user {user.id}")
-        except:
-            pass
-            
+        # Translate components
+        subject = translate(subject_key, lang=lang).format(username=user.username, **format_args)
+        greeting = translate(greeting_key, lang=lang).format(username=user.username, **format_args)
+        body_content = translate(body_key, lang=lang).format(**format_args)
+        footer = translate(footer_key, lang=lang).format(**format_args)
+        
+        # Construct email body
+        full_body = f"{greeting}\\n\\n{body_content}\\n\\n{footer}"
+        
+        print(f"Preparing localized email for {user.email} (Lang: {lang}) - Subject: {subject}")
+        
+        # Use the central send_email function
+        return send_email(user.email, subject, full_body)
+
+    except Exception as e:
+        print(f"Error preparing or sending localized email for {user.email}: {e}")
+        traceback.print_exc()
         return False
 
 @app.route('/verify_email/<token>')
@@ -1075,7 +939,7 @@ def resend_verification():
         verification_token = current_user.generate_verification_token()
         db.session.commit()
         
-        # Send verification email
+        # Send verification email using the refactored function
         verification_link = url_for('verify_email', token=verification_token, _external=True)
         send_localized_email(
             current_user,
