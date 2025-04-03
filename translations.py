@@ -177,7 +177,20 @@ translations = {
         'tour_button_skip': 'Skip Tour',
         'tour_button_next': 'Next',
         'tour_button_back': 'Back',
-        'tour_button_finish': 'Finish'
+        'tour_button_finish': 'Finish',
+        # PWA & Notifications
+        'install_app': 'تثبيت التطبيق',
+        'enable_notifications': 'تفعيل الإشعارات',
+        'app_installed': 'تم تثبيت التطبيق',
+        'notifications_enabled': 'تم تفعيل الإشعارات',
+        'offline_mode': 'وضع عدم الاتصال',
+        'offline_description': 'أنت تستخدم التطبيق بدون اتصال بالإنترنت، بعض الميزات قد لا تعمل.',
+        'update_available': 'يوجد تحديث جديد',
+        'update_app': 'تحديث التطبيق',
+        'app_updated': 'تم تحديث التطبيق',
+        'add_to_home_screen': 'إضافة إلى الشاشة الرئيسية',
+        'add_to_home_screen_ios': 'اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"',
+        'add_to_home_screen_android': 'اضغط على قائمة الإعدادات ثم "إضافة إلى الشاشة الرئيسية"',
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -380,6 +393,19 @@ translations = {
         'tour_button_skip': 'إغلاق',
         'tour_button_next': 'التالي',
         'tour_button_back': 'السابق',
-        'tour_button_finish': 'إنهاء'
+        'tour_button_finish': 'إنهاء',
+        # PWA & Notifications
+        'install_app': 'تثبيت التطبيق',
+        'enable_notifications': 'تفعيل الإشعارات',
+        'app_installed': 'تم تثبيت التطبيق',
+        'notifications_enabled': 'تم تفعيل الإشعارات',
+        'offline_mode': 'وضع عدم الاتصال',
+        'offline_description': 'أنت تستخدم التطبيق بدون اتصال بالإنترنت، بعض الميزات قد لا تعمل.',
+        'update_available': 'يوجد تحديث جديد',
+        'update_app': 'تحديث التطبيق',
+        'app_updated': 'تم تحديث التطبيق',
+        'add_to_home_screen': 'إضافة إلى الشاشة الرئيسية',
+        'add_to_home_screen_ios': 'اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"',
+        'add_to_home_screen_android': 'اضغط على قائمة الإعدادات ثم "إضافة إلى الشاشة الرئيسية"',
     }
 } 

@@ -1672,3 +1672,83 @@ def setup_admin(token, username):
         db.session.rollback()
         return f"Error: {str(e)}", 500
 
+@app.route('/save-subscription', methods=['POST'])
+@login_required
+def save_subscription():
+    """حفظ اشتراك الإشعارات الخاص بالمستخدم"""
+    try:
+        # الحصول على بيانات الاشتراك من طلب JSON
+        subscription = request.json
+        
+        if not subscription:
+            return jsonify({'success': False, 'error': 'بيانات الاشتراك غير صالحة'}), 400
+            
+        # تخزين بيانات الاشتراك في ملف المستخدم
+        # يمكن تعديل هذا ليناسب هيكل قاعدة البيانات الخاصة بك
+        current_user.push_subscription = json.dumps(subscription)
+        current_user.notifications_enabled = True
+        db.session.commit()
+        
+        print(f"تم حفظ اشتراك الإشعارات للمستخدم: {current_user.id}")
+        
+        return jsonify({'success': True, 'message': 'تم تسجيل الاشتراك بنجاح'})
+    except Exception as e:
+        print(f"خطأ في حفظ اشتراك الإشعارات: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'حدث خطأ أثناء حفظ الاشتراك'}), 500
+
+@app.route('/send-notification', methods=['POST'])
+@login_required
+def send_notification():
+    """إرسال إشعار للمستخدم لاختبار الإشعارات"""
+    try:
+        # التحقق من صلاحيات المستخدم (اختياري)
+        
+        # الحصول على اشتراك الإشعارات للمستخدم
+        if not current_user.push_subscription:
+            return jsonify({'success': False, 'error': 'المستخدم غير مشترك في الإشعارات'}), 400
+            
+        subscription_info = json.loads(current_user.push_subscription)
+        
+        # بيانات الإشعار
+        notification_data = {
+            'title': 'إشعار اختبار',
+            'body': 'هذا إشعار اختباري من زونار',
+            'tag': 'test-notification',
+            'url': '/'
+        }
+        
+        # إرسال الإشعار عبر webpush
+        from pywebpush import webpush, WebPushException
+        
+        try:
+            webpush(
+                subscription_info=subscription_info,
+                data=json.dumps(notification_data),
+                vapid_private_key=app.config.get('VAPID_PRIVATE_KEY'),
+                vapid_claims={
+                    "sub": "mailto:info@zonar.com"
+                }
+            )
+            
+            return jsonify({'success': True, 'message': 'تم إرسال الإشعار بنجاح'})
+        except WebPushException as e:
+            print(f"خطأ في إرسال الإشعار: {str(e)}")
+            # التحقق من حالة الانتهاء
+            if e.response and e.response.status_code == 410:
+                # الاشتراك لم يعد صالحًا، قم بإزالته
+                current_user.push_subscription = None
+                db.session.commit()
+                return jsonify({'success': False, 'error': 'انتهت صلاحية الاشتراك'}), 410
+            return jsonify({'success': False, 'error': f"فشل إرسال الإشعار: {str(e)}"}), 500
+    except Exception as e:
+        print(f"خطأ في مسار إرسال الإشعار: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'حدث خطأ أثناء إرسال الإشعار'}), 500
+
+# مسار لعرض صفحة وضع عدم الاتصال (offline)
+@app.route('/offline.html')
+def offline():
+    """عرض صفحة وضع عدم الاتصال"""
+    return render_template('offline.html')
+

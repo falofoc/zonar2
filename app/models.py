@@ -33,6 +33,11 @@ class User(db.Model, UserMixin):
     products = db.relationship('Product', backref='user', lazy='dynamic')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     
+    # حقول PWA وإشعارات الويب
+    push_subscription = db.Column(db.Text)  # تخزين بيانات اشتراك الإشعارات بتنسيق JSON
+    notifications_enabled = db.Column(db.Boolean, default=False)
+    device_info = db.Column(db.Text)  # معلومات الجهاز بتنسيق JSON (اختياري)
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     
