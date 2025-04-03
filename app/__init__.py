@@ -11,6 +11,8 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from flask_mail import Mail
+from logging.handlers import RotatingFileHandler
+import logging
 
 # Load environment variables
 load_dotenv()
@@ -165,6 +167,39 @@ def before_request():
     g.is_english = (g.lang == 'en')
     print(f"CURRENT STATE: AR={g.is_arabic}, EN={g.is_english}")
 
+    # Verify user session
+    if current_user.is_authenticated:
+        # Get the stored session token from the session
+        session_token = session.get('user_session_token')
+        
+        # Update user's last_active timestamp
+        current_user.last_active = datetime.utcnow()
+        db.session.commit()
+        
+        # Check if the token is valid for this user
+        if not session_token or not current_user.verify_session_token(session_token):
+            # Session is invalid - user may be logged in elsewhere
+            # This won't run for endpoints exempted from login requirements
+            if not request.endpoint or request.endpoint not in ['logout', 'login', 'static']:
+                # Forcibly logout the user
+                logout_user()
+                session.pop('user_session_token', None)
+                session['flash_message'] = {
+                    'message': translate('session_expired_elsewhere'),
+                    'category': 'warning'
+                }
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    # For AJAX requests, return a JSON response
+                    return jsonify({
+                        'success': False,
+                        'message': translate('session_expired_elsewhere'),
+                        'redirect': '/login'
+                    }), 401
+                else:
+                    # For regular requests, redirect to login
+                    return redirect(url_for('login'))
+
 # Now import the rest of the app components
 try:
     from . import models, routes
@@ -193,3 +228,30 @@ with app.app_context():
 def load_user(id):
     from app.models import User
     return User.query.get(int(id)) 
+
+# Configure logging
+if not os.path.exists('logs'):
+    os.mkdir('logs')
+
+file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+file_handler.setLevel(logging.INFO)
+app.logger.addHandler(file_handler)
+app.logger.setLevel(logging.INFO)
+app.logger.info('Application startup')
+
+# Initialize extensions with app
+db.init_app(app)
+login_manager.init_app(app)
+mail.init_app(app)
+
+# Import models and routes
+from app.models import User, Product
+
+# Create the database tables
+with app.app_context():
+    db.create_all()
+
+from app import routes 

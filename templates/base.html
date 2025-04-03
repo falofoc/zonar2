@@ -1185,6 +1185,35 @@
             line-height: 1;
         }
 
+        /* Pagination Styling */
+        .pagination-container {
+            margin: 2rem 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* Disclaimer footer */
+        .disclaimer-footer {
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 0;
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .disclaimer-footer p {
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .disclaimer-footer {
+                padding: 0.75rem 1rem;
+                font-size: 0.75rem;
+            }
+        }
+
     </style>
     {% block extra_css %}{% endblock %}
 
@@ -1939,6 +1968,15 @@
         {% endif %}
     </button>
     {% endif %}
+
+    <!-- Disclaimer Footer -->
+    <footer class="disclaimer-footer">
+        <div class="container">
+            <p>{{ translate('disclaimer_tracking_only') }}</p>
+            <p>{{ translate('disclaimer_prices_change') }}</p>
+            <p>&copy; {{ now.year }} ZONAR</p>
+        </div>
+    </footer>
 
 </body>
 </html> 

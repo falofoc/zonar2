@@ -29,6 +29,13 @@ class User(db.Model, UserMixin):
     # Email verification fields
     verification_token_expiry = db.Column(db.DateTime, nullable=True)
     
+    # Session management
+    session_token = db.Column(db.String(100), nullable=True)
+    session_expiry = db.Column(db.DateTime, nullable=True)
+    last_active = db.Column(db.DateTime, nullable=True)
+    last_ip = db.Column(db.String(50), nullable=True)
+    last_user_agent = db.Column(db.String(255), nullable=True)
+    
     # Relationships
     products = db.relationship('Product', backref='user', lazy='dynamic')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
@@ -82,6 +89,25 @@ class User(db.Model, UserMixin):
         self.verification_token = None
         self.verification_token_expiry = None
         self.email_verified = True
+    
+    def generate_session_token(self):
+        """Generate a unique session token for the user"""
+        self.session_token = secrets.token_urlsafe(64)
+        self.session_expiry = datetime.utcnow() + timedelta(days=30)  # 30-day session
+        return self.session_token
+    
+    def verify_session_token(self, token):
+        """Verify if the session token is valid"""
+        if not self.session_token or self.session_token != token:
+            return False
+        if not self.session_expiry or datetime.utcnow() > self.session_expiry:
+            return False
+        return True
+    
+    def clear_session_token(self):
+        """Clear the session token on logout"""
+        self.session_token = None
+        self.session_expiry = None
         
     def __repr__(self):
         return f'<User {self.username}>'
@@ -93,10 +119,13 @@ class Product(db.Model):
     custom_name = db.Column(db.String(200))
     current_price = db.Column(db.Float, nullable=False)
     target_price = db.Column(db.Float)
-    image_url = db.Column(db.String(500))
+    image_url = db.Column(db.String(500))  # Original Amazon image URL
+    local_image = db.Column(db.LargeBinary, nullable=True)  # Store image data locally
+    image_content_type = db.Column(db.String(50), nullable=True)  # Image MIME type (e.g., image/jpeg)
+    last_image_update = db.Column(db.DateTime, nullable=True)  # When the image was last fetched
     price_history = db.Column(db.Text, default='[]')  # JSON string of price history
     tracking_enabled = db.Column(db.Boolean, default=True)
-    notify_on_any_change = db.Column(db.Boolean, default=False)
+    notify_on_any_change = db.Column(db.Boolean, default=True)  # Default to notify on any change
     last_checked = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -113,6 +142,20 @@ class Product(db.Model):
         for entry in history:
             entry['date'] = datetime.fromisoformat(entry['date'])
         
+        return history
+    
+    def add_price_to_history(self, price):
+        """Add a price point to the history, recording every price change"""
+        history = json.loads(self.price_history) if self.price_history else []
+        
+        # Add the new price point
+        history.append({
+            'price': price,
+            'date': datetime.utcnow().isoformat()
+        })
+        
+        # Save updated history
+        self.price_history = json.dumps(history)
         return history
         
     # Properties for template compatibility
@@ -134,4 +177,6 @@ class Notification(db.Model):
     message = db.Column(db.String(500), nullable=False)
     read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) 
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    related_product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)
+    notification_type = db.Column(db.String(50), default='price_change')  # Type: price_change, target_reached, etc. 

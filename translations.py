@@ -234,6 +234,14 @@ translations = {
         'no_products_description': 'We couldn\'t find any products matching your search criteria. Try changing your search query or check back later.',
         'clear_search': 'Clear Search',
         'search_products': 'Search products...',
+        
+        # Session management and price checking
+        'session_exists_elsewhere': 'You appear to be logged in on another device. Continuing will end that session.',
+        'session_expired_elsewhere': 'Your session has expired or you have logged in elsewhere. Please log in again.',
+        'recently_checked': 'This product was checked recently. Please wait before checking again.',
+        'price_checked': 'Price checked successfully',
+        'disclaimer_tracking_only': 'ZONAR is for tracking purposes only. Prices may change at any time.',
+        'disclaimer_prices_change': 'Prices on Amazon.sa may change at any time. ZONAR is a tracking tool only and not affiliated with Amazon.',
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -490,5 +498,13 @@ translations = {
         'no_products_description': 'لم نتمكن من العثور على منتجات تطابق معايير البحث. حاول تغيير مصطلح البحث أو التحقق لاحقاً.',
         'clear_search': 'مسح البحث',
         'search_products': 'البحث عن المنتجات...',
+        
+        # Session management and price checking
+        'session_exists_elsewhere': 'يبدو أنك مسجل الدخول على جهاز آخر. المتابعة ستنهي تلك الجلسة.',
+        'session_expired_elsewhere': 'انتهت صلاحية جلستك أو قمت بتسجيل الدخول في مكان آخر. يرجى تسجيل الدخول مرة أخرى.',
+        'recently_checked': 'تم التحقق من سعر هذا المنتج مؤخرًا. يرجى الانتظار قبل التحقق مرة أخرى.',
+        'price_checked': 'تم التحقق من السعر بنجاح',
+        'disclaimer_tracking_only': 'زونار هو فقط لأغراض تتبع الأسعار. قد تتغير الأسعار في أي وقت.',
+        'disclaimer_prices_change': 'قد تتغير أسعار أمازون السعودية في أي وقت. زونار هو أداة تتبع فقط وليس مرتبطًا بأمازون.',
     }
 } 
