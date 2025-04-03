@@ -123,6 +123,50 @@
         background-color: #fff; /* White background for contain */
         padding: var(--spacing-sm);
         border-bottom: 1px solid var(--border-color);
+        position: relative; /* Added for absolute positioning of hunted stamp */
+    }
+
+    /* Hunted stamp styling */
+    .hunted-stamp {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--brand-orange-500), var(--brand-orange-600));
+        color: white;
+        padding: 5px 15px;
+        font-weight: bold;
+        font-size: 12px;
+        transform: rotate(45deg) translate(22%, -20%);
+        transform-origin: top right;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 1;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    
+    [dir="rtl"] .hunted-stamp {
+        left: 0;
+        right: auto;
+        transform: rotate(-45deg) translate(-22%, -20%);
+        transform-origin: top left;
+    }
+    
+    .price-drop-badge {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(39, 174, 96, 0.85);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 1;
+    }
+    
+    [dir="rtl"] .price-drop-badge {
+        left: auto;
+        right: 10px;
     }
 
     .dark-theme .product-image {
@@ -733,6 +777,21 @@
                 <div class="product-card">
                     {% if product.image_url %}
                     <img src="{{ product.image_url }}" class="product-image" alt="{{ product.name }}">
+                    {% if product.price_history and (product.get_price_history()|length > 1) %}
+                        {% set history = product.get_price_history() %}
+                        {% set last_idx = history|length - 1 %}
+                        {% set prev_idx = history|length - 2 %}
+                        {% if history[last_idx].price < history[prev_idx].price or (product.target_price and history[last_idx].price <= product.target_price) %}
+                            <div class="hunted-stamp" data-bs-toggle="tooltip" title="{{ translate('hunted_tooltip') }}">
+                                {{ translate('hunted') }}
+                            </div>
+                            {% if history[last_idx].price < history[prev_idx].price %}
+                                <div class="price-drop-badge">
+                                    {{ translate('price_drop_save', amount=(history[prev_idx].price - history[last_idx].price)|round(2)) }}
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
                     {% endif %}
                     <div class="product-info">
                         <h5 class="product-name">{{ product.custom_name or product.name }}</h5>

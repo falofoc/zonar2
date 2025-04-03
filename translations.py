@@ -208,6 +208,11 @@ translations = {
         'not_verified': 'Not Verified',
         'email_verified_tooltip': 'Your email is verified',
         'email_not_verified_tooltip': 'Please verify your email to enable all features',
+        
+        # Hunted stamp
+        'hunted': 'HUNTED',
+        'hunted_tooltip': 'Price has dropped or reached target',
+        'price_drop_save': 'Save {amount}',
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -438,5 +443,10 @@ translations = {
         'not_verified': 'غير مُتحقق',
         'email_verified_tooltip': 'تم التحقق من بريدك الإلكتروني',
         'email_not_verified_tooltip': 'يرجى التحقق من بريدك الإلكتروني لتفعيل كافة الميزات',
+        
+        # Hunted stamp
+        'hunted': 'تم اصطياده',
+        'hunted_tooltip': 'انخفض السعر أو وصل للهدف',
+        'price_drop_save': 'وفر {amount}',
     }
 } 
