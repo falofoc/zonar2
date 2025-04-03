@@ -323,52 +323,145 @@
         padding: var(--spacing-xl) var(--spacing-md);
         background-color: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        border: 1px dashed var(--border-color);
-        margin-top: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
+        margin: 2rem auto;
+        max-width: 900px;
+        position: relative;
+        overflow: hidden;
     }
-
-    .empty-state-icon {
-        font-size: 4rem;
-        color: var(--secondary-color);
-        margin-bottom: var(--spacing-md);
-        display: block;
+    
+    .empty-state:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: var(--gradient-fire);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
     }
-
-    .empty-state h3 {
-        font-weight: 600;
+    
+    .empty-state-title {
+        font-weight: 700;
         color: var(--text-primary);
         margin-bottom: var(--spacing-sm);
+        font-size: 1.75rem;
     }
-
+    
     .empty-state-text {
         color: var(--text-secondary);
         margin-bottom: var(--spacing-lg);
-        max-width: 400px;
+        max-width: 600px;
         margin-left: auto;
         margin-right: auto;
+        font-size: 1.1rem;
     }
-
+    
     .empty-state .add-product-btn {
         background: var(--gradient-fire);
         border: none;
         color: white;
-        padding: var(--spacing-md) var(--spacing-lg);
-        font-size: var(--font-size-base);
-        font-weight: 500;
-        border-radius: var(--border-radius);
-        transition: background var(--transition-base), transform var(--transition-fast);
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: var(--border-radius-lg);
+        transition: transform var(--transition-base), box-shadow var(--transition-base);
+        box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+        position: relative;
+        z-index: 2;
     }
-
+    
     .empty-state .add-product-btn:hover {
-        background: var(--gradient-sunset);
-        transform: scale(1.03);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
     }
+    
+    .empty-state .add-product-btn:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 10px rgba(255, 107, 0, 0.3);
+    }
+    
     .empty-state .add-product-btn i {
-        margin-right: 0.5em;
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+        vertical-align: middle;
     }
+    
     [dir="rtl"] .empty-state .add-product-btn i {
-        margin-left: 0.5em;
+        margin-left: 0.5rem;
         margin-right: 0;
+    }
+    
+    .benefit-card {
+        background: rgba(255, 107, 0, 0.05);
+        border-radius: var(--border-radius);
+        padding: 1.25rem 1rem;
+        height: 100%;
+        transition: transform var(--transition-base), box-shadow var(--transition-base);
+    }
+    
+    .benefit-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow);
+    }
+    
+    .benefit-card i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+    
+    .benefit-card h5 {
+        font-size: 1rem;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .empty-state-help {
+        margin-top: 3rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .help-text {
+        margin-bottom: 0.5rem;
+    }
+    
+    .version-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: var(--brand-orange-100);
+        color: var(--primary-color);
+        border-radius: 2rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+        .empty-state {
+            padding: var(--spacing-lg) var(--spacing-sm);
+            margin: 1rem 0;
+        }
+        
+        .empty-state-title {
+            font-size: 1.5rem;
+        }
+        
+        .empty-state-text {
+            font-size: 1rem;
+            padding: 0 var(--spacing-sm);
+        }
+        
+        .empty-state .add-product-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .benefit-card {
+            margin-bottom: var(--spacing-sm);
+        }
     }
 
     /* Pagination Adjustments */
@@ -816,66 +909,55 @@
             {% endfor %}
         {% else %}
             <div class="col-12">
-                <div class="empty-state-container">
-                    <div class="empty-state-animation">
-                        <div class="rocket-container">
-                            <div class="rocket">
-                                <div class="rocket-body">
-                                    <div class="window"></div>
-                                </div>
-                                <div class="rocket-fin rocket-fin-left"></div>
-                                <div class="rocket-fin rocket-fin-right"></div>
-                                <div class="rocket-flames">
-                                    <div class="flame"></div>
-                                    <div class="flame"></div>
-                                    <div class="flame"></div>
+                <div class="empty-state">
+                    <div class="empty-state-animation mb-4">
+                        <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_qm8eqzim.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: 0 auto;" loop autoplay></lottie-player>
+                    </div>
+                    
+                    <h3 class="empty-state-title">{{ translate('no_products_yet') }}</h3>
+                    
+                    <p class="empty-state-text">{{ translate('start_tracking_message') }}</p>
+                    
+                    <div class="empty-state-benefits mb-4">
+                        <div class="row justify-content-center">
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="benefit-card">
+                                    <i class="bi bi-graph-down"></i>
+                                    <h5>{{ translate('track_prices') }}</h5>
                                 </div>
                             </div>
-                            <div class="stars">
-                                <div class="star star1"></div>
-                                <div class="star star2"></div>
-                                <div class="star star3"></div>
-                                <div class="star star4"></div>
-                                <div class="star star5"></div>
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="benefit-card">
+                                    <i class="bi bi-bell"></i>
+                                    <h5>{{ translate('get_notified') }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-6 mb-3">
+                                <div class="benefit-card">
+                                    <i class="bi bi-arrow-down-circle"></i>
+                                    <h5>{{ translate('target_reached') }}</h5>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="empty-state-content">
-                        <h2 class="empty-state-title">{{ translate('no_products_yet') }}</h2>
-                        <p class="empty-state-description">{{ translate('start_tracking_description') }}</p>
-                        
-                        <div class="empty-state-features">
-                            <div class="feature">
-                                <div class="feature-icon">
-                                    <i class="bi bi-graph-up"></i>
-                                </div>
-                                <div class="feature-text">{{ translate('track_prices') }}</div>
-                            </div>
-                            <div class="feature">
-                                <div class="feature-icon">
-                                    <i class="bi bi-bell"></i>
-                                </div>
-                                <div class="feature-text">{{ translate('get_notified') }}</div>
-                            </div>
-                            <div class="feature">
-                                <div class="feature-icon">
-                                    <i class="bi bi-piggy-bank"></i>
-                                </div>
-                                <div class="feature-text">{{ translate('save_money') }}</div>
-                            </div>
-                        </div>
-                        
-                        <button class="add-first-product-btn pulse-animation" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                            <i class="bi bi-plus-circle me-2"></i>{{ translate('add_first_product') }}
+                    <div class="mt-4">
+                        <button class="add-product-btn" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                            <i class="bi bi-plus-circle"></i>{{ translate('add_first_product') }}
                         </button>
-                        
-                        <div class="sample-product">
-                            <p class="sample-tip">{{ translate('try_with') }} <a href="https://www.amazon.sa" target="_blank">Amazon.sa</a></p>
+                    </div>
+                    
+                    <div class="empty-state-help mt-4">
+                        <p class="help-text">{{ translate('start_tracking_description') }}</p>
+                        <div class="version-badge">
+                            <span>{{ translate('version') }} 2.1</span>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Load Lottie Animation Library -->
+            <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
         {% endif %}
     </div>
 
