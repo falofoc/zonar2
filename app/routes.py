@@ -260,6 +260,18 @@ def add_product():
             print("URL is required but was not provided")
             return jsonify({'success': False, 'error': translate('url_required')})
         
+        # Support for shortened Amazon URLs (amzn.eu)
+        if url.startswith('https://amzn.eu/'):
+            try:
+                import requests
+                # Follow the redirect to get the full amazon.sa URL
+                response = requests.head(url, allow_redirects=True)
+                url = response.url
+                print(f"Shortened URL expanded to: {url}")
+            except Exception as e:
+                print(f"Error expanding shortened URL: {str(e)}")
+                return jsonify({'success': False, 'error': translate('invalid_url')})
+        
         # Validate Amazon.sa URL
         if not url.startswith('https://www.amazon.sa'):
             print(f"Invalid URL: {url} - not from amazon.sa")
