@@ -960,6 +960,150 @@
             user-select: none;
         }
 
+        /* Floating Action Button for mobile */
+        .floating-add-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #FF6B00, #FF9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
+            z-index: 999;
+            border: none;
+            font-size: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .floating-add-btn:hover, .floating-add-btn:focus {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 6px 16px rgba(255, 107, 0, 0.5);
+            color: white;
+        }
+        
+        .floating-add-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .floating-add-btn .version-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: white;
+            color: #FF6B00;
+            border-radius: 12px;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            line-height: 1;
+        }
+        
+        /* Show on mobile only */
+        @media (min-width: 992px) {
+            .floating-add-btn {
+                display: none;
+            }
+        }
+        
+        [dir="rtl"] .floating-add-btn {
+            right: auto;
+            left: 24px;
+        }
+        
+        /* Floating notification badge */
+        .floating-notification-btn {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: 48px;
+            height: 48px;
+            background: white;
+            color: #FF6B00;
+            border: 2px solid #FF6B00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            font-size: 1.3rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .floating-notification-btn:hover, .floating-notification-btn:focus {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+        }
+        
+        .floating-notification-btn .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            padding: 1px 5px;
+            line-height: 1.2;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        /* Show on mobile only */
+        @media (min-width: 992px) {
+            .floating-notification-btn {
+                display: none;
+            }
+        }
+        
+        [dir="rtl"] .floating-notification-btn {
+            left: auto;
+            right: 24px;
+        }
+        
+        /* Empty state message */
+        .empty-state-message {
+            background-color: var(--card-bg);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        
+        .empty-state-message h4 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .empty-state-message p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-state-message .btn {
+            background: linear-gradient(135deg, #FF6B00, #FF9800);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            transition: all 0.3s;
+        }
+        
+        .empty-state-message .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+        }
+
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -1011,13 +1155,8 @@
                         <!-- Only show these elements if the user is logged in -->
                         
                         <!-- Add Product Button (Logged In Only) -->
-                        <button class="nav-icon-btn d-none d-md-inline-flex" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
+                        <button class="nav-icon-btn" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
                             <i class="bi bi-plus-circle"></i>
-                        </button>
-                        
-                        <!-- Mobile Add Product Button -->
-                        <button class="btn btn-primary d-md-none mb-2 w-100" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                            <i class="bi bi-plus-circle me-2"></i>{{ translate('add_product') }}
                         </button>
 
                         <!-- Notifications Dropdown (Logged In Only) -->
@@ -1528,6 +1667,21 @@
     <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
 
     <!-- Removed FAB HTML -->
+
+    <!-- Right before closing body tag, add floating buttons for mobile -->
+    {% if current_user.is_authenticated %}
+    <button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#addProductModal" title="{{ translate('add_product') }}">
+        <i class="bi bi-plus-lg"></i>
+        <span class="version-badge">2.1</span>
+    </button>
+
+    <button class="floating-notification-btn" data-bs-toggle="dropdown" aria-expanded="false" title="{{ translate('notifications') }}">
+        <i class="bi bi-bell"></i>
+        {% if unread_count > 0 %}
+        <span class="notification-badge">{{ unread_count }}</span>
+        {% endif %}
+    </button>
+    {% endif %}
 
 </body>
 </html> 

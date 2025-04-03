@@ -1,27 +1,18 @@
-# Amazon SA Price Tracker
+# Amazon Price Tracker (ZONAR - زونار)
 
-A web application that tracks prices of products on Amazon Saudi Arabia. Get notified when prices drop or change on your favorite items.
+A Flask web application that tracks Amazon Saudi Arabia product prices and notifies users when prices change or reach their target price.
 
 ## Features
 
-- Track product prices from Amazon Saudi Arabia
-- Receive notifications for price drops and changes
-- Customizable target price alerts
-- Mobile-responsive design
-- Bilingual support (English/Arabic)
-- Dark/Light theme
-- Price history visualization
-- Easy product management
+- Track Amazon Saudi Arabia product prices
+- Set target prices for products
+- Receive notifications for price changes
+- Support for both Arabic and English languages
+- Light/Dark theme support
+- Price history tracking
+- User authentication system
 
-## Tech Stack
-
-- Python/Flask
-- SQLAlchemy
-- Bootstrap 5
-- JavaScript
-- SQLite
-
-## Installation
+## Setup
 
 1. Clone the repository:
 ```bash
@@ -29,7 +20,7 @@ git clone https://github.com/YOUR_USERNAME/amazonsa2.git
 cd amazonsa2
 ```
 
-2. Create a virtual environment and activate it:
+2. Create and activate a virtual environment:
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -40,45 +31,28 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Set up environment variables:
-Create a `.env` file in the root directory and add:
+4. Create a `.env` file with your configuration:
 ```
-FLASK_APP=app
+FLASK_APP=app.py
 FLASK_ENV=development
-SECRET_KEY=your_secret_key
-MAIL_SERVER=your_mail_server
-MAIL_PORT=your_mail_port
-MAIL_USERNAME=your_mail_username
-MAIL_PASSWORD=your_mail_password
-MAIL_USE_TLS=True
+AMAZON_REFERRAL_CODE=your_referral_code
 ```
 
-5. Initialize the database:
+5. Run the application:
 ```bash
-flask db upgrade
+python app.py
 ```
 
-6. Run the application:
-```bash
-flask run
-```
+The application will be available at http://localhost:8080
 
-## Usage
+## Requirements
 
-1. Sign up for an account
-2. Add Amazon SA products by pasting their URLs
-3. Set target prices (optional)
-4. Enable tracking for products you want to monitor
-5. Get notified when prices change
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- Python 3.8+
+- Flask
+- SQLAlchemy
+- APScheduler
+- Other dependencies listed in requirements.txt
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License # zonar2

@@ -1,0 +1,3 @@
+2025-04-03 05:48:45,252 - zonar.email - INFO - Email connection test successful
+2025-04-03 05:48:45,354 - zonar.email - INFO - Sending email to zoonarcom@gmail.com
+2025-04-03 05:48:47,401 - zonar.email - INFO - Email sent successfully to zoonarcom@gmail.com in 2.05 seconds

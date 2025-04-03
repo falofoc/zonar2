@@ -1,0 +1,35 @@
+services:
+  # Web Service - The main Flask application
+  - type: web
+    name: zonar-amazon-tracker
+    env: python
+    plan: free # Change to 'starter' or higher for production use
+    buildCommand: ./build.sh
+    startCommand: gunicorn wsgi:app
+    region: ohio # Choose a region close to your users - could be singapore for Middle East
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: MAIL_SERVERn        value: smtp.gmail.comn      - key: MAIL_PORTn        value: 587n      - key: MAIL_USE_TLSn        value: truen      - key: MAIL_USERNAMEn        value: zoonarcom@gmail.comn      - key: MAIL_PASSWORDn        value: vnmlzqhuvwktbucjn      - key: MAIL_DEFAULT_SENDERn        value: zoonarcom@gmail.com      - key: RENDER
+        value: true 
+      - key: SECRET_KEY
+        generateValue: true
+    healthCheckPath: /
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1 # 1GB storage for SQLite
+
+# Add a cron job for automatic price checking
+cron:
+  - name: price-tracker-job
+    schedule: "0 */6 * * *" # Run every 6 hours
+    command: python price_checker.py
+    envVars:
+      - key: MAIL_SERVERn        value: smtp.gmail.comn      - key: MAIL_PORTn        value: 587n      - key: MAIL_USE_TLSn        value: truen      - key: MAIL_USERNAMEn        value: zoonarcom@gmail.comn      - key: MAIL_PASSWORDn        value: vnmlzqhuvwktbucjn      - key: MAIL_DEFAULT_SENDERn        value: zoonarcom@gmail.com      - key: RENDER
+        value: true
+      - key: SECRET_KEY
+        fromService:
+          name: zonar-amazon-tracker
+          type: web
+          envVarKey: SECRET_KEY 

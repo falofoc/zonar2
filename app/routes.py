@@ -93,7 +93,7 @@ def login():
         if request.method == 'POST':
             username = request.form.get('username')
             password = request.form.get('password')
-            remember = request.form.get('remember', False)
+            remember = request.form.get('remember', 'off') == 'on'  # Convert checkbox value to boolean
             
             if not username or not password:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -104,8 +104,14 @@ def login():
             user = User.query.filter_by(username=username).first()
             
             if user and user.check_password(password):
-                login_user(user, remember=bool(remember))
+                # Improved login with persistent session
+                login_user(user, remember=remember)
                 session.permanent = True  # Make session permanent
+                
+                # Set session cookie expiration to 30 days for remembered users
+                if remember:
+                    from datetime import timedelta
+                    app.permanent_session_lifetime = timedelta(days=30)
                 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({
@@ -866,8 +872,8 @@ def forgot_password():
                 mail.send(msg)
                 print(f"Password reset email sent to {user.email}")
 
-                message = translate('reset_email_sent')
-                category = 'success'
+                     message = translate('reset_email_sent')
+                     category = 'success'
 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': True, 'message': message})

@@ -816,15 +816,15 @@
             {% endfor %}
         {% else %}
             <div class="col-12">
-                <div class="empty-state text-center p-5 bg-light rounded-3 shadow-sm">
-                    <i class="bi bi-bag-plus empty-state-icon display-1 text-primary mb-4"></i>
-                    <h2 class="mb-3">{{ translate('no_products_yet') }}</h2>
-                    <p class="empty-state-text lead mb-4">{{ translate('start_tracking_message') }}</p>
-                    <div class="d-grid gap-2 col-md-6 mx-auto">
-                        <button class="btn btn-lg btn-primary add-product-btn" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                            <i class="bi bi-plus-lg me-2"></i> {{ translate('add_first_product') }}
-                        </button>
+                <div class="empty-state-message">
+                    <div class="mb-4">
+                        <img src="{{ url_for('static', filename='img/empty-cart.svg') }}" alt="No products yet" style="width: 120px; height: auto; opacity: 0.8;">
                     </div>
+                    <h4>{{ translate('no_products_yet') }}</h4>
+                    <p>{{ translate('start_tracking_description') }}</p>
+                    <button class="btn" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="bi bi-plus-circle me-2"></i>{{ translate('add_first_product') }}
+                    </button>
                 </div>
             </div>
         {% endif %}

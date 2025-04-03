@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ]
     });
 
-    // Add Product Step
+    // Add Product Step - Detect device and show appropriate button
     tour.addStep({
         id: 'add-product',
         title: document.dir === 'rtl' ? 'إضافة منتج جديد' : 'Add a New Product',
@@ -55,8 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ? 'انقر هنا لإضافة منتج جديد من أمازون. كل ما تحتاجه هو رابط المنتج من موقع أمازون السعودية.'
             : 'Click here to add a new Amazon product. All you need is the product link from amazon.sa.',
         attachTo: {
-            element: '.add-product-btn',
-            on: 'bottom'
+            element: window.innerWidth < 992 ? '.floating-add-btn' : '.nav-icon-btn[data-bs-target="#addProductModal"]',
+            on: window.innerWidth < 992 ? 'top' : 'bottom'
         },
         buttons: [
             {
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Notifications Step
+    // Notifications Step - Detect device and show appropriate button
     tour.addStep({
         id: 'notifications',
         title: document.dir === 'rtl' ? 'الإشعارات' : 'Notifications',
@@ -182,8 +182,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ? 'ستظهر هنا إشعارات تغيرات الأسعار والتنبيهات الهامة الأخرى. سيتم إرسال إشعارات البريد الإلكتروني أيضاً عند تغير الأسعار.'
             : 'Price change notifications and other important alerts will appear here. Email notifications will also be sent when prices change.',
         attachTo: {
-            element: '.notifications-dropdown',
-            on: 'bottom'
+            element: window.innerWidth < 992 ? '.floating-notification-btn' : '.dropdown .nav-icon-btn',
+            on: window.innerWidth < 992 ? 'top' : 'bottom'
         },
         buttons: [
             {
