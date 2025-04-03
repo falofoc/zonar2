@@ -1101,8 +1101,8 @@ def test_email():
         traceback.print_exc()
         return redirect(url_for('settings'))
 
-def send_email(to, subject, body):
-    """Sends an email using Flask-Mail configuration."""
+def send_email(to, subject, body, html=None):
+    """Sends an email using Flask-Mail configuration, with optional HTML content."""
     try:
         # Ensure MAIL_USERNAME and MAIL_PASSWORD are set
         sender = app.config.get('MAIL_USERNAME')
@@ -1119,7 +1119,8 @@ def send_email(to, subject, body):
         msg = Message(
             subject=subject,
             recipients=[to],
-            body=body,
+            body=body,  # Plain text version
+            html=html,  # HTML version (if provided)
             sender=sender # Use configured sender
         )
         
@@ -1143,7 +1144,7 @@ def send_email(to, subject, body):
         return False
 
 def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, **format_args):
-    """Sends localized email using the send_email helper."""
+    """Sends localized email using the send_email helper with orange branded HTML template."""
     try:
         lang = user.language if hasattr(user, 'language') and user.language else g.lang
         
@@ -1153,13 +1154,70 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
         body_content = translate(body_key).format(**format_args)
         footer = translate(footer_key).format(**format_args)
         
-        # Construct email body
-        full_body = f"{greeting}\n\n{body_content}\n\n{footer}"
+        # Define verification link HTML if present
+        verification_link_html = ""
+        if 'verification_link' in format_args:
+            verification_link_html = f"""
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{format_args['verification_link']}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); 
+                          color: white; padding: 15px 30px; text-decoration: none; 
+                          border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                    {translate('verify_email_button')}
+                </a>
+            </div>
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                {translate('if_button_doesnt_work')}
+            </p>
+            <p style="background-color: #f5f5f5; padding: 10px; border-radius: 5px; 
+                      word-break: break-all; font-size: 14px; direction: ltr; text-align: left;">
+                {format_args['verification_link']}
+            </p>
+            """
+            
+        # Create beautiful HTML email with orange branding
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div dir="{('rtl' if lang == 'ar' else 'ltr')}" style="text-align: {('right' if lang == 'ar' else 'left')}; 
+                     background-color: #fff; border-radius: 10px; padding: 20px; 
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="https://zonar.sa/static/img/logo.png" alt="ZONAR" 
+                         style="max-width: 150px; height: auto;"/>
+                </div>
+                
+                <h2 style="color: #FF6B00; margin-bottom: 20px;">{greeting}</h2>
+                
+                <div style="color: #333; font-size: 16px; line-height: 1.5;">
+                    {body_content.replace('\\n', '<br>')}
+                </div>
+                
+                {verification_link_html}
+                
+                <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
+                
+                <div style="color: #999; font-size: 12px;">
+                    {footer.replace('\\n', '<br>')}
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
+                          border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                    <p>© {datetime.now().year} ZONAR - زونار</p>
+                </div>
+            </div>
+        </div>
+        """
         
-        print(f"Preparing localized email for {user.email} (Lang: {lang}) - Subject: {subject}")
+        print(f"Preparing localized HTML email for {user.email} (Lang: {lang}) - Subject: {subject}")
+        
+        # Create plain text version as fallback
+        plain_text = f"{greeting}\n\n{body_content}\n\n{footer}"
+        if 'verification_link' in format_args:
+            plain_text += f"\n\n{translate('verify_email_link')}: {format_args['verification_link']}"
         
         # Use the central send_email function
-        return send_email(user.email, subject, full_body)
+        return send_email(user.email, subject, plain_text, html_body)
 
     except Exception as e:
         print(f"Error preparing or sending localized email for {user.email}: {e}")
@@ -1177,21 +1235,41 @@ def verify_email(token):
             flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
+        # إضافة المزيد من التتبع
+        print(f"Looking for user with verification token starting with: {token[:10]}...")
+        
         # البحث عن المستخدم بواسطة الرمز
         user = User.query.filter_by(verification_token=token).first()
         
-        # إذا كان الرمز غير صالح أو غير موجود
+        # إذا كان الرمز غير صالح
         if not user:
             print(f"No user found with verification token: {token[:10]}...")
-            flash(translate('verification_failed'), 'danger')
-            return redirect(url_for('home'))
+            # محاولة البحث بطريقة أخرى
+            print("Trying partial token match...")
+            # البحث بالأحرف الأولى من الرمز (قد تكون مشكلة في الرابط)
+            users_with_tokens = User.query.filter(User.verification_token.isnot(None)).all()
+            for u in users_with_tokens:
+                if u.verification_token and u.verification_token.startswith(token[:20]):
+                    print(f"Found possible matching user: {u.username} with token starting with {u.verification_token[:10]}")
+                    user = u
+                    break
+
+            # إذا لم يتم العثور على مستخدم
+            if not user:
+                print("No matching users found with similar tokens")
+                flash(translate('verification_failed'), 'danger')
+                return redirect(url_for('home'))
         
         print(f"Found user: {user.username}, Email: {user.email}")
         
-        # تفعيل البريد الإلكتروني بغض النظر عن صلاحية الرمز
-        print(f"Email verification successful for user: {user.username}")
+        # التحقق من صلاحية الرمز
+        if user.verification_token_expiry and datetime.utcnow() > user.verification_token_expiry:
+            print(f"Token expired for user: {user.username}")
+            flash(translate('verification_failed'), 'danger')
+            return redirect(url_for('home'))
         
-        # تحديث الحقول الضرورية لتفعيل البريد الإلكتروني
+        # تفعيل البريد الإلكتروني
+        print(f"Email verification successful for user: {user.username}")
         user.email_verified = True
         user.verification_token = None
         user.verification_token_expiry = None
@@ -1199,8 +1277,6 @@ def verify_email(token):
         # تطبيق التغييرات في قاعدة البيانات
         try:
             db.session.commit()
-            
-            # إضافة رسالة نجاح التفعيل
             flash(translate('verification_success'), 'success')
             
             # إذا لم يكن المستخدم مسجل دخوله، قم بتسجيل دخوله تلقائيًا
@@ -1208,15 +1284,12 @@ def verify_email(token):
                 login_user(user)
                 flash(translate('logged_in_after_verification'), 'success')
             
-            # إعادة التوجيه إلى الصفحة الرئيسية
             return redirect(url_for('home'))
-            
         except Exception as db_error:
             print(f"Database error during verification: {str(db_error)}")
             db.session.rollback()
             flash(translate('verification_error_try_again'), 'danger')
             return redirect(url_for('home'))
-            
     except Exception as e:
         print(f"Error in verify_email route: {str(e)}")
         traceback.print_exc()

@@ -199,6 +199,9 @@ translations = {
         'account_created_without_verification': 'Your account has been created successfully, but we could not send the verification email. Please contact support or try resending the verification email later.',
         'passwords_dont_match': 'Passwords do not match',
         'email_exists': 'Email already registered',
+        'verify_email_button': 'Verify Email Address',
+        'if_button_doesnt_work': 'If the button doesn\'t work, copy and paste this link into your browser:',
+        'verify_email_link': 'Verify your email at:',
     },
     'ar': {
         'app_name': 'متتبع أسعار أمازون السعودية',
@@ -371,13 +374,13 @@ translations = {
         'verification_email_body': 'يرجى التحقق من عنوان بريدك الإلكتروني لتفعيل جميع ميزات حساب زونار الخاص بك.\n\nانقر على الرابط أدناه للتحقق من بريدك الإلكتروني:\n{verification_link}\n\nهذا الرابط صالح لمدة 7 أيام.',
         'verification_email_footer': 'إذا لم تقم بإنشاء هذا الحساب، يرجى تجاهل هذا البريد الإلكتروني.\n\nمع أطيب التحيات،\nفريق زونار',
         
-        'verification_success': 'تم التحقق من بريدك الإلكتروني بنجاح! يمكنك الآن استلام إشعارات عبر البريد الإلكتروني.',
-        'verification_failed': 'فشل التحقق من البريد الإلكتروني. قد يكون رابط التحقق غير صالح أو تم استخدامه بالفعل.',
-        'verification_required': 'يرجى التحقق من بريدك الإلكتروني لاستلام الإشعارات. تحقق من صندوق الوارد أو اطلب إرسال بريد تحقق جديد.',
+        'verification_success': 'تم التحقق من بريدك الإلكتروني بنجاح! يمكنك الآن تلقي إشعارات البريد الإلكتروني.',
+        'verification_failed': 'فشل التحقق من البريد الإلكتروني. قد تكون رابط التحقق منتهي الصلاحية أو غير صالح.',
+        'verification_required': 'يرجى التحقق من بريدك الإلكتروني لتلقي الإشعارات. تحقق من صندوق الوارد الخاص بك أو اطلب بريد تحقق جديد.',
         'verification_resent': 'تم إرسال بريد تحقق جديد. يرجى التحقق من صندوق الوارد الخاص بك.',
-        'email_already_verified': 'بريدك الإلكتروني مفعّل بالفعل.',
+        'email_already_verified': 'تم التحقق من بريدك الإلكتروني بالفعل.',
         'resend_verification': 'إعادة إرسال بريد التحقق',
-        'logged_in_after_verification': 'تم تسجيل الدخول بنجاح بعد التحقق من بريدك الإلكتروني.',
+        'logged_in_after_verification': 'تم تسجيل الدخول بعد التحقق من بريدك الإلكتروني بنجاح.',
         'verification_error_try_again': 'حدث خطأ أثناء عملية التحقق. يرجى المحاولة مرة أخرى.',
         'email_sending_failed': 'فشل في إرسال البريد الإلكتروني. يرجى المحاولة مرة أخرى لاحقاً.',
         
@@ -420,5 +423,8 @@ translations = {
         'add_to_home_screen': 'إضافة إلى الشاشة الرئيسية',
         'add_to_home_screen_ios': 'اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"',
         'add_to_home_screen_android': 'اضغط على قائمة الإعدادات ثم "إضافة إلى الشاشة الرئيسية"',
+        'verify_email_button': 'تحقق من بريدك الإلكتروني',
+        'if_button_doesnt_work': 'إذا لم يعمل الزر، يمكنك نسخ الرابط التالي ولصقه في متصفحك:',
+        'verify_email_link': 'تحقق من بريدك الإلكتروني على:',
     }
 } 
