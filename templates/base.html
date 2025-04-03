@@ -1307,11 +1307,6 @@
                             <i class="bi bi-gear"></i>
                         </a>
                         
-                        <!-- Tour Guide Button -->
-                        <button class="nav-icon-btn ms-2 tour-button" id="startTour" title="{{ translate('tour_guide') or 'Tour Guide' }}" onclick="localStorage.setItem('zonar_show_tour', 'true'); window.location.href='/?tour'">
-                            <i class="bi bi-info-circle"></i>
-                        </button>
-                        
                         <!-- PWA Add to Home Button -->
                         <button class="nav-icon-btn ms-2" id="add-to-home" style="display: none;" title="{{ translate('install_app') or 'Install App' }}">
                             <i class="bi bi-download"></i>
@@ -1921,10 +1916,6 @@
 
     </script>
     {% block extra_js %}{% endblock %}
-
-    <!-- Tour Guide Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
-    <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
 
     <!-- Removed FAB HTML -->
 
