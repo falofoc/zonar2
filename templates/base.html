@@ -90,15 +90,8 @@
             --text-primary: #2D3436;
             --text-secondary: #636E72;
             --link-color: var(--primary-color); /* New variable for links */
-            
-            /* Dark Theme Colors */
-            .dark-theme {
-                --bg-color: #1A1A1A;
-                --card-bg: #2C2C2C;
-                --text-primary: #ECEFF4;
-                --text-secondary: #D8DEE9;
-                --border-color: rgba(255, 107, 0, 0.3);
-            }
+            --navbar-bg: #FFFFFF;
+            --navbar-border: rgba(255, 107, 0, 0.15);
             
             /* Borders and Shadows */
             --border-color: rgba(255, 107, 0, 0.15);
@@ -141,6 +134,17 @@
             --gradient-sunset: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
         }
 
+        /* Dark Theme Colors */
+        .dark-theme {
+            --bg-color: #1A1A1A;
+            --card-bg: #2C2C2C;
+            --text-primary: #ECEFF4;
+            --text-secondary: #D8DEE9;
+            --border-color: rgba(255, 107, 0, 0.3);
+            --navbar-bg: #2C2C2C;
+            --navbar-border: rgba(255, 107, 0, 0.3);
+        }
+
         [dir="rtl"] {
             font-family: var(--font-family-ar);
             letter-spacing: 0;
@@ -162,17 +166,11 @@
             padding-top: 70px; /* Adjust based on final navbar height */
         }
 
-        .dark-theme {
-            --bg-color: #1A1A1A; /* Darker background */
-            --card-bg: #2C2C2C; /* Darker cards */
-            --text-primary: #ECEFF4;
-            --text-secondary: #D8DEE9;
-            --border-color: rgba(255, 107, 0, 0.3);
-        }
-
+        /* Dark theme definitions moved to root level, not needed here */
+        
         /* --- Modern Minimal Navbar --- */
         .navbar {
-            background: var(--card-bg);
+            background: var(--navbar-bg);
             box-shadow: var(--shadow);
             padding: 0.75rem 0;
             position: fixed;
@@ -180,14 +178,8 @@
             left: 0;
             right: 0;
             z-index: 1030; /* Ensure above other content */
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--navbar-border);
             transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-
-        /* Ensure navbar respects dark theme */
-        .dark-theme .navbar {
-            background-color: var(--card-bg);
-            border-color: var(--border-color);
         }
 
         .navbar-brand {
@@ -1189,29 +1181,6 @@
         .verification-badge i {
             font-size: 10px;
             line-height: 1;
-        }
-
-        /* Further ensure navbar components respect dark theme */
-        .dark-theme .nav-icon-btn {
-            color: var(--text-secondary);
-            border-color: var(--border-color);
-        }
-        
-        .dark-theme .navbar-toggler {
-            color: var(--text-secondary);
-        }
-        
-        .dark-theme .dropdown-menu {
-            background-color: var(--card-bg);
-            border-color: var(--border-color);
-        }
-        
-        .dark-theme .dropdown-item {
-            color: var(--text-primary);
-        }
-        
-        .dark-theme .brand-text {
-            text-shadow: 0 2px 4px rgba(255, 107, 0, 0.4);
         }
 
     </style>
