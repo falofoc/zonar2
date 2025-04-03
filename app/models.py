@@ -46,24 +46,24 @@ class User(db.Model, UserMixin):
         return self.reset_token
     
     def generate_verification_token(self):
-        """Generate an email verification token valid for 24 hours"""
-        self.verification_token = secrets.token_urlsafe(32)
-        self.verification_token_expiry = datetime.utcnow() + timedelta(hours=24)
+        """Generate an email verification token valid for 7 days (instead of 24 hours)"""
+        self.verification_token = secrets.token_urlsafe(64)  # زيادة طول الرمز لتقليل احتمالية حدوث تكرار
+        self.verification_token_expiry = datetime.utcnow() + timedelta(days=7)  # زيادة فترة الصلاحية من 24 ساعة إلى 7 أيام
         return self.verification_token
     
     def verify_reset_token(self, token):
         """Verify if the password reset token is valid"""
-        if self.reset_token != token:
+        if not self.reset_token or self.reset_token != token:
             return False
-        if datetime.utcnow() > self.reset_token_expiry:
+        if not self.reset_token_expiry or datetime.utcnow() > self.reset_token_expiry:
             return False
         return True
     
     def verify_verification_token(self, token):
         """Verify if the email verification token is valid"""
-        if self.verification_token != token:
+        if not self.verification_token or self.verification_token != token:
             return False
-        if datetime.utcnow() > self.verification_token_expiry:
+        if not self.verification_token_expiry or datetime.utcnow() > self.verification_token_expiry:
             return False
         return True
     

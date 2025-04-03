@@ -15,6 +15,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask_mail import Message
 from app import mail
+import time
 
 # Routes
 @app.route('/')
@@ -195,10 +196,14 @@ def signup():
                 db.session.commit()
                 print("User saved to database successfully")
                 
-                # Send verification email using the refactored function
-                verification_link = url_for('verify_email', token=verification_token, _external=True)
+                # إنشاء رابط تحقق أكثر موثوقية مع معلمة منع التخزين المؤقت
+                timestamp = int(datetime.utcnow().timestamp())
+                verification_link = url_for('verify_email', token=verification_token, v=timestamp, _external=True)
+                print(f"Generated verification link for {email}")
+                
+                # Send verification email with better tracking and debugging
                 print(f"Sending verification email to {email}")
-                send_localized_email(
+                verification_email_sent = send_localized_email(
                     user,
                     subject_key="verification_email_subject",
                     greeting_key="verification_email_greeting",
@@ -207,9 +212,12 @@ def signup():
                     verification_link=verification_link
                 )
                 
-                # Send welcome email using the refactored function
+                if not verification_email_sent:
+                    print(f"WARNING: Could not send verification email to {email}. User will need to request a new link.")
+                
+                # Send welcome email (non-critical, don't worry if it fails)
                 print(f"Sending welcome email to {email}")
-                send_localized_email(
+                welcome_email_sent = send_localized_email(
                     user,
                     subject_key="welcome_email_subject",
                     greeting_key="welcome_email_greeting",
@@ -217,10 +225,19 @@ def signup():
                     footer_key="welcome_email_footer"
                 )
                 
+                if not welcome_email_sent:
+                    print(f"WARNING: Could not send welcome email to {email}")
+                
                 print("Logging in new user")
                 login_user(user)
                 print("User logged in, redirecting to home")
-                flash(translate('account_created') + ' ' + translate('verification_required'), 'success')
+                
+                # Include email verification status in the flash message
+                if verification_email_sent:
+                    flash(translate('account_created_with_verification'), 'success')
+                else:
+                    flash(translate('account_created_without_verification'), 'warning')
+                
                 return redirect(url_for('home'))
             except Exception as inner_e:
                 print(f"Error during user creation/database operation: {inner_e}")
@@ -1085,19 +1102,32 @@ def send_email(to, subject, body):
         if not sender or not password:
             print("ERROR: MAIL_USERNAME or MAIL_PASSWORD not configured in Flask app config.")
             # Optionally, you could raise an exception here in production
-            # raise ValueError("Email credentials not configured")
             return False # Indicate failure
 
         print(f"Attempting to send email from {sender} to {to} with subject: {subject}")
+        
+        # Create a more reliable message object with proper encoding
         msg = Message(
             subject=subject,
             recipients=[to],
             body=body,
             sender=sender # Use configured sender
         )
-        mail.send(msg)
-        print(f"Email sent successfully to {to}")
-        return True
+        
+        # Attempt to send the email with retry mechanism
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                mail.send(msg)
+                print(f"Email sent successfully to {to} (attempt {attempt})")
+                return True
+            except Exception as retry_error:
+                if attempt < max_retries:
+                    print(f"Attempt {attempt} failed: {str(retry_error)}. Retrying...")
+                    time.sleep(2)  # انتظر قبل المحاولة مرة أخرى
+                else:
+                    raise  # رمي الاستثناء في المحاولة الأخيرة
+                    
     except Exception as e:
         print(f"ERROR sending email to {to}: {str(e)}")
         traceback.print_exc()
@@ -1130,24 +1160,60 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
 @app.route('/verify_email/<token>')
 def verify_email(token):
     try:
-        # Find user with this verification token
+        print(f"Starting email verification process for token: {token[:10]}...")
+        
+        # تتبع أفضل للحالات المختلفة
+        if not token or len(token) < 10:
+            print(f"Invalid token format provided: {token}")
+            flash(translate('verification_failed'), 'danger')
+            return redirect(url_for('home'))
+        
+        # البحث عن المستخدم بواسطة الرمز
         user = User.query.filter_by(verification_token=token).first()
         
+        # إذا كان الرمز غير صالح
         if not user:
+            print(f"No user found with verification token: {token[:10]}...")
             flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
-        # Check if token is valid
+        print(f"Found user: {user.username}, Email: {user.email}")
+        
+        # التحقق من صلاحية الرمز
         if not user.verify_verification_token(token):
+            # تسجيل سبب الفشل
+            if not user.verification_token_expiry:
+                print(f"Token expiry date is missing for user: {user.username}")
+            elif datetime.utcnow() > user.verification_token_expiry:
+                print(f"Token expired on {user.verification_token_expiry} for user: {user.username}")
+            else:
+                print(f"Token verification failed for unknown reason: {user.username}")
+            
             flash(translate('verification_failed'), 'danger')
             return redirect(url_for('home'))
         
-        # Mark email as verified and clear token
-        user.clear_verification_token()
-        db.session.commit()
+        # تحديث حالة المستخدم والحفظ في قاعدة البيانات
+        print(f"Email verification successful for user: {user.username}")
+        user.email_verified = True
+        user.verification_token = None
+        user.verification_token_expiry = None
         
-        flash(translate('verification_success'), 'success')
-        return redirect(url_for('home'))
+        # تطبيق التغييرات في قاعدة البيانات
+        try:
+            db.session.commit()
+            flash(translate('verification_success'), 'success')
+            
+            # إذا لم يكن المستخدم مسجل دخوله، قم بتسجيل دخوله تلقائيًا
+            if not current_user.is_authenticated:
+                login_user(user)
+                flash(translate('logged_in_after_verification'), 'success')
+            
+            return redirect(url_for('home'))
+        except Exception as db_error:
+            print(f"Database error during verification: {str(db_error)}")
+            db.session.rollback()
+            flash(translate('verification_error_try_again'), 'danger')
+            return redirect(url_for('home'))
     except Exception as e:
         print(f"Error in verify_email route: {str(e)}")
         traceback.print_exc()
@@ -1158,26 +1224,56 @@ def verify_email(token):
 @login_required
 def resend_verification():
     try:
+        print(f"Resend verification requested for user: {current_user.username}, ID: {current_user.id}")
+        
+        # التحقق إذا كان البريد الإلكتروني مفعل مسبقًا
         if current_user.email_verified:
+            print(f"User {current_user.username} already has a verified email")
             flash(translate('email_already_verified'), 'info')
             return redirect(url_for('home'))
         
-        # Generate new verification token
-        verification_token = current_user.generate_verification_token()
+        # مسح أي رموز سابقة للمستخدم
+        current_user.verification_token = None
+        current_user.verification_token_expiry = None
         db.session.commit()
         
-        # Send verification email using the refactored function
-        verification_link = url_for('verify_email', token=verification_token, _external=True)
-        send_localized_email(
-            current_user,
-            subject_key="verification_email_subject",
-            greeting_key="verification_email_greeting",
-            body_key="verification_email_body",
-            footer_key="verification_email_footer",
-            verification_link=verification_link
-        )
+        # إنشاء رمز تحقق جديد (صالح لمدة 7 أيام)
+        verification_token = current_user.generate_verification_token()
         
-        flash(translate('verification_resent'), 'success')
+        try:
+            # حفظ التغييرات في قاعدة البيانات
+            db.session.commit()
+            print(f"Generated new verification token (valid for 7 days) for: {current_user.username}")
+            
+            # إنشاء رابط التحقق مع معلمة إضافية للإصدار لمنع مشاكل الذاكرة المخبأة
+            timestamp = int(datetime.utcnow().timestamp())
+            verification_link = url_for('verify_email', token=verification_token, v=timestamp, _external=True)
+            
+            print(f"Generated verification link for user: {current_user.username}")
+            
+            # إرسال بريد التحقق باستخدام الوظيفة المعاد تشكيلها
+            email_sent = send_localized_email(
+                current_user,
+                subject_key="verification_email_subject",
+                greeting_key="verification_email_greeting",
+                body_key="verification_email_body",
+                footer_key="verification_email_footer",
+                verification_link=verification_link
+            )
+            
+            if email_sent:
+                print(f"Verification email sent successfully to: {current_user.email}")
+                flash(translate('verification_resent'), 'success')
+            else:
+                print(f"Failed to send verification email to: {current_user.email}")
+                # استعادة التغييرات إذا فشل إرسال البريد
+                db.session.rollback()
+                flash(translate('email_sending_failed'), 'danger')
+        except Exception as db_error:
+            print(f"Database error during token generation: {str(db_error)}")
+            db.session.rollback()
+            flash(translate('error_occurred'), 'danger')
+        
         return redirect(url_for('home'))
     except Exception as e:
         print(f"Error in resend_verification route: {str(e)}")
