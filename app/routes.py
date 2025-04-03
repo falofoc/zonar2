@@ -695,10 +695,14 @@ def check_price(product_id):
                          
                          <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                          
-                         <p style="color: #999; font-size: 12px;">
-                             مع أطيب التحيات،<br>
-                             فريق زونار
-                         </p>
+                         <div style="color: #999; font-size: 12px;">
+                             {footer.replace('\\\\n', '<br>')}
+                         </div>
+                         
+                         <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
+                                   border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                             <p>© {datetime.now().year} ZONAR - زونار</p>
+                         </div>
                      </div>
 
                      <!-- English Version -->
@@ -738,10 +742,14 @@ def check_price(product_id):
                          
                          <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                          
-                         <p style="color: #999; font-size: 12px;">
-                             Best regards,<br>
-                             The ZONAR Team
-                         </p>
+                         <div style="color: #999; font-size: 12px;">
+                             {footer.replace('\\\\n', '<br>')}
+                         </div>
+                         
+                         <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
+                                   border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                             <p>© {datetime.now().year} ZONAR - زونار</p>
+                         </div>
                      </div>
                  </div>
                  """
@@ -895,10 +903,14 @@ def forgot_password():
                         
                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                         
-                        <p style="color: #999; font-size: 12px;">
-                            مع أطيب التحيات،<br>
-                            فريق زونار
-                        </p>
+                        <div style="color: #999; font-size: 12px;">
+                            {footer.replace('\\\\n', '<br>')}
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
+                                  border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                            <p>© {datetime.now().year} ZONAR - زونار</p>
+                        </div>
                     </div>
 
                     <!-- English Version -->
@@ -933,10 +945,14 @@ def forgot_password():
                         
                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                         
-                        <p style="color: #999; font-size: 12px;">
-                            Best regards,<br>
-                            The ZONAR Team
-                        </p>
+                        <div style="color: #999; font-size: 12px;">
+                            {footer.replace('\\\\n', '<br>')}
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
+                                  border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                            <p>© {datetime.now().year} ZONAR - زونار</p>
+                        </div>
                     </div>
                 </div>
                 """
@@ -1190,7 +1206,9 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
                 <h2 style="color: #FF6B00; margin-bottom: 20px;">{greeting}</h2>
                 
                 <div style="color: #333; font-size: 16px; line-height: 1.5;">
-                    {body_content.replace('\\n', '<br>')}
+                    <div style="padding: 20px;">
+                        {body_content.replace('\\\\n', '<br>')}
+                    </div>
                 </div>
                 
                 {verification_link_html}
@@ -1198,7 +1216,7 @@ def send_localized_email(user, subject_key, greeting_key, body_key, footer_key, 
                 <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
                 
                 <div style="color: #999; font-size: 12px;">
-                    {footer.replace('\\n', '<br>')}
+                    {footer.replace('\\\\n', '<br>')}
                 </div>
                 
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
