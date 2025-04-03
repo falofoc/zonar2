@@ -31,30 +31,6 @@ else
     echo "Database initialized and migrations applied successfully!"
 fi
 
-# Create default bot configuration if it doesn't exist
-if [ ! -f "bot_config.json" ]; then
-    echo "Creating default Amazon bot configuration..."
-    cat > bot_config.json << 'EOL'
-{
-    "enabled": true,
-    "run_time": "09:00",
-    "max_products": 10,
-    "min_discount": 10,
-    "bot_username": "amazon_bot",
-    "bot_email": "bot@amazontracker.sa",
-    "cleanup_old_products": false,
-    "categories": ["electronics", "home", "kitchen", "fashion", "beauty", "toys", "sports"]
-}
-EOL
-    echo "Bot configuration created successfully!"
-fi
-
-# Make sure logs directory exists
-if [ ! -d "logs" ]; then
-    mkdir -p logs
-    echo "Created logs directory"
-fi
-
 # Create price_checker.py script for cron job if it doesn't exist
 if [ ! -f "price_checker.py" ]; then
     echo "Creating price_checker.py for automated tasks..."

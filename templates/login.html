@@ -138,24 +138,12 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                 <input type="password" class="form-control" id="password" name="password" required>
-                                <button class="btn btn-outline-secondary" type="button" id="toggle-password">
-                                    <i class="bi bi-eye"></i>
-                                </button>
                             </div>
                             <div class="text-end mt-1">
                                 <a href="{{ url_for('forgot_password') }}" class="auth-link small">{{ translate('forgot_password') }}</a>
                             </div>
                         </div>
-                        
-                        {% if require_confirmation %}
-                        <div class="alert alert-warning mb-3">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            {{ translate('session_exists_elsewhere') or 'You appear to be logged in on another device. Continuing will end that session.' }}
-                            <input type="hidden" name="force_login" value="true">
-                        </div>
-                        {% endif %}
-                        
-                        <div class="mb-3 form-check">
+                        <div class="mb-3 form-check form-switch">
                             <input type="checkbox" class="form-check-input" id="remember" name="remember">
                             <label class="form-check-label" for="remember">{{ translate('remember_me') }}</label>
                         </div>

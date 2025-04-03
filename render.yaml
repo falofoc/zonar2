@@ -32,9 +32,8 @@ services:
       mountPath: /opt/render/project/src/.backup
       sizeGB: 1
 
-# Add cron jobs for automated tasks
+# Add a cron job for automatic price checking
 cron:
-  # Price tracker job - runs every 6 hours
   - name: price-tracker-job
     schedule: "0 */6 * * *" # Run every 6 hours
     command: python price_checker.py
@@ -48,42 +47,15 @@ cron:
       - key: MAIL_USE_SSL
         value: false
       - key: MAIL_USERNAME
-        sync: false  # Secret value set via Render dashboard
+        value: zoonarcom@gmail.com
       - key: MAIL_PASSWORD
-        sync: false  # Secret value set via Render dashboard
+        value: vnmlzqhuvwktbucj
       - key: MAIL_DEFAULT_SENDER
-        sync: false  # Secret value set via Render dashboard
+        value: zoonarcom@gmail.com
       - key: RENDER
         value: true
       - key: SECRET_KEY
         fromService:
-          name: zonar
-          type: web
-          envVarKey: SECRET_KEY
-          
-  # Amazon bot job - runs daily at configured time in bot settings
-  - name: amazon-bot-job
-    schedule: "0 9 * * *" # Run daily at 9 AM by default (can be adjusted in settings)
-    command: python amazon_bot_direct.py
-    envVars:
-      - key: MAIL_SERVER
-        value: smtp.gmail.com
-      - key: MAIL_PORT
-        value: 587
-      - key: MAIL_USE_TLS
-        value: true
-      - key: MAIL_USE_SSL
-        value: false
-      - key: MAIL_USERNAME
-        sync: false  # Secret value set via Render dashboard
-      - key: MAIL_PASSWORD
-        sync: false  # Secret value set via Render dashboard
-      - key: MAIL_DEFAULT_SENDER
-        sync: false  # Secret value set via Render dashboard
-      - key: RENDER
-        value: true
-      - key: SECRET_KEY
-        fromService:
-          name: zonar
+          name: zonar-amazon-tracker
           type: web
           envVarKey: SECRET_KEY 

@@ -135,15 +135,6 @@ def utility_processor():
     """Add helper functions to template context"""
     return dict(translate=translate)
 
-# Add custom Jinja2 filters
-@app.template_filter('from_json')
-def from_json_filter(value):
-    """Convert a JSON string to a Python object"""
-    try:
-        return json.loads(value)
-    except (ValueError, TypeError):
-        return []
-
 @app.before_request
 def before_request():
     """Set language preference before each request"""

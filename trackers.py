@@ -355,36 +355,8 @@ def fetch_product_data(url):
         try:
             data = tracker(url)
             if data and data['name'] and data['price']:
-                # Download the image if available
-                if data['image_url']:
-                    try:
-                        image_data, content_type = download_image(data['image_url'])
-                        data['image_binary'] = image_data
-                        data['image_content_type'] = content_type
-                    except Exception as img_error:
-                        print(f"Failed to download image: {str(img_error)}")
-                        data['image_binary'] = None
-                        data['image_content_type'] = None
                 return data
         except Exception as e:
             print(f"Error in {tracker.__name__}: {str(e)}")
             continue
-    return None
-
-def download_image(image_url):
-    """Download image and return as binary data with content type"""
-    if not image_url:
-        return None, None
-        
-    # Add a random user agent to avoid blocking
-    headers = get_random_headers()
-    
-    # Make request with timeout and proper headers
-    response = requests.get(image_url, headers=headers, timeout=15, stream=True)
-    response.raise_for_status()
-    
-    # Get content type from response headers
-    content_type = response.headers.get('Content-Type', 'image/jpeg')
-    
-    # Return binary image data and content type
-    return response.content, content_type 
+    return None 

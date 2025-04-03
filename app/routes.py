@@ -3,7 +3,7 @@
 import os
 import json
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_login import login_user, login_required, logout_user, current_user
 
@@ -22,238 +22,72 @@ import time
 def home():
     try:
         if current_user.is_authenticated:
-            # Redirect to user's dashboard
-            return redirect(url_for('user_dashboard'))
-        else:
-            # Redirect to public home page
-            return redirect(url_for('public_home'))
-    except Exception as e:
-        print(f"Error in home route: {e}")
-        traceback.print_exc()
-        return redirect(url_for('login'))
-
-@app.route('/public_home')
-def public_home():
-    try:
-        # Get search query
-        search_query = request.args.get('search', '').strip()
-        
-        # Get page number and set items per page
-        page = request.args.get('page', 1, type=int)
-        per_page = 10  # Maximum 10 products per page as requested
-        
-        # Get sorting parameter
-        sort_by = request.args.get('sort_by', 'discount')  # Default sort by discount
-        
-        # Base query for all products
-        query = Product.query
-        
-        # Apply search if query exists
-        if search_query:
-            search_term = f"%{search_query}%"
-            query = query.filter(
-                db.or_(
-                    Product.name.ilike(search_term),
-                    Product.custom_name.ilike(search_term)
+            # Check for flash messages in session
+            if 'flash_message' in session:
+                flash_data = session.pop('flash_message')
+                flash(flash_data['message'], flash_data['category'])
+            
+            # Show email verification reminder if email is not verified
+            if not current_user.email_verified:
+                flash(translate('verification_required'), 'warning')
+            
+            # Get search query
+            search_query = request.args.get('search', '').strip()
+            
+            # Get page number from query parameters, default to 1
+            page = request.args.get('page', 1, type=int)
+            per_page = 5  # Number of products per page
+            
+            # Base query for user's products
+            print(f"Querying products for user ID: {current_user.id}")
+            query = Product.query.filter_by(user_id=current_user.id)
+            
+            # Apply search if query exists
+            if search_query:
+                search_term = f"%{search_query}%"
+                query = query.filter(
+                    db.or_(
+                        Product.name.ilike(search_term),
+                        Product.custom_name.ilike(search_term)
+                    )
                 )
-            )
-        
-        # Apply sorting
-        if sort_by == 'price_low':
-            query = query.order_by(Product.current_price.asc())
-        elif sort_by == 'price_high':
-            query = query.order_by(Product.current_price.desc())
-        elif sort_by == 'newest':
-            query = query.order_by(Product.created_at.desc())
-        else:  # Default: sort by discount percentage (requires special handling)
-            # We need to get all products to calculate discount
-            all_products = query.all()
             
-            # Calculate discount percentage for each product
-            products_with_discount = []
-            for product in all_products:
-                price_history = json.loads(product.price_history)
-                
-                # Filter out duplicates where price didn't change
-                unique_prices = []
-                last_price = None
-                for entry in price_history:
-                    if last_price != entry['price']:
-                        unique_prices.append(entry)
-                        last_price = entry['price']
-                
-                # If we have at least 2 price points
-                if len(unique_prices) >= 2:
-                    # Sort by date, newest first
-                    sorted_history = sorted(unique_prices, key=lambda x: x['date'], reverse=True)
-                    
-                    # Get current and previous prices
-                    current_price = product.current_price
-                    highest_price = max(entry['price'] for entry in price_history)
-                    
-                    # Calculate discount percentage
-                    if highest_price > current_price:
-                        discount_percent = ((highest_price - current_price) / highest_price) * 100
-                    else:
-                        discount_percent = 0
-                    
-                    products_with_discount.append((product, discount_percent))
-                else:
-                    products_with_discount.append((product, 0))  # No discount
+            # Order by creation date (newest first) and paginate
+            products = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
             
-            # Sort by discount percentage (highest first)
-            products_with_discount.sort(key=lambda x: x[1], reverse=True)
+            # Log product count for debugging
+            product_count = query.count()
+            print(f"Found {product_count} products for user {current_user.id}")
             
-            # Extract just the products in sorted order
-            sorted_products = [p[0] for p in products_with_discount]
+            # For empty state message
+            has_products = product_count > 0
+            print(f"User has products: {has_products}")
             
-            # Manual pagination
-            total_products = len(sorted_products)
-            total_pages = (total_products + per_page - 1) // per_page
-            start_idx = (page - 1) * per_page
-            end_idx = min(start_idx + per_page, total_products)
-            
-            paginated_products = sorted_products[start_idx:end_idx]
-            
-            # Get any unread notifications for authenticated user
-            unread_count = 0
-            if current_user.is_authenticated:
-                notifications = Notification.query.filter_by(
-                    user_id=current_user.id, 
-                    read=False
-                ).all()
-                unread_count = len(notifications)
-            else:
-                notifications = []
-            
-            # Create a pagination object for template compatibility
-            class Pagination:
-                def __init__(self, items, page, per_page, total):
-                    self.items = items
-                    self.page = page
-                    self.per_page = per_page
-                    self.total = total
-                    self.pages = total_pages
-                
-                def iter_pages(self, left_edge=2, left_current=2, right_current=3, right_edge=2):
-                    last = 0
-                    for num in range(1, self.pages + 1):
-                        if (num <= left_edge or
-                            (num > self.page - left_current - 1 and num < self.page + right_current) or
-                            num > self.pages - right_edge):
-                            if last + 1 != num:
-                                yield None
-                            yield num
-                            last = num
-            
-            pagination = Pagination(paginated_products, page, per_page, total_products)
-            
-            return render_template(
-                'public_home.html',
-                products=pagination,
-                notifications=notifications,
-                search_query=search_query,
-                unread_count=unread_count,
-                sort_by=sort_by,
-                email_verified=current_user.is_authenticated and current_user.email_verified,
-                has_products=total_products > 0
-            )
-        
-        # For non-discount sorting, use standard SQLAlchemy pagination
-        products = query.paginate(page=page, per_page=per_page, error_out=False)
-        
-        # Get unread notifications for authenticated users
-        unread_count = 0
-        if current_user.is_authenticated:
+            # Get notifications
             notifications = Notification.query.filter_by(
                 user_id=current_user.id, 
                 read=False
             ).order_by(Notification.created_at.desc()).all()
+            
+            # Get unread count
             unread_count = len(notifications)
-        else:
-            notifications = []
-        
-        return render_template(
-            'public_home.html',
-            products=products,
-            notifications=notifications,
-            search_query=search_query,
-            unread_count=unread_count,
-            sort_by=sort_by,
-            email_verified=current_user.is_authenticated and current_user.email_verified,
-            has_products=products.total > 0
-        )
-    except Exception as e:
-        print(f"Error in public_home route: {e}")
-        traceback.print_exc()
-        return redirect(url_for('login'))
-
-@app.route('/dashboard')
-@login_required
-def user_dashboard():
-    try:
-        # Check for flash messages in session
-        if 'flash_message' in session:
-            flash_data = session.pop('flash_message')
-            flash(flash_data['message'], flash_data['category'])
-        
-        # Show email verification reminder if email is not verified
-        if not current_user.email_verified:
-            flash(translate('verification_required'), 'warning')
-        
-        # Get search query
-        search_query = request.args.get('search', '').strip()
-        
-        # Get page number from query parameters, default to 1
-        page = request.args.get('page', 1, type=int)
-        per_page = 5  # Number of products per page
-        
-        # Base query for user's products
-        print(f"Querying products for user ID: {current_user.id}")
-        query = Product.query.filter_by(user_id=current_user.id)
-        
-        # Apply search if query exists
-        if search_query:
-            search_term = f"%{search_query}%"
-            query = query.filter(
-                db.or_(
-                    Product.name.ilike(search_term),
-                    Product.custom_name.ilike(search_term)
-                )
+            
+            return render_template(
+                'index.html',
+                products=products,
+                notifications=notifications,
+                search_query=search_query,
+                unread_count=unread_count,
+                email_verified=current_user.email_verified,
+                has_products=has_products
             )
-        
-        # Order by creation date (newest first) and paginate
-        products = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
-        
-        # Log product count for debugging
-        product_count = query.count()
-        print(f"Found {product_count} products for user {current_user.id}")
-        
-        # For empty state message
-        has_products = product_count > 0
-        print(f"User has products: {has_products}")
-        
-        # Get notifications
-        notifications = Notification.query.filter_by(
-            user_id=current_user.id, 
-            read=False
-        ).order_by(Notification.created_at.desc()).all()
-        
-        # Get unread count
-        unread_count = len(notifications)
-        
-        return render_template(
-            'index.html',
-            products=products,
-            notifications=notifications,
-            search_query=search_query,
-            unread_count=unread_count,
-            email_verified=current_user.email_verified,
-            has_products=has_products
-        )
+        else:
+            # For non-authenticated users show login page with proper language support
+            print("User not authenticated, showing login page")
+            return redirect(url_for('login'))
     except Exception as e:
-        print(f"Error in user_dashboard route: {e}")
-        traceback.print_exc()
+        print(f"Error in home route: {e}")
+        traceback.print_exc()  # Add full traceback for better debugging
         return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -276,41 +110,9 @@ def login():
             user = User.query.filter_by(username=username).first()
             
             if user and user.check_password(password):
-                # Check if user already has an active session elsewhere
-                if user.session_token and user.session_expiry and user.session_expiry > datetime.utcnow():
-                    # Existing session found - handle based on policy
-                    if request.form.get('force_login') == 'true':
-                        # User has confirmed to force login and invalidate other sessions
-                        print(f"Forcing login for {username}, invalidating previous sessions")
-                    else:
-                        # Alert user about existing session
-                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                            return jsonify({
-                                'success': False, 
-                                'message': translate('session_exists_elsewhere'),
-                                'require_confirmation': True
-                            })
-                        flash(translate('session_exists_elsewhere'), 'warning')
-                        return render_template('login.html', unread_count=0, username=username, 
-                                              require_confirmation=True)
-                
-                # Generate a new session token
-                session_token = user.generate_session_token()
-                
-                # Store IP and user agent information
-                user.last_ip = request.remote_addr
-                user.last_user_agent = request.user_agent.string
-                user.last_active = datetime.utcnow()
-                
-                # Update database
-                db.session.commit()
-                
                 # Improved login with persistent session
                 login_user(user, remember=remember)
                 session.permanent = True  # Make session permanent
-                
-                # Store session token in browser cookie
-                session['user_session_token'] = session_token
                 
                 # Set session cookie expiration to 30 days for remembered users
                 if remember:
@@ -561,12 +363,6 @@ def add_product():
         
         # Create new product
         try:
-            # Add price to history
-            price_history = [{
-                'price': product_data['price'],
-                'date': datetime.utcnow().isoformat()
-            }]
-            
             product = Product(
                 url=url,
                 name=product_data['name'],
@@ -574,9 +370,6 @@ def add_product():
                 current_price=product_data['price'],
                 target_price=target_price,
                 image_url=product_data.get('image_url'),
-                local_image=product_data.get('image_binary'),
-                image_content_type=product_data.get('image_content_type'),
-                last_image_update=datetime.utcnow(),
                 tracking_enabled=True,
                 notify_on_any_change=notify_on_any_change,
                 user_id=current_user.id,
@@ -645,21 +438,20 @@ def add_product():
             }), 401
         return jsonify({'success': False, 'error': 'An unexpected error occurred. Please try again later.'})
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
 def logout():
-    if current_user.is_authenticated:
-        # Clear session token
-        if hasattr(current_user, 'clear_session_token'):
-            current_user.clear_session_token()
-            db.session.commit()
-            
-        # Remove session token from browser session
-        if 'user_session_token' in session:
-            session.pop('user_session_token')
-            
+    """Handle user logout with proper session cleanup"""
+    try:
+        # Clear all session data
+        session.clear()
         # Logout the user
         logout_user()
         flash(translate('logged_out_success'), 'success')
+    except Exception as e:
+        print(f"Error during logout: {str(e)}")
+        flash(translate('error_occurred'), 'danger')
+    
     return redirect(url_for('login'))
 
 @app.route('/change_language/<lang>')
@@ -797,108 +589,209 @@ def delete_product(product_id):
 @app.route('/check_price/<int:product_id>', methods=['POST'])
 @login_required
 def check_price(product_id):
+    """
+    Manually trigger price check for a specific product
+    """
     try:
-        # Get product
-        product = Product.query.get_or_404(product_id)
+        # Verify the product exists and belongs to this user
+        product = Product.query.filter_by(id=product_id, user_id=current_user.id).first_or_404()
         
-        # Check if product belongs to current user
-        if product.user_id != current_user.id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        print(f"Manually checking price for product {product_id}: {product.name}")
         
-        # Check if the product was checked recently (within the last 15 minutes)
-        # Reduced from 1 hour to 15 minutes to allow for more frequent checks
-        time_since_last_check = datetime.utcnow() - product.last_checked
-        if time_since_last_check < timedelta(minutes=15) and request.args.get('force') != 'true':
+        # Get current product data from Amazon
+        product_data = trackers.fetch_product_data(product.url)
+        
+        if not product_data or 'price' not in product_data:
+            print(f"Failed to fetch current price for product {product_id}")
             return jsonify({
-                'success': False, 
-                'error': translate('recently_checked'),
-                'last_checked': product.last_checked.isoformat()
+                'success': False,
+                'error': translate('check_price_error')
             })
         
-        # Fetch current price
-        product_data = trackers.fetch_product_data(product.url)
-        if not product_data or not product_data.get('price'):
-            return jsonify({'success': False, 'error': translate('fetch_error')})
-        
-        # Get the current price
-        new_price = product_data.get('price')
+        # Get the new price
+        new_price = product_data['price']
         old_price = product.current_price
-        price_changed = new_price != old_price
         
-        # Record the price change in history
-        if price_changed:
-            # Add price to history using the new method
-            product.add_price_to_history(new_price)
+        # Create price history entry
+        price_history = json.loads(product.price_history) if product.price_history else []
+        price_history.append({
+            'price': new_price,
+            'date': datetime.utcnow().isoformat()
+        })
         
-        # Update product data
+        # Update product with new price and history
+        product.price_history = json.dumps(price_history)
         product.current_price = new_price
         product.last_checked = datetime.utcnow()
         
-        # Update image if available (to keep images fresh)
-        try:
-            if product_data.get('image_binary'):
-                product.local_image = product_data.get('image_binary')
-                product.image_content_type = product_data.get('image_content_type')
-                product.last_image_update = datetime.utcnow()
-            # Fallback to image URL if binary not available
-            if product_data.get('image_url'):
-                product.image_url = product_data.get('image_url')
-        except Exception as img_error:
-            print(f"Error updating product image: {str(img_error)}")
-            # Continue even if image update fails
-        
-        message = ""
-        # Create notification if price changed
-        if price_changed:
-            # Format price change message
-            price_diff = abs(new_price - old_price)
-            price_diff_percent = (price_diff / old_price) * 100 if old_price > 0 else 0
+        # Create notification if price changed and notifications are enabled
+        if new_price != old_price:
+            should_notify = False
+            notification_message = ""
             
+            # Determine message based on price change
             if new_price < old_price:
-                # Price decreased
-                message = translate('price_dropped') + f" {new_price:.2f} SAR (-{price_diff:.2f} SAR, -{price_diff_percent:.1f}%)"
-                notification_type = 'price_drop'
-            else:
-                # Price increased
-                message = translate('price_increased') + f" {new_price:.2f} SAR (+{price_diff:.2f} SAR, +{price_diff_percent:.1f}%)"
-                notification_type = 'price_increase'
-            
-            # Create notification for price change if enabled
-            if product.notify_on_any_change:
-                notification = Notification(
-                    user_id=current_user.id,
-                    message=message,
-                    notification_type=notification_type,
-                    related_product_id=product.id
-                )
-                db.session.add(notification)
+                notification_message = f"{product.custom_name or product.name}: {translate('price_dropped')} {new_price}."
+                should_notify = True # Notify on any drop or target reach
+            elif new_price > old_price and product.notify_on_any_change:
+                 notification_message = f"{product.custom_name or product.name}: {translate('price_increased')} {new_price}."
+                 should_notify = True # Notify on increase only if user opted in
             
             # Check target price
-            if product.target_price and new_price <= product.target_price and old_price > product.target_price:
-                target_message = translate('target_reached') + f" {product.target_price:.2f} SAR"
-                target_notification = Notification(
+            if product.target_price and new_price <= product.target_price:
+                notification_message += f" {translate('target_reached')}!"
+                should_notify = True # Always notify if target reached
+            
+            # Send email and create DB notification if needed and email is verified
+            if should_notify and current_user.email_verified:
+                 print(f"Sending price change notification email to {current_user.email} for product {product.id}")
+                 
+                 # Calculate price difference and percentage
+                 price_diff = abs(new_price - old_price)
+                 price_change_percent = (price_diff / old_price) * 100
+                 
+                 # Create engaging subject lines in both languages
+                 if new_price < old_price:
+                     email_subject = f"🎉 تخفيض السعر! وفر {price_diff:.2f} ريال على {product.custom_name or product.name}"
+                 else:
+                     email_subject = f"⚡ تنبيه تغير السعر - {product.custom_name or product.name}"
+                 
+                 # Pre-process footer to avoid f-string backslash issues
+                 footer_text = translate('price_change_footer') if 'price_change_footer' in translations[g.lang] else "We'll continue monitoring the price for you."
+                 footer_html = footer_text.replace('\\\\n', '<br>')
+                 
+                 # Create an engaging HTML email body with bilingual support
+                 email_body = f"""
+                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                     <div dir="rtl" style="text-align: right;">
+                         <h2 style="color: #FF6B00; margin-bottom: 20px;">مرحباً {current_user.username}،</h2>
+                         
+                         <div style="background-color: #FFF5E6; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                             <h3 style="margin-top: 0;">{product.custom_name or product.name}</h3>
+                             
+                             <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                                 <div style="text-align: right;">
+                                     <p style="color: #666; margin: 0;">السعر الحالي:</p>
+                                     <p style="font-size: 24px; color: {'#2E7D32' if new_price < old_price else '#D32F2F'}; font-weight: bold; margin: 5px 0;">
+                                         {new_price:.2f} ريال
+                                     </p>
+                                 </div>
+                                 <div style="text-align: left;">
+                                     <p style="color: #666; margin: 0;">السعر السابق:</p>
+                                     <p style="font-size: 18px; margin: 5px 0;"><strike>{old_price:.2f} ريال</strike></p>
+                                 </div>
+                             </div>
+                             
+                             {f'<p style="color: #2E7D32; font-weight: bold; font-size: 18px; margin: 10px 0;">التوفير: {price_diff:.2f} ريال ({price_change_percent:.1f}%)</p>' if new_price < old_price else ''}
+                             
+                             {f'<p style="color: #D32F2F; font-size: 16px; margin: 10px 0;">ارتفع السعر بمقدار {price_diff:.2f} ريال ({price_change_percent:.1f}%)</p>' if new_price > old_price else ''}
+                         </div>
+                         
+                         {'<p style="font-size: 16px; color: #2E7D32; margin: 15px 0;"><strong>🎯 تم الوصول للسعر المستهدف!</strong> الآن هو الوقت المناسب للشراء!</p>' if product.target_price and new_price <= product.target_price else ''}
+                         
+                         <a href="{product.url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                             {'🛒 اشترِ الآن - سعر محدود!' if new_price < old_price else '🛒 عرض المنتج'}
+                         </a>
+                         
+                         <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                             سنواصل مراقبة السعر وإخطارك بأي تغييرات.
+                         </p>
+                         
+                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
+                         
+                         <div style="color: #999; font-size: 12px;">
+                             {footer_html}
+                         </div>
+                         
+                         <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
+                                   border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                             <p>© {datetime.now().year} ZONAR - زونار</p>
+                         </div>
+                     </div>
+
+                     <!-- English Version -->
+                     <div dir="ltr" style="text-align: left; margin-top: 40px; border-top: 2px solid #EEE; padding-top: 20px;">
+                         <h2 style="color: #FF6B00; margin-bottom: 20px;">Hello {current_user.username},</h2>
+                         
+                         <div style="background-color: #FFF5E6; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                             <h3 style="margin-top: 0;">{product.custom_name or product.name}</h3>
+                             
+                             <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                                 <div>
+                                     <p style="color: #666; margin: 0;">Previous Price:</p>
+                                     <p style="font-size: 18px; margin: 5px 0;"><strike>{old_price:.2f} SAR</strike></p>
+                                 </div>
+                                 <div style="text-align: right;">
+                                     <p style="color: #666; margin: 0;">Current Price:</p>
+                                     <p style="font-size: 24px; color: {'#2E7D32' if new_price < old_price else '#D32F2F'}; font-weight: bold; margin: 5px 0;">
+                                         {new_price:.2f} SAR
+                                     </p>
+                                 </div>
+                             </div>
+                             
+                             {f'<p style="color: #2E7D32; font-weight: bold; font-size: 18px; margin: 10px 0;">You save: {price_diff:.2f} SAR ({price_change_percent:.1f}%)</p>' if new_price < old_price else ''}
+                             
+                             {f'<p style="color: #D32F2F; font-size: 16px; margin: 10px 0;">Price increased by {price_diff:.2f} SAR ({price_change_percent:.1f}%)</p>' if new_price > old_price else ''}
+                         </div>
+                         
+                         {'<p style="font-size: 16px; color: #2E7D32; margin: 15px 0;"><strong>🎯 Target price reached!</strong> Now is a great time to buy!</p>' if product.target_price and new_price <= product.target_price else ''}
+                         
+                         <a href="{product.url}" style="display: inline-block; background: linear-gradient(135deg, #FF9800, #FF6B00); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin: 20px 0;">
+                             {'🛒 Buy Now - Limited Time Price!' if new_price < old_price else '🛒 View Product'}
+                         </a>
+                         
+                         <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                             We'll continue monitoring the price and notify you of any changes.
+                         </p>
+                         
+                         <hr style="border: none; border-top: 1px solid #EEE; margin: 20px 0;">
+                         
+                         <div style="color: #999; font-size: 12px;">
+                             {footer_html}
+                         </div>
+                         
+                         <div style="text-align: center; margin-top: 20px; padding-top: 20px; 
+                                   border-top: 1px solid #eee; color: #999; font-size: 12px;">
+                             <p>© {datetime.now().year} ZONAR - زونار</p>
+                         </div>
+                     </div>
+                 </div>
+                 """
+                 
+                 msg = Message(
+                     subject=email_subject,
+                     recipients=[current_user.email],
+                     html=email_body
+                 )
+                 mail.send(msg)
+                 print(f"Email notification sent to {current_user.email}")
+
+            # Create and save notification in DB regardless of email status (if should_notify)
+            if should_notify:
+                notification = Notification(
+                    message=notification_message,
                     user_id=current_user.id,
-                    message=target_message,
-                    notification_type='target_reached',
-                    related_product_id=product.id
+                    read=False
                 )
-                db.session.add(target_notification)
-        
+                db.session.add(notification)
+
+        # Save changes (including potential notification)
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': translate('price_checked') + (f" - {message}" if message else ""),
-            'new_price': new_price,
+            'message': f"{translate('current_price')}: {new_price}",
             'old_price': old_price,
-            'price_changed': price_changed,
-            'last_checked': product.last_checked.isoformat()
+            'new_price': new_price
         })
-        
     except Exception as e:
-        print(f"Error in check_price: {str(e)}")
+        db.session.rollback()
+        print(f"Error checking price for product {product_id}: {str(e)}")
         traceback.print_exc()
-        return jsonify({'success': False, 'error': translate('check_price_error')})
+        return jsonify({
+            'success': False,
+            'error': translate('check_price_error')
+        })
 
 @app.route('/toggle_tracking/<int:product_id>', methods=['POST'])
 @login_required
@@ -1081,8 +974,8 @@ def forgot_password():
                 mail.send(msg)
                 print(f"Password reset email sent to {user.email}")
 
-                message = translate('reset_email_sent')
-                category = 'success'
+                     message = translate('reset_email_sent')
+                     category = 'success'
 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return jsonify({'success': True, 'message': message})
@@ -1259,9 +1152,9 @@ def send_email(to, subject, body, html=None):
         max_retries = 3
         for attempt in range(1, max_retries + 1):
             try:
-                mail.send(msg)
+        mail.send(msg)
                 print(f"Email sent successfully to {to} (attempt {attempt})")
-                return True
+        return True
             except Exception as retry_error:
                 if attempt < max_retries:
                     print(f"Attempt {attempt} failed: {str(retry_error)}. Retrying...")
@@ -1401,8 +1294,8 @@ def verify_email(token):
             # إذا لم يتم العثور على مستخدم
             if not user:
                 print("No matching users found with similar tokens")
-                flash(translate('verification_failed'), 'danger')
-                return redirect(url_for('home'))
+            flash(translate('verification_failed'), 'danger')
+            return redirect(url_for('home'))
         
         print(f"Found user: {user.username}, Email: {user.email}")
         
@@ -1421,7 +1314,7 @@ def verify_email(token):
         # تطبيق التغييرات في قاعدة البيانات
         try:
             db.session.commit()
-            flash(translate('verification_success'), 'success')
+        flash(translate('verification_success'), 'success')
             
             # إذا لم يكن المستخدم مسجل دخوله، قم بتسجيل دخوله تلقائيًا
             if not current_user.is_authenticated:
@@ -1433,7 +1326,7 @@ def verify_email(token):
             print(f"Database error during verification: {str(db_error)}")
             db.session.rollback()
             flash(translate('verification_error_try_again'), 'danger')
-            return redirect(url_for('home'))
+        return redirect(url_for('home'))
     except Exception as e:
         print(f"Error in verify_email route: {str(e)}")
         traceback.print_exc()
@@ -1462,7 +1355,7 @@ def resend_verification():
         
         try:
             # حفظ التغييرات في قاعدة البيانات
-            db.session.commit()
+        db.session.commit()
             print(f"Generated new verification token (valid for 7 days) for: {current_user.username}")
             
             # إنشاء رابط التحقق مع معلمة إضافية للإصدار لمنع مشاكل الذاكرة المخبأة
@@ -1473,17 +1366,17 @@ def resend_verification():
             
             # إرسال بريد التحقق باستخدام الوظيفة المعاد تشكيلها
             email_sent = send_localized_email(
-                current_user,
-                subject_key="verification_email_subject",
-                greeting_key="verification_email_greeting",
-                body_key="verification_email_body",
-                footer_key="verification_email_footer",
-                verification_link=verification_link
-            )
-            
+            current_user,
+            subject_key="verification_email_subject",
+            greeting_key="verification_email_greeting",
+            body_key="verification_email_body",
+            footer_key="verification_email_footer",
+            verification_link=verification_link
+        )
+        
             if email_sent:
                 print(f"Verification email sent successfully to: {current_user.email}")
-                flash(translate('verification_resent'), 'success')
+        flash(translate('verification_resent'), 'success')
             else:
                 print(f"Failed to send verification email to: {current_user.email}")
                 # استعادة التغييرات إذا فشل إرسال البريد
@@ -2000,13 +1893,4 @@ def change_theme():
         print(f"Error changing theme: {str(e)}")
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)})
-
-@app.context_processor
-def utility_processor():
-    """Make common variables available to all templates"""
-    from datetime import datetime
-    return {
-        'translate': translate,
-        'now': datetime.now(),
-    }
 
