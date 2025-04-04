@@ -10,6 +10,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail
 from flask_migrate import Migrate
+import click
 
 # Load environment variables
 load_dotenv()
@@ -264,17 +265,28 @@ def index():
     </html>
     """
 
-# Initialize the database if not already done
-@app.before_first_request
+# Initialize the database - replaces @app.before_first_request
+# This runs when the app starts
 def initialize_database():
-    try:
-        # Create tables if they don't exist
-        db.create_all()
-        print("Database tables created/verified successfully")
-    except Exception as e:
-        print(f"Error initializing database: {e}")
-        print(f"Traceback: {traceback.format_exc()}")
-        print("Application will continue but database features may be limited")
+    with app.app_context():
+        try:
+            # Create tables if they don't exist
+            db.create_all()
+            print("Database tables created/verified successfully")
+        except Exception as e:
+            print(f"Error initializing database: {e}")
+            print(f"Traceback: {traceback.format_exc()}")
+            print("Application will continue but database features may be limited")
+
+# Register a CLI command to initialize the database
+@app.cli.command("init-db")
+def init_db_command():
+    """Clear existing data and create new tables."""
+    initialize_database()
+    click.echo("Initialized the database.")
+
+# Run the initialization when the app starts
+initialize_database()
 
 # Import routes
 try:
