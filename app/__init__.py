@@ -12,6 +12,7 @@ from flask_mail import Mail
 from flask_migrate import Migrate
 import click
 from sqlalchemy import text
+import psycopg2
 
 # Load environment variables
 load_dotenv()
@@ -156,26 +157,91 @@ from .models import User
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Test the direct PostgreSQL connection
+def test_postgres_connection():
+    """Test the PostgreSQL connection directly using psycopg2"""
+    if not DATABASE_URL or not DATABASE_URL.startswith("postgresql://"):
+        return "Not a PostgreSQL database", False
+    
+    try:
+        # Parse the connection string
+        # Format: postgresql://username:password@host:port/database
+        conn_parts = DATABASE_URL.replace("postgresql://", "").split("@")
+        auth = conn_parts[0].split(":")
+        username = auth[0]
+        password = auth[1] if len(auth) > 1 else ""
+        
+        host_parts = conn_parts[1].split("/")
+        host_port = host_parts[0].split(":")
+        host = host_port[0]
+        port = host_port[1] if len(host_port) > 1 else "5432"
+        database = host_parts[1]
+        
+        # Connect to PostgreSQL
+        conn = psycopg2.connect(
+            host=host,
+            port=port,
+            user=username,
+            password=password,
+            database=database
+        )
+        
+        # Create a cursor and execute a test query
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if result and result[0] == 1:
+            return "PostgreSQL connection successful", True
+        else:
+            return "PostgreSQL connection test failed", False
+            
+    except Exception as e:
+        return f"PostgreSQL connection error: {str(e)}", False
+
 # Add a health check endpoint
 @app.route('/health')
 def health_check():
     # Basic system health check
     db_status = "healthy"
+    db_message = "OK"
     try:
         # Test DB connection using proper SQLAlchemy syntax
-        db.session.execute(text("SELECT 1"))
-        db.session.commit()
+        result = db.session.execute(text("SELECT 1")).fetchone()
+        if result and result[0] == 1:
+            db_message = "SQLAlchemy connection successful"
+        else:
+            db_message = "SQLAlchemy test failed"
+            db_status = "warning"
     except Exception as e:
-        db_status = f"error: {str(e)}"
+        db_status = "error"
+        db_message = f"SQLAlchemy error: {str(e)}"
         print(f"Database health check failed: {e}")
+    
+    # Try direct PostgreSQL connection if SQLAlchemy fails
+    pg_message = ""
+    pg_status = ""
+    
+    if db_status != "healthy":
+        pg_message, pg_success = test_postgres_connection()
+        pg_status = "healthy" if pg_success else "error"
     
     status = {
         'status': 'healthy',
         'timestamp': datetime.utcnow().isoformat(),
         'database_status': db_status,
+        'database_message': db_message,
         'environment': 'production' if is_production else 'development',
         'database_type': 'PostgreSQL' if 'postgresql' in str(app.config['SQLALCHEMY_DATABASE_URI']) else 'SQLite'
     }
+    
+    # Add PostgreSQL connection info if tested
+    if pg_message:
+        status['postgres_status'] = pg_status
+        status['postgres_message'] = pg_message
+    
     return jsonify(status)
 
 # Add a simple index page for initial testing
@@ -183,15 +249,23 @@ def health_check():
 def index():
     # Show a proper homepage
     db_connected = False
+    db_message = ""
     try:
         # Try to count users to verify DB access (we'll still show the page even if this fails)
         with app.app_context():
             user_count = User.query.count()
             print(f"Database connection successful: {user_count} users in database")
             db_connected = True
+            db_message = f"Successfully connected. {user_count} users in database."
     except Exception as e:
-        print(f"Error connecting to database: {e}")
+        print(f"Error connecting to database via SQLAlchemy: {e}")
         db_connected = False
+        db_message = f"SQLAlchemy error: {str(e)}"
+        
+        # Try direct PostgreSQL connection
+        pg_message, pg_success = test_postgres_connection()
+        if pg_success:
+            db_message += f" However, direct PostgreSQL connection works: {pg_message}"
     
     # Always show homepage with helpful information
     return """
@@ -237,6 +311,11 @@ def index():
             .status.warning {
                 color: orange;
             }
+            .message {
+                font-size: 0.8em;
+                color: #666;
+                margin-top: 5px;
+            }
         </style>
     </head>
     <body>
@@ -261,6 +340,7 @@ def index():
         <p>Status: <span class="status""" + (" warning" if not db_connected else "") + """">
             """ + ("Partially Active - Database Connection Issues" if not db_connected else "Fully Active") + """
         </span></p>
+        <p class="message">""" + (db_message) + """</p>
         <p>Server is running correctly! """ + ("Database connection needs attention." if not db_connected else "All features are available.") + """</p>
         
         <a href="/health" class="cta">Check Health Status</a>
