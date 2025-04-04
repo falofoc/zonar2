@@ -72,8 +72,9 @@ login_manager.login_message_category = 'info'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"
 
-# Initialize Supabase client - ENSURE IT'S ENABLED
-ENABLE_SUPABASE = True
+# Initialize Supabase client - use ENABLE_SUPABASE_ENV to control via environment
+ENABLE_SUPABASE = os.environ.get('ENABLE_SUPABASE', 'False').lower() in ['true', '1', 't', 'yes', 'y']
+print(f"ENABLE_SUPABASE set to: {ENABLE_SUPABASE} from environment")
 
 # Global variable to track Supabase availability
 supabase = None
