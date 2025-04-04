@@ -195,23 +195,75 @@ def health_check():
 # Add a simple index page for initial testing
 @app.route('/')
 def index():
-    if ENABLE_SUPABASE:
-        # When Supabase is enabled, import the actual routes
-        return redirect(url_for('home'))
-    else:
-        # When Supabase is disabled, show the construction page
-        return """
-        <html>
-        <head><title>Zonar - Under Construction</title></head>
-        <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
-            <h1>Zonar</h1>
-            <p>This site is currently under construction.</p>
-            <p>The server is running correctly!</p>
-            <p>Status: <span style="color: green; font-weight: bold;">Active</span></p>
-            <p><a href="/health">Health Check</a></p>
-        </body>
-        </html>
-        """
+    # Always show a proper homepage whether Supabase is enabled or not
+    return """
+    <html>
+    <head>
+        <title>Zonar - Product Price Tracker</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+                max-width: 800px;
+                margin: 0 auto;
+                color: #333;
+            }
+            h1 {
+                color: #2c3e50;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 10px;
+            }
+            .feature {
+                background: #f9f9f9;
+                border-left: 4px solid #3498db;
+                margin: 20px 0;
+                padding: 15px;
+                border-radius: 4px;
+            }
+            .cta {
+                background: #3498db;
+                color: white;
+                text-decoration: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                display: inline-block;
+                margin-top: 20px;
+                font-weight: bold;
+            }
+            .status {
+                color: green;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Welcome to Zonar</h1>
+        <p>Your ultimate product price tracker for Amazon and other online retailers.</p>
+        
+        <div class="feature">
+            <h2>Track Product Prices</h2>
+            <p>Add products from Amazon and other supported sites to track their prices over time.</p>
+        </div>
+        
+        <div class="feature">
+            <h2>Get Price Drop Alerts</h2>
+            <p>Receive notifications when prices drop for your tracked products.</p>
+        </div>
+        
+        <div class="feature">
+            <h2>Analyze Price History</h2>
+            <p>View price history charts to make informed purchasing decisions.</p>
+        </div>
+        
+        <p>Status: <span class="status">Active</span></p>
+        <p>Server is running correctly! Full functionality coming soon.</p>
+        
+        <a href="/health" class="cta">Check Health Status</a>
+    </body>
+    </html>
+    """
 
 # Initialize Supabase tables if they don't exist (but only if Supabase is enabled)
 def init_supabase_tables():
