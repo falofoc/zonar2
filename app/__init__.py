@@ -73,7 +73,7 @@ login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"
 
 # Initialize Supabase client - USING A FLAG TO MAKE IT OPTIONAL
-ENABLE_SUPABASE = False
+ENABLE_SUPABASE = True
 
 try:
     if ENABLE_SUPABASE:
