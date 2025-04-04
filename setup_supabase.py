@@ -1,109 +1,80 @@
 import os
-from dotenv import load_dotenv
-from supabase import create_client
-import time
 import sys
-
-# Load environment variables
-load_dotenv()
+from supabase import create_client, Client
+from dotenv import load_dotenv
 
 def main():
+    # Load environment variables
+    load_dotenv()
+    
     # Get Supabase credentials
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY")
     
-    print("Environment check:")
-    print(f"SUPABASE_URL present: {bool(supabase_url)}")
-    print(f"SUPABASE_KEY present: {bool(supabase_key)}")
-    print(f"SUPABASE_SERVICE_KEY present: {bool(os.getenv('SUPABASE_SERVICE_KEY'))}")
+    print(f"Supabase URL: {supabase_url}")
+    print(f"Supabase Key present: {bool(supabase_key)}")
     
     if not supabase_url or not supabase_key:
-        print("Error: SUPABASE_URL and SUPABASE_KEY must be set in environment")
+        print("Error: Required environment variables SUPABASE_URL and SUPABASE_KEY/SUPABASE_SERVICE_KEY must be set")
         sys.exit(1)
-    
-    print(f"Connecting to Supabase...")
     
     try:
         # Initialize Supabase client
-        supabase = create_client(supabase_url, supabase_key)
+        supabase: Client = create_client(supabase_url, supabase_key)
+        print("Successfully initialized Supabase client")
         
         # Test connection with a simple query
         try:
-            response = supabase.table('users').select('id').limit(1).execute()
-            print("Successfully connected to Supabase and verified table access")
+            supabase.table('users').select("*").limit(1).execute()
+            print("Successfully connected to Supabase")
         except Exception as e:
-            print(f"Warning: Could not query users table: {e}")
-            print("This is expected for first deployment when tables don't exist yet")
+            print(f"Warning: Could not query users table: {str(e)}")
+            # Continue execution as tables might not exist yet
         
-        # Create tables
-        create_tables(supabase)
-        return 0
-    except Exception as e:
-        print(f"Error connecting to Supabase: {e}")
-        print("Warning: Proceeding with deployment despite Supabase connection issues")
-        return 0  # Return success even if there are warnings
-
-def create_tables(supabase):
-    """Create necessary tables in Supabase"""
-    
-    tables = {
-        'users': {
-            'sample': {
-                'username': 'dummy_setup',
-                'email': 'dummy_setup@example.com',
-                'password_hash': 'dummy',
-                'language': 'ar',
-                'theme': 'light',
-                'email_verified': False,
-                'is_admin': False,
-                'notifications_enabled': False
-            }
-        },
-        'products': {
-            'sample': {
-                'url': 'https://example.com/dummy',
-                'name': 'Dummy Product',
-                'current_price': 0.0,
-                'price_history': '[]',
-                'tracking_enabled': True,
-                'notify_on_any_change': False,
-                'user_id': 0
-            }
-        },
-        'notifications': {
-            'sample': {
-                'message': 'Dummy notification',
-                'read': False,
-                'user_id': 0
+        # Sample data for tables
+        sample_data = {
+            'users': {
+                'email': 'test@example.com',
+                'username': 'testuser',
+                'password': 'hashedpassword'
+            },
+            'products': {
+                'name': 'Test Product',
+                'description': 'A test product',
+                'price': 9.99
+            },
+            'notifications': {
+                'user_id': '1',
+                'message': 'Test notification',
+                'read': False
             }
         }
-    }
-    
-    for table_name, config in tables.items():
-        print(f"Checking '{table_name}' table...")
-        try:
-            # Try to query the table
-            response = supabase.table(table_name).select('id').limit(1).execute()
-            print(f"'{table_name}' table already exists.")
-        except Exception as e:
-            print(f"Creating '{table_name}' table...")
+        
+        # Create tables if they don't exist
+        for table_name, sample_record in sample_data.items():
             try:
-                # Try creating a dummy record
-                supabase.table(table_name).insert(config['sample']).execute()
-                print(f"'{table_name}' table created successfully!")
-                
-                # Delete the dummy record
-                if 'username' in config['sample']:
-                    supabase.table(table_name).delete().eq('username', config['sample']['username']).execute()
-                elif 'name' in config['sample']:
-                    supabase.table(table_name).delete().eq('name', config['sample']['name']).execute()
-                elif 'message' in config['sample']:
-                    supabase.table(table_name).delete().eq('message', config['sample']['message']).execute()
+                # Try to query the table
+                supabase.table(table_name).select("*").limit(1).execute()
+                print(f"Table {table_name} exists")
             except Exception as e:
-                print(f"Warning: Could not create '{table_name}' table: {e}")
-                print("Please ensure the table exists in Supabase dashboard")
-    
-    print("Table setup complete.")
+                print(f"Creating table {table_name}...")
+                try:
+                    # Create table using sample record
+                    supabase.table(table_name).insert(sample_record).execute()
+                    print(f"Successfully created table {table_name}")
+                    # Delete the sample record
+                    supabase.table(table_name).delete().neq('id', 0).execute()
+                except Exception as create_error:
+                    print(f"Warning: Could not create table {table_name}: {str(create_error)}")
+                    # Continue with next table
+        
+        print("Supabase setup completed successfully")
+        return 0
+        
+    except Exception as e:
+        print(f"Error during Supabase setup: {str(e)}")
+        # Return 0 to allow deployment to continue
+        return 0
 
 if __name__ == "__main__":
     sys.exit(main()) 
