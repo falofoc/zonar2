@@ -1,24 +1,25 @@
 services:
   # Web Service - The main Flask application
   - type: web
-    name: zonar
+    name: zonarcom
     env: python
-    buildCommand: ./build.sh
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: gunicorn wsgi:app
-    region: frankfurt
-    plan: free
-    healthCheckPath: /health
     envVars:
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_ENV
+        value: production
       - key: PYTHON_VERSION
         value: 3.11.4
-      - key: RENDER
-        value: true
       - key: SECRET_KEY
-        sync: false  # Secret value set via Render dashboard
-      - key: MAIL_USERNAME
-        sync: false  # Secret value set via Render dashboard
-      - key: MAIL_PASSWORD
-        sync: false  # Secret value set via Render dashboard
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
       - key: MAIL_SERVER
         value: smtp.gmail.com
       - key: MAIL_PORT
@@ -27,15 +28,20 @@ services:
         value: true
       - key: MAIL_USE_SSL
         value: false
-      - key: SUPABASE_URL
-        sync: false  # Secret value set via Render dashboard
-      - key: SUPABASE_KEY
-        sync: false  # Secret value set via Render dashboard
-      - key: SUPABASE_SERVICE_KEY
-        sync: false  # Secret value set via Render dashboard
+      - key: MAIL_USERNAME
+        value: zoonarcom@gmail.com
+      - key: MAIL_PASSWORD
+        value: vnmlzqhuvwktbucj
+      - key: MAIL_DEFAULT_SENDER
+        value: zoonarcom@gmail.com
+      - key: RENDER
+        value: true
+    region: frankfurt
+    plan: free
+    healthCheckPath: /health
     disk:
       name: database-backup
-      mountPath: /opt/render/project/src/.backup
+      mountPath: /opt/render/project/src/backup
       sizeGB: 1
 
 # Add a cron job for automatic price checking
@@ -62,21 +68,21 @@ cron:
         value: true
       - key: SECRET_KEY
         fromService:
-          name: zonar-amazon-tracker
+          name: zonarcom
           type: web
           envVarKey: SECRET_KEY
       - key: SUPABASE_URL
         fromService:
-          name: zonar-amazon-tracker
+          name: zonarcom
           type: web
           envVarKey: SUPABASE_URL
       - key: SUPABASE_KEY
         fromService:
-          name: zonar-amazon-tracker
+          name: zonarcom
           type: web
           envVarKey: SUPABASE_KEY
       - key: SUPABASE_SERVICE_KEY
         fromService:
-          name: zonar-amazon-tracker
+          name: zonarcom
           type: web
           envVarKey: SUPABASE_SERVICE_KEY 
