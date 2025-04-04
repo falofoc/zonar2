@@ -7,10 +7,10 @@ services:
       python -m pip install --upgrade pip
       pip install -r requirements.txt
       python setup_supabase.py || echo "Supabase setup completed with warnings"
-    startCommand: gunicorn app:app
+    startCommand: gunicorn wsgi:app
     envVars:
       - key: FLASK_APP
-        value: app.py
+        value: wsgi.py
       - key: FLASK_ENV
         value: production
       - key: PYTHON_VERSION
@@ -18,11 +18,11 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: SUPABASE_URL
-        value: https://zonarcom.supabase.co
+        value: "https://zonarcom.supabase.co"
       - key: SUPABASE_KEY
-        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvbmFyY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTIyMDc2MDAsImV4cCI6MjAyNzc4MzYwMH0.Hs_jYQqTJ8zn_Sy_KLpUDDFnRJHA_j_aD_KMJwxEB7k
+        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvbmFyY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTIyMDc2MDAsImV4cCI6MjAyNzc4MzYwMH0.Hs_jYQqTJ8zn_Sy_KLpUDDFnRJHA_j_aD_KMJwxEB7k"
       - key: SUPABASE_SERVICE_KEY
-        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvbmFyY29tIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxMjIwNzYwMCwiZXhwIjoyMDI3NzgzNjAwfQ.Hs_jYQqTJ8zn_Sy_KLpUDDFnRJHA_j_aD_KMJwxEB7k
+        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvbmFyY29tIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxMjIwNzYwMCwiZXhwIjoyMDI3NzgzNjAwfQ.Hs_jYQqTJ8zn_Sy_KLpUDDFnRJHA_j_aD_KMJwxEB7k"
       - key: MAIL_SERVER
         value: smtp.gmail.com
       - key: MAIL_PORT
