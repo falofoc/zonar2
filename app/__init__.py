@@ -9,15 +9,10 @@ from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail
+from flask_migrate import Migrate
 
 # Load environment variables
 load_dotenv()
-
-# Print environment variables for debugging
-print("Environment variables at app startup:")
-print(f"SUPABASE_URL present: {bool(os.environ.get('SUPABASE_URL'))}")
-print(f"SUPABASE_KEY present: {bool(os.environ.get('SUPABASE_KEY'))}")
-print(f"SUPABASE_SERVICE_KEY present: {bool(os.environ.get('SUPABASE_SERVICE_KEY'))}")
 
 # Initialize Flask app
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
@@ -39,6 +34,29 @@ app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'False').lower() in 
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', None)
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', None)
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', None)
+
+# Configure SQLAlchemy with PostgreSQL
+# Get database URL from environment or use SQLite as fallback
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    # Render uses "postgres://" but SQLAlchemy needs "postgresql://"
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    print(f"Using PostgreSQL database URL: {DATABASE_URL[:25]}...")
+else:
+    # Use SQLite for development (but PostgreSQL strongly recommended for production)
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+    print(f"Using database URL: {DATABASE_URL}")
+
+# Configure SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,  # Verify connections before use to avoid stale connections
+    'pool_recycle': 300,    # Recycle connections every 5 minutes
+    'pool_timeout': 30,     # Connection timeout of 30 seconds
+    'max_overflow': 10,     # Allow 10 connections above pool size
+    'pool_size': 5          # Maintain 5 connections in the pool
+}
 
 # Security settings
 app.config.update(
@@ -72,30 +90,12 @@ login_manager.login_message_category = 'info'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"
 
-# Initialize Supabase client - use ENABLE_SUPABASE_ENV to control via environment
-ENABLE_SUPABASE = os.environ.get('ENABLE_SUPABASE', 'False').lower() in ['true', '1', 't', 'yes', 'y']
-print(f"ENABLE_SUPABASE set to: {ENABLE_SUPABASE} from environment")
+# Initialize SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
+db = SQLAlchemy(app)
 
-# Global variable to track Supabase availability
-supabase = None
-
-try:
-    if ENABLE_SUPABASE:
-        from .supabase_client import get_supabase_client
-        supabase = get_supabase_client()
-        if supabase is None:
-            print("WARNING: Supabase client initialization returned None")
-            print("The application will continue with limited functionality")
-        else:
-            print("Successfully initialized Supabase client")
-    else:
-        print("Supabase integration is disabled, skipping initialization")
-        supabase = None
-except Exception as e:
-    print(f"ERROR initializing Supabase client: {str(e)}")
-    print(f"Traceback: {traceback.format_exc()}")
-    print("The application will continue with limited functionality")
-    supabase = None
+# Initialize Flask-Migrate for database migrations
+migrate = Migrate(app, db)
 
 # Import translations
 import sys
@@ -147,69 +147,47 @@ def before_request():
     g.is_arabic = (g.lang == 'ar')
     g.is_english = (g.lang == 'en')
 
-# Import Supabase models conditionally
-if ENABLE_SUPABASE:
-    try:
-        from .supabase_models import SupabaseUser, SupabaseProduct, SupabaseNotification
-        print("Successfully imported Supabase models")
-    except ImportError as e:
-        print(f"Failed to import Supabase models: {e}")
-        
-        # Define mock User class as fallback
-        class SupabaseUser(UserMixin):
-            def __init__(self, id=None, username=None, email=None):
-                self.id = id
-                self.username = username
-                self.email = email
-                self.theme = 'light'
-                
-            @staticmethod
-            def get_by_id(user_id):
-                print(f"Mock get_by_id called with {user_id}")
-                return None
-else:
-    # Define mock User class
-    class SupabaseUser(UserMixin):
-        def __init__(self, id=None, username=None, email=None):
-            self.id = id
-            self.username = username
-            self.email = email
-            self.theme = 'light'
-            
-        @staticmethod
-        def get_by_id(user_id):
-            print(f"Mock get_by_id called with {user_id}")
-            return None
+# Import models
+from .models import User, Product, Notification
 
 @login_manager.user_loader
-def load_user(id):
-    if ENABLE_SUPABASE:
-        return SupabaseUser.get_by_id(int(id))
-    return None
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Add a health check endpoint
 @app.route('/health')
 def health_check():
     # Basic system health check
+    db_status = "healthy"
+    try:
+        # Test DB connection
+        db.session.execute("SELECT 1")
+        db.session.commit()
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+        print(f"Database health check failed: {e}")
+    
     status = {
         'status': 'healthy',
         'timestamp': datetime.utcnow().isoformat(),
-        'supabase_available': supabase is not None,
-        'environment': 'production' if is_production else 'development'
+        'database_status': db_status,
+        'environment': 'production' if is_production else 'development',
+        'database_type': 'PostgreSQL' if 'postgresql' in str(app.config['SQLALCHEMY_DATABASE_URI']) else 'SQLite'
     }
     return jsonify(status)
 
 # Add a simple index page for initial testing
 @app.route('/')
 def index():
-    # Show a proper homepage that works whether Supabase is enabled or not
-    if supabase is not None:
-        try:
-            # If Supabase is available, we could fetch some data or redirect to a template
-            # For now, fall through to the static page as a safe option
-            pass
-        except Exception as e:
-            print(f"Error loading index page with Supabase: {e}")
+    # Show a proper homepage
+    try:
+        # Try to count users to verify DB access (we'll still show the page even if this fails)
+        user_count = User.query.count()
+        print(f"Database connection successful: {user_count} users in database")
+        db_connected = True
+    except Exception as e:
+        print(f"Error connecting to database: {e}")
+        db_connected = False
     
     # Always show homepage with helpful information
     return """
@@ -276,55 +254,32 @@ def index():
             <p>View price history charts to make informed purchasing decisions.</p>
         </div>
         
-        <p>Status: <span class="status""" + (" warning" if supabase is None else "") + """">
-            """ + ("Partially Active - Database Features Limited" if supabase is None else "Fully Active") + """
+        <p>Status: <span class="status""" + (" warning" if not db_connected else "") + """">
+            """ + ("Partially Active - Database Connection Issues" if not db_connected else "Fully Active") + """
         </span></p>
-        <p>Server is running correctly! """ + ("Full functionality depends on database connection." if supabase is None else "All features are available.") + """</p>
+        <p>Server is running correctly! """ + ("Database connection needs attention." if not db_connected else "All features are available.") + """</p>
         
         <a href="/health" class="cta">Check Health Status</a>
     </body>
     </html>
     """
 
-# Initialize Supabase tables if they don't exist (but only if Supabase is enabled)
-def init_supabase_tables():
-    if not ENABLE_SUPABASE or supabase is None:
-        print("WARNING: Skipping table initialization because Supabase is disabled or unavailable")
-        return
-        
+# Initialize the database if not already done
+@app.before_first_request
+def initialize_database():
     try:
-        print("Checking Supabase tables...")
-        tables = ['users', 'products', 'notifications']
-        for table in tables:
-            try:
-                result = supabase.table(table).select('id').limit(1).execute()
-                print(f"Table '{table}' exists and is accessible")
-            except Exception as table_error:
-                print(f"Could not access table '{table}': {str(table_error)}")
-                print("This is expected during first deployment")
-        
-        print("Supabase table check completed")
+        # Create tables if they don't exist
+        db.create_all()
+        print("Database tables created/verified successfully")
     except Exception as e:
-        print(f"Error during table initialization: {str(e)}")
+        print(f"Error initializing database: {e}")
         print(f"Traceback: {traceback.format_exc()}")
-        print("Continuing despite table initialization error")
+        print("Application will continue but database features may be limited")
 
-# Initialize Supabase tables
+# Import routes
 try:
-    if ENABLE_SUPABASE and supabase is not None:
-        init_supabase_tables()
-    else:
-        print("Skipping Supabase table initialization as client is not available")
-except Exception as e:
-    print(f"Failed to initialize tables but continuing: {str(e)}")
-
-# Import routes conditionally to avoid errors
-if ENABLE_SUPABASE and supabase is not None:
-    try:
-        from . import routes
-        print("Successfully imported routes")
-    except ImportError as e:
-        print(f"Failed to import routes: {e}")
-        print("Using minimal routes only")
-else:
-    print("Skipping import of main routes since Supabase is not available") 
+    from . import routes
+    print("Successfully imported routes")
+except ImportError as e:
+    print(f"Failed to import routes: {e}")
+    print("Using minimal routes only") 
