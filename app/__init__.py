@@ -73,7 +73,7 @@ login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"
 
 # Initialize Supabase client - USING A FLAG TO MAKE IT OPTIONAL
-ENABLE_SUPABASE = False
+ENABLE_SUPABASE = True
 
 try:
     if ENABLE_SUPABASE:
@@ -195,18 +195,23 @@ def health_check():
 # Add a simple index page for initial testing
 @app.route('/')
 def index():
-    return """
-    <html>
-    <head><title>Zonar - Under Construction</title></head>
-    <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
-        <h1>Zonar</h1>
-        <p>This site is currently under construction.</p>
-        <p>The server is running correctly!</p>
-        <p>Status: <span style="color: green; font-weight: bold;">Active</span></p>
-        <p><a href="/health">Health Check</a></p>
-    </body>
-    </html>
-    """
+    if ENABLE_SUPABASE:
+        # When Supabase is enabled, import the actual routes
+        return redirect(url_for('home'))
+    else:
+        # When Supabase is disabled, show the construction page
+        return """
+        <html>
+        <head><title>Zonar - Under Construction</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+            <h1>Zonar</h1>
+            <p>This site is currently under construction.</p>
+            <p>The server is running correctly!</p>
+            <p>Status: <span style="color: green; font-weight: bold;">Active</span></p>
+            <p><a href="/health">Health Check</a></p>
+        </body>
+        </html>
+        """
 
 # Initialize Supabase tables if they don't exist (but only if Supabase is enabled)
 def init_supabase_tables():
