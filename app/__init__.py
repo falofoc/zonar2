@@ -72,14 +72,20 @@ login_manager.login_message_category = 'info'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"
 
-# Initialize Supabase client with error handling
+# Initialize Supabase client - USING A FLAG TO MAKE IT OPTIONAL
+ENABLE_SUPABASE = False
+
 try:
-    from .supabase_client import get_supabase_client
-    supabase = get_supabase_client()
-    if supabase is None:
-        print("WARNING: Supabase client initialization returned None")
+    if ENABLE_SUPABASE:
+        from .supabase_client import get_supabase_client
+        supabase = get_supabase_client()
+        if supabase is None:
+            print("WARNING: Supabase client initialization returned None")
+        else:
+            print("Successfully initialized Supabase client")
     else:
-        print("Successfully initialized Supabase client")
+        print("Supabase integration is disabled, skipping initialization")
+        supabase = None
 except Exception as e:
     print(f"ERROR initializing Supabase client: {str(e)}")
     print(f"Traceback: {traceback.format_exc()}")
@@ -135,17 +141,77 @@ def before_request():
     g.is_arabic = (g.lang == 'ar')
     g.is_english = (g.lang == 'en')
 
-# Import Supabase models
-from .supabase_models import SupabaseUser, SupabaseProduct, SupabaseNotification
+# Import Supabase models conditionally
+if ENABLE_SUPABASE:
+    try:
+        from .supabase_models import SupabaseUser, SupabaseProduct, SupabaseNotification
+    except ImportError as e:
+        print(f"Failed to import Supabase models: {e}")
+        
+        # Define mock User class as fallback
+        class SupabaseUser(UserMixin):
+            def __init__(self, id=None, username=None, email=None):
+                self.id = id
+                self.username = username
+                self.email = email
+                self.theme = 'light'
+                
+            @staticmethod
+            def get_by_id(user_id):
+                print(f"Mock get_by_id called with {user_id}")
+                return None
+else:
+    # Define mock User class
+    class SupabaseUser(UserMixin):
+        def __init__(self, id=None, username=None, email=None):
+            self.id = id
+            self.username = username
+            self.email = email
+            self.theme = 'light'
+            
+        @staticmethod
+        def get_by_id(user_id):
+            print(f"Mock get_by_id called with {user_id}")
+            return None
 
 @login_manager.user_loader
 def load_user(id):
-    return SupabaseUser.get_by_id(int(id))
+    if ENABLE_SUPABASE:
+        return SupabaseUser.get_by_id(int(id))
+    return None
 
-# Initialize Supabase tables if they don't exist
+# Add a health check endpoint
+@app.route('/health')
+def health_check():
+    # Basic system health check
+    status = {
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'supabase_available': supabase is not None,
+        'environment': 'production' if is_production else 'development'
+    }
+    return jsonify(status)
+
+# Add a simple index page for initial testing
+@app.route('/')
+def index():
+    return """
+    <html>
+    <head><title>Zonar - Under Construction</title></head>
+    <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+        <h1>Zonar</h1>
+        <p>This site is currently under construction.</p>
+        <p>The server is running correctly!</p>
+        <p>Status: <span style="color: green; font-weight: bold;">Active</span></p>
+        <p><a href="/health">Health Check</a></p>
+    </body>
+    </html>
+    """
+
+# Initialize Supabase tables if they don't exist (but only if Supabase is enabled)
 def init_supabase_tables():
-    if supabase is None:
-        print("WARNING: Skipping table initialization because Supabase client is not available")
+    if not ENABLE_SUPABASE or supabase is None:
+        print("WARNING: Skipping table initialization because Supabase is disabled")
         return
         
     try:
@@ -167,9 +233,20 @@ def init_supabase_tables():
 
 # Initialize Supabase tables
 try:
-    init_supabase_tables()
+    if ENABLE_SUPABASE:
+        init_supabase_tables()
+    else:
+        print("Skipping Supabase table initialization")
 except Exception as e:
     print(f"Failed to initialize tables but continuing: {str(e)}")
 
-# Import routes
-from . import routes 
+# Import routes conditionally to avoid errors
+if ENABLE_SUPABASE:
+    try:
+        from . import routes
+        print("Successfully imported routes")
+    except ImportError as e:
+        print(f"Failed to import routes: {e}")
+        print("Using minimal routes only")
+else:
+    print("Skipping import of main routes since Supabase is disabled") 
