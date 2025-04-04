@@ -18,7 +18,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: SUPABASE_URL
-        value: "https://zonarcom.supabase.co"
+        value: "https://awmypvuudpipjrajpwz.supabase.co"
       - key: SUPABASE_KEY
         value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvbmFyY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTIyMDc2MDAsImV4cCI6MjAyNzc4MzYwMH0.Hs_jYQqTJ8zn_Sy_KLpUDDFnRJHA_j_aD_KMJwxEB7k"
       - key: SUPABASE_SERVICE_KEY
