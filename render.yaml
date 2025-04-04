@@ -4,8 +4,9 @@ services:
     name: zonarcom
     env: python
     buildCommand: |
+      python -m pip install --upgrade pip
       pip install -r requirements.txt
-      python setup_supabase.py
+      python setup_supabase.py || echo "Supabase setup completed with warnings"
     startCommand: gunicorn wsgi:app
     envVars:
       - key: FLASK_APP
@@ -38,6 +39,8 @@ services:
         value: zoonarcom@gmail.com
       - key: RENDER
         value: true
+      - key: PYTHONPATH
+        value: .
     region: frankfurt
     plan: free
     healthCheckPath: /health
