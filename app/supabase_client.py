@@ -1,6 +1,6 @@
 import os
 import traceback
-from supabase import create_client
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -31,14 +31,14 @@ def get_supabase_client():
     if not supabase_key:
         raise ValueError("Neither SUPABASE_KEY nor SUPABASE_SERVICE_KEY environment variables are set")
     
-    # Initialize and return Supabase client
+    # Initialize and return Supabase client - older version doesn't support options like timeout
     try:
         client = create_client(supabase_url, supabase_key)
         print("Successfully created Supabase client")
         
-        # Test connection
+        # Test connection - simplified for older version
         try:
-            client.table('users').select("count", count='exact').execute()
+            result = client.table('users').select('*').limit(1).execute()
             print("Successfully tested Supabase connection")
         except Exception as test_error:
             print(f"Warning: Could not test connection: {str(test_error)}")
@@ -48,7 +48,16 @@ def get_supabase_client():
     except Exception as e:
         print(f"Error creating Supabase client: {str(e)}")
         print(f"Traceback: {traceback.format_exc()}")
-        raise
+        print("Trying fallback initialization...")
+        
+        # Fallback to basic client initialization without options
+        try:
+            client = Client(supabase_url, supabase_key)
+            print("Fallback client initialization successful")
+            return client
+        except Exception as fallback_error:
+            print(f"Fallback initialization failed: {str(fallback_error)}")
+            raise
 
 # Create a global client instance
 try:

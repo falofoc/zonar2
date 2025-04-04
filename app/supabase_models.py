@@ -7,7 +7,12 @@ from flask_login import UserMixin
 
 from .supabase_client import get_supabase_client
 
-supabase = get_supabase_client()
+# Initialize supabase with error handling
+try:
+    supabase = get_supabase_client()
+except Exception as e:
+    print(f"WARNING: Failed to initialize supabase in models: {str(e)}")
+    supabase = None
 
 class SupabaseUser(UserMixin):
     """
@@ -34,20 +39,42 @@ class SupabaseUser(UserMixin):
     @staticmethod
     def get_by_id(user_id: int) -> Optional['SupabaseUser']:
         """Get user by ID"""
-        response = supabase.table('users').select('*').eq('id', user_id).execute()
-        
-        if response.data and len(response.data) > 0:
-            return SupabaseUser(response.data[0])
-        return None
+        if not supabase:
+            print("Supabase client not available in get_by_id")
+            return None
+            
+        try:
+            # Old version API compatibility
+            response = supabase.table('users').select('*').eq('id', user_id).execute()
+            
+            # In older versions, data might be directly in response
+            data = getattr(response, 'data', response)
+            
+            if data and len(data) > 0:
+                return SupabaseUser(data[0])
+            return None
+        except Exception as e:
+            print(f"Error in get_by_id: {str(e)}")
+            return None
     
     @staticmethod
     def get_by_email(email: str) -> Optional['SupabaseUser']:
         """Get user by email"""
-        response = supabase.table('users').select('*').eq('email', email).execute()
-        
-        if response.data and len(response.data) > 0:
-            return SupabaseUser(response.data[0])
-        return None
+        if not supabase:
+            return None
+            
+        try:
+            response = supabase.table('users').select('*').eq('email', email).execute()
+            
+            # In older versions, data might be directly in response
+            data = getattr(response, 'data', response)
+            
+            if data and len(data) > 0:
+                return SupabaseUser(data[0])
+            return None
+        except Exception as e:
+            print(f"Error in get_by_email: {str(e)}")
+            return None
     
     @staticmethod
     def get_by_username(username: str) -> Optional['SupabaseUser']:
