@@ -16,6 +16,6 @@ pywebpush==1.14.0
 supabase==0.7.1
 gotrue==0.5.0
 postgrest==0.10.6
-realtime==0.0.8
+realtime==0.0.5
 storage3==0.5.2
 psycopg2-binary==2.9.9 
