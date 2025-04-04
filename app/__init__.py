@@ -72,8 +72,11 @@ login_manager.login_message_category = 'info'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"
 
-# Initialize Supabase client - USING A FLAG TO MAKE IT OPTIONAL
+# Initialize Supabase client - ENSURE IT'S ENABLED
 ENABLE_SUPABASE = True
+
+# Global variable to track Supabase availability
+supabase = None
 
 try:
     if ENABLE_SUPABASE:
@@ -81,6 +84,7 @@ try:
         supabase = get_supabase_client()
         if supabase is None:
             print("WARNING: Supabase client initialization returned None")
+            print("The application will continue with limited functionality")
         else:
             print("Successfully initialized Supabase client")
     else:
@@ -89,6 +93,7 @@ try:
 except Exception as e:
     print(f"ERROR initializing Supabase client: {str(e)}")
     print(f"Traceback: {traceback.format_exc()}")
+    print("The application will continue with limited functionality")
     supabase = None
 
 # Import translations
@@ -145,6 +150,7 @@ def before_request():
 if ENABLE_SUPABASE:
     try:
         from .supabase_models import SupabaseUser, SupabaseProduct, SupabaseNotification
+        print("Successfully imported Supabase models")
     except ImportError as e:
         print(f"Failed to import Supabase models: {e}")
         
@@ -195,7 +201,16 @@ def health_check():
 # Add a simple index page for initial testing
 @app.route('/')
 def index():
-    # Always show a proper homepage whether Supabase is enabled or not
+    # Show a proper homepage that works whether Supabase is enabled or not
+    if supabase is not None:
+        try:
+            # If Supabase is available, we could fetch some data or redirect to a template
+            # For now, fall through to the static page as a safe option
+            pass
+        except Exception as e:
+            print(f"Error loading index page with Supabase: {e}")
+    
+    # Always show homepage with helpful information
     return """
     <html>
     <head>
@@ -236,6 +251,9 @@ def index():
                 color: green;
                 font-weight: bold;
             }
+            .status.warning {
+                color: orange;
+            }
         </style>
     </head>
     <body>
@@ -257,8 +275,10 @@ def index():
             <p>View price history charts to make informed purchasing decisions.</p>
         </div>
         
-        <p>Status: <span class="status">Active</span></p>
-        <p>Server is running correctly! Full functionality coming soon.</p>
+        <p>Status: <span class="status""" + (" warning" if supabase is None else "") + """">
+            """ + ("Partially Active - Database Features Limited" if supabase is None else "Fully Active") + """
+        </span></p>
+        <p>Server is running correctly! """ + ("Full functionality depends on database connection." if supabase is None else "All features are available.") + """</p>
         
         <a href="/health" class="cta">Check Health Status</a>
     </body>
@@ -268,7 +288,7 @@ def index():
 # Initialize Supabase tables if they don't exist (but only if Supabase is enabled)
 def init_supabase_tables():
     if not ENABLE_SUPABASE or supabase is None:
-        print("WARNING: Skipping table initialization because Supabase is disabled")
+        print("WARNING: Skipping table initialization because Supabase is disabled or unavailable")
         return
         
     try:
@@ -290,15 +310,15 @@ def init_supabase_tables():
 
 # Initialize Supabase tables
 try:
-    if ENABLE_SUPABASE:
+    if ENABLE_SUPABASE and supabase is not None:
         init_supabase_tables()
     else:
-        print("Skipping Supabase table initialization")
+        print("Skipping Supabase table initialization as client is not available")
 except Exception as e:
     print(f"Failed to initialize tables but continuing: {str(e)}")
 
 # Import routes conditionally to avoid errors
-if ENABLE_SUPABASE:
+if ENABLE_SUPABASE and supabase is not None:
     try:
         from . import routes
         print("Successfully imported routes")
@@ -306,4 +326,4 @@ if ENABLE_SUPABASE:
         print(f"Failed to import routes: {e}")
         print("Using minimal routes only")
 else:
-    print("Skipping import of main routes since Supabase is disabled") 
+    print("Skipping import of main routes since Supabase is not available") 

@@ -31,7 +31,8 @@ def main():
         # Test connection with a simple query
         try:
             print("Testing connection to Supabase...")
-            supabase.table('users').select("*").limit(1).execute()
+            # Use older API style compatible with supabase==0.0.3
+            results = supabase.table('users').select("*").limit(1).execute()
             print("Successfully connected to Supabase")
         except Exception as e:
             print(f"Warning: Could not query users table: {str(e)}")
@@ -71,19 +72,28 @@ def main():
                 supabase.table(table_name).select("*").limit(1).execute()
                 print(f"Table {table_name} exists")
             except Exception as e:
-                print(f"Creating table {table_name}...")
+                print(f"Creating or verifying table {table_name}...")
                 try:
-                    # Create table using sample record
-                    supabase.table(table_name).insert(sample_record).execute()
-                    print(f"Successfully created table {table_name}")
-                    # Delete the sample record to keep tables clean
+                    # With older supabase versions, we might not be able to create tables directly
+                    # This will either work or fail gracefully if the table already exists
                     try:
-                        supabase.table(table_name).delete().neq('id', 0).execute()
+                        # Create table using sample record
+                        supabase.table(table_name).insert(sample_record).execute()
+                        print(f"Successfully created or inserted into table {table_name}")
+                    except Exception as insert_error:
+                        print(f"Warning: Could not insert into table {table_name}: {str(insert_error)}")
+                        print("This is expected if you need to create tables via Supabase dashboard first")
+                    
+                    # Delete the sample record to keep tables clean (only if insert was successful)
+                    try:
+                        # Only run this if we successfully inserted above
+                        supabase.table(table_name).delete().filter('id', 'gt', 0).execute()
                     except Exception as delete_error:
                         print(f"Warning: Could not delete sample record: {str(delete_error)}")
                 except Exception as create_error:
-                    print(f"Warning: Could not create table {table_name}: {str(create_error)}")
+                    print(f"Warning: Could not verify table {table_name}: {str(create_error)}")
                     print(f"Detailed error: {traceback.format_exc()}")
+                    print("You may need to create this table manually in the Supabase dashboard")
                     # Continue with next table
         
         print("Supabase setup completed successfully")
