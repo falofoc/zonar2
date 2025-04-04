@@ -13,10 +13,4 @@ gunicorn==21.2.0
 Flask-Migrate==4.0.5
 Flask-Mail==0.9.1
 pywebpush==1.14.0
-# Comment out Supabase packages to prevent dependency conflicts
-# supabase==0.7.1
-# gotrue==0.5.0
-# postgrest==0.10.6
-# realtime==0.0.5
-# storage3==0.5.2
 psycopg2-binary==2.9.9 
