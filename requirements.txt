@@ -14,9 +14,9 @@ Flask-Migrate==4.0.5
 Flask-Mail==0.9.1
 pywebpush==1.14.0
 psycopg2-binary==2.9.9
-supabase==0.7.1
 httpx==0.23.0
-gotrue>=0.2.0,<0.3.0
+gotrue==0.5.0
 postgrest==0.10.6
 realtime==0.0.5
-storage3==0.3.6 
+storage3==0.3.6
+supabase==0.7.1 
