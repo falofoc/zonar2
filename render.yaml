@@ -39,10 +39,6 @@ services:
     region: frankfurt
     plan: free
     healthCheckPath: /health
-    disk:
-      name: database-backup
-      mountPath: /opt/render/project/src/backup
-      sizeGB: 1
 
 # Add a cron job for automatic price checking
 cron:

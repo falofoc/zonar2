@@ -8,142 +8,106 @@ echo "Python version: $(python --version)"
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Backup the database before any operations
-echo "Checking for existing database and creating backup..."
-python restore_db.py backup || echo "Backup failed or no existing database found."
-
-# Restore the database if needed (in case of a fresh deployment)
-echo "Attempting to restore database from previous backup..."
-python restore_db.py restore || echo "Restore skipped - database may already exist or no backup found."
-
-# Run database migrations to apply any schema changes
-echo "Running database migrations..."
-if [ -d "migrations" ]; then
-    # Use Flask-Migrate to run migrations
-    flask db upgrade
-    echo "Database migrations applied successfully!"
-else
-    # First-time setup: initialize migrations if they don't exist
-    echo "Initializing database for first time..."
-    flask db init
-    flask db migrate -m "Initial migration"
-    flask db upgrade
-    echo "Database initialized and migrations applied successfully!"
-fi
+# Set up Supabase tables and initial data
+echo "Setting up Supabase..."
+python setup_supabase.py || echo "Supabase setup skipped - may already be configured"
 
 # Create price_checker.py script for cron job if it doesn't exist
 if [ ! -f "price_checker.py" ]; then
     echo "Creating price_checker.py for automated tasks..."
     cat > price_checker.py << 'EOL'
 #!/usr/bin/env python
-# Automatic price checker script for cron jobs
 import os
 import sys
 import traceback
 from datetime import datetime
+import json
+from supabase import create_client, Client
 
-# Add the current directory to the path so imports work
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Supabase setup
+supabase: Client = create_client(
+    os.environ.get("SUPABASE_URL"),
+    os.environ.get("SUPABASE_KEY")
+)
 
 try:
     print(f"[{datetime.now()}] Starting automated price check")
-    from app import app, db
-    from app.models import Product, Notification, User
-    import trackers
-    import json
-    from flask_mail import Message
-    from app import mail
-
-    # Run within the application context
-    with app.app_context():
-        # Get all products with tracking enabled
-        products = Product.query.filter_by(tracking_enabled=True).all()
-        print(f"Found {len(products)} products to check")
-        
-        for product in products:
-            try:
-                print(f"Checking price for product {product.id}: {product.name}")
-                product_data = trackers.fetch_product_data(product.url)
+    
+    # Get all products with tracking enabled
+    response = supabase.table('products').select('*').eq('tracking_enabled', True).execute()
+    products = response.data
+    print(f"Found {len(products)} products to check")
+    
+    for product in products:
+        try:
+            print(f"Checking price for product {product['id']}: {product['name']}")
+            
+            # Fetch new price (implement your price fetching logic here)
+            new_price = 0  # Replace with actual price fetching
+            old_price = product['current_price']
+            
+            if new_price != old_price:
+                # Update price history
+                price_history = json.loads(product['price_history']) if product['price_history'] else []
+                price_history.append({
+                    'price': new_price,
+                    'date': datetime.utcnow().isoformat()
+                })
                 
-                if not product_data or 'price' not in product_data:
-                    print(f"Failed to fetch price for product {product.id}")
-                    continue
-                    
-                new_price = product_data['price']
-                old_price = product.current_price
+                # Update product
+                supabase.table('products').update({
+                    'price_history': json.dumps(price_history),
+                    'current_price': new_price,
+                    'last_checked': datetime.utcnow().isoformat()
+                }).eq('id', product['id']).execute()
                 
-                if new_price != old_price:
-                    # Update price history
-                    price_history = json.loads(product.price_history) if product.price_history else []
-                    price_history.append({
-                        'price': new_price,
-                        'date': datetime.utcnow().isoformat()
-                    })
-                    product.price_history = json.dumps(price_history)
-                    product.current_price = new_price
-                    product.last_checked = datetime.utcnow()
-                    
-                    # Create notification if needed
-                    if product.notify_on_any_change or (product.target_price and new_price <= product.target_price):
-                        message = None
-                        if new_price < old_price:
-                            message = f"{product.custom_name or product.name}: Price dropped to {new_price} SAR"
-                        else:
-                            message = f"{product.custom_name or product.name}: Price increased to {new_price} SAR"
-                            
-                        if product.target_price and new_price <= product.target_price:
-                            message += f" - Target price reached!"
-                            
-                        notification = Notification(
-                            message=message,
-                            user_id=product.user_id,
-                            read=False
-                        )
-                        db.session.add(notification)
+                # Create notification if needed
+                if product['notify_on_any_change'] or (product['target_price'] and new_price <= product['target_price']):
+                    message = None
+                    if new_price < old_price:
+                        message = f"{product['custom_name'] or product['name']}: Price dropped to {new_price} SAR"
+                    else:
+                        message = f"{product['custom_name'] or product['name']}: Price increased to {new_price} SAR"
                         
-                        # Send email notification
-                        try:
-                            user = User.query.get(product.user_id)
-                            if user:
-                                subject = "Price Alert - Amazon Saudi Tracker"
-                                body = f"""
-                                Hello {user.username},
-                                
-                                {message}
-                                
-                                Click here to view the product: {product.url}
-                                
-                                Thank you for using Amazon Saudi Tracker!
-                                """
-                                
-                                msg = Message(subject=subject, recipients=[user.email], body=body)
-                                mail.send(msg)
-                                print(f"Email notification sent to {user.email}")
-                        except Exception as e:
-                            print(f"Failed to send email notification: {str(e)}")
-                            traceback.print_exc()
-                
-                # Always update last_checked time
-                product.last_checked = datetime.utcnow()
-                
-            except Exception as e:
-                print(f"Error checking product {product.id}: {str(e)}")
-                traceback.print_exc()
-                continue
-        
-        # Commit all changes at once
-        db.session.commit()
-        print(f"[{datetime.now()}] Price check completed successfully")
-        
+                    if product['target_price'] and new_price <= product['target_price']:
+                        message += f" - Target price reached!"
+                        
+                    # Add notification
+                    supabase.table('notifications').insert({
+                        'message': message,
+                        'user_id': product['user_id'],
+                        'read': False
+                    }).execute()
+                    
+                    # Send email notification
+                    try:
+                        user_response = supabase.table('users').select('*').eq('id', product['user_id']).execute()
+                        user = user_response.data[0] if user_response.data else None
+                        
+                        if user:
+                            # Implement your email sending logic here
+                            print(f"Would send email to {user['email']}")
+                    except Exception as e:
+                        print(f"Failed to send email notification: {str(e)}")
+                        traceback.print_exc()
+            
+            # Always update last_checked time
+            supabase.table('products').update({
+                'last_checked': datetime.utcnow().isoformat()
+            }).eq('id', product['id']).execute()
+            
+        except Exception as e:
+            print(f"Error checking product {product['id']}: {str(e)}")
+            traceback.print_exc()
+            continue
+    
+    print(f"[{datetime.now()}] Price check completed successfully")
+    
 except Exception as e:
     print(f"[{datetime.now()}] Error in price checker: {str(e)}")
     traceback.print_exc()
 EOL
     chmod +x price_checker.py
 fi
-
-# Final backup after all operations
-echo "Creating final backup after build completion..."
-python restore_db.py backup || echo "Final backup failed."
 
 echo "Build completed successfully!" 
