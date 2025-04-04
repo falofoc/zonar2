@@ -7,7 +7,7 @@ services:
       python -m pip install --upgrade pip
       pip install -r requirements.txt
       python setup_supabase.py || echo "Supabase setup completed with warnings"
-    startCommand: gunicorn wsgi:app
+    startCommand: gunicorn app:app
     envVars:
       - key: FLASK_APP
         value: app.py
