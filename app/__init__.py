@@ -11,6 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail
 from flask_migrate import Migrate
 import click
+from sqlalchemy import text
 
 # Load environment variables
 load_dotenv()
@@ -148,8 +149,8 @@ def before_request():
     g.is_arabic = (g.lang == 'ar')
     g.is_english = (g.lang == 'en')
 
-# Import models
-from .models import User, Product, Notification
+# Import database models 
+from .models import User
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -161,8 +162,8 @@ def health_check():
     # Basic system health check
     db_status = "healthy"
     try:
-        # Test DB connection
-        db.session.execute("SELECT 1")
+        # Test DB connection using proper SQLAlchemy syntax
+        db.session.execute(text("SELECT 1"))
         db.session.commit()
     except Exception as e:
         db_status = f"error: {str(e)}"
@@ -181,11 +182,13 @@ def health_check():
 @app.route('/')
 def index():
     # Show a proper homepage
+    db_connected = False
     try:
         # Try to count users to verify DB access (we'll still show the page even if this fails)
-        user_count = User.query.count()
-        print(f"Database connection successful: {user_count} users in database")
-        db_connected = True
+        with app.app_context():
+            user_count = User.query.count()
+            print(f"Database connection successful: {user_count} users in database")
+            db_connected = True
     except Exception as e:
         print(f"Error connecting to database: {e}")
         db_connected = False

@@ -3,130 +3,15 @@
 import os
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import render_template, request, jsonify, redirect, url_for, flash, g, session
 from flask_login import login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
-from app import app, translate, supabase
-from app.supabase_models import SupabaseUser, SupabaseProduct, SupabaseNotification
-import trackers
-import smtplib, ssl
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from flask_mail import Message
-from app import mail
-import time
+from app import app, db, translate
+from app.models import User, Product, Notification
 
 # Routes
-@app.route('/')
-def home():
-    try:
-        if current_user.is_authenticated:
-            # Check for flash messages in session
-            if 'flash_message' in session:
-                flash_data = session.pop('flash_message')
-                flash(flash_data['message'], flash_data['category'])
-            
-            # Show email verification reminder if email is not verified
-            if not current_user.email_verified:
-                flash(translate('verification_required'), 'warning')
-            
-            # Get search query
-            search_query = request.args.get('search', '').strip()
-            
-            # Get page number from query parameters, default to 1
-            page = request.args.get('page', 1, type=int)
-            per_page = 5  # Number of products per page
-            
-            # Get products from Supabase
-            print(f"Querying products for user ID: {current_user.id}")
-            
-            # Get all user products
-            query = supabase.table('products').select('*').eq('user_id', current_user.id)
-            
-            # Apply search if query exists
-            if search_query:
-                search_term = f"%{search_query}%"
-                query = query.or_(f"name.ilike.{search_term},custom_name.ilike.{search_term}")
-            
-            # Order by creation date (newest first)
-            query = query.order('created_at', desc=True)
-            
-            # Execute the query
-            result = query.execute()
-            products = result.data if result.data else []
-            
-            # Implement manual pagination since Supabase doesn't have built-in pagination
-            total_products = len(products)
-            start_idx = (page - 1) * per_page
-            end_idx = start_idx + per_page
-            paginated_products = products[start_idx:end_idx]
-            
-            # Create a pagination object to mimic SQLAlchemy's pagination
-            class PaginationObject:
-                def __init__(self, items, page, per_page, total):
-                    self.items = items
-                    self.page = page
-                    self.per_page = per_page
-                    self.total = total
-                    self.pages = (total + per_page - 1) // per_page
-                    
-                def iter_pages(self, left_edge=2, left_current=2, right_current=3, right_edge=2):
-                    last = 0
-                    for num in range(1, self.pages + 1):
-                        if num <= left_edge or \
-                           (num > self.page - left_current - 1 and num < self.page + right_current) or \
-                           num > self.pages - right_edge:
-                            if last + 1 != num:
-                                yield None
-                            yield num
-                            last = num
-            
-            pagination = PaginationObject(
-                items=paginated_products,
-                page=page,
-                per_page=per_page,
-                total=total_products
-            )
-            
-            # Log product count for debugging
-            print(f"Found {total_products} products for user {current_user.id}")
-            
-            # For empty state message
-            has_products = total_products > 0
-            print(f"User has products: {has_products}")
-            
-            # Get notifications
-            notifications_result = supabase.table('notifications') \
-                .select('*') \
-                .eq('user_id', current_user.id) \
-                .eq('read', False) \
-                .order('created_at', desc=True) \
-                .execute()
-            
-            notifications = notifications_result.data if notifications_result.data else []
-            
-            # Get unread count
-            unread_count = len(notifications)
-            
-            return render_template(
-                'index.html',
-                products=pagination,
-                notifications=notifications,
-                search_query=search_query,
-                unread_count=unread_count,
-                email_verified=current_user.email_verified,
-                has_products=has_products
-            )
-        else:
-            # For non-authenticated users show login page with proper language support
-            print("User not authenticated, showing login page")
-            return redirect(url_for('login'))
-    except Exception as e:
-        print(f"Error in home route: {e}")
-        traceback.print_exc()  # Add full traceback for better debugging
-        return redirect(url_for('login'))
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     try:
@@ -144,36 +29,30 @@ def login():
                 flash('Please provide both username and password', 'danger')
                 return render_template('login.html', unread_count=0)
                 
-            # Query user by username from Supabase
-            response = supabase.table('users').select('*').eq('username', username).execute()
+            # Find user by username using SQLAlchemy
+            user = User.query.filter_by(username=username).first()
             
-            # Check if we found a user
-            if response.data and len(response.data) > 0:
-                # Create SupabaseUser object
-                user = SupabaseUser(response.data[0])
+            if user and user.check_password(password):
+                # Improved login with persistent session
+                login_user(user, remember=remember)
+                session.permanent = True  # Make session permanent
                 
-                if user.check_password(password):
-                    # Improved login with persistent session
-                    login_user(user, remember=remember)
-                    session.permanent = True  # Make session permanent
+                # Set session cookie expiration to 30 days for remembered users
+                if remember:
+                    app.permanent_session_lifetime = timedelta(days=30)
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True,
+                        'message': 'Logged in successfully!',
+                        'redirect': url_for('home')
+                    })
                     
-                    # Set session cookie expiration to 30 days for remembered users
-                    if remember:
-                        from datetime import timedelta
-                        app.permanent_session_lifetime = timedelta(days=30)
-                    
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return jsonify({
-                            'success': True,
-                            'message': 'Logged in successfully!',
-                            'redirect': url_for('home')
-                        })
-                        
-                    flash('Logged in successfully!', 'success')
-                    next_page = request.args.get('next')
-                    if not next_page or not next_page.startswith('/'):
-                        next_page = url_for('home')
-                    return redirect(next_page)
+                flash('Logged in successfully!', 'success')
+                next_page = request.args.get('next')
+                if not next_page or not next_page.startswith('/'):
+                    next_page = url_for('home')
+                return redirect(next_page)
             
             # If we get here, either user not found or password incorrect
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -193,42 +72,38 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     try:
-        print("Starting signup process...")
         if current_user.is_authenticated:
-            print("User already authenticated, redirecting to home")
             return redirect(url_for('home'))
             
         if request.method == 'POST':
-            print("Processing POST request for signup")
             username = request.form.get('username')
             email = request.form.get('email')
             password = request.form.get('password')
             
-            print(f"Received signup data - Username: {username}, Email: {email}")
-            
             # Add some basic validation
             if not username or not email or not password:
-                print("Missing required fields")
                 flash('Please fill in all fields', 'danger')
                 return redirect(url_for('signup'))
             
             # Check for existing username
-            existing_user = SupabaseUser.query.filter_by(username=username).first()
+            existing_user = User.query.filter_by(username=username).first()
             if existing_user:
-                print(f"Username {username} already exists")
                 flash('Username already exists', 'danger')
                 return redirect(url_for('signup'))
                 
             # Check for existing email
-            existing_email = SupabaseUser.query.filter_by(email=email).first()
+            existing_email = User.query.filter_by(email=email).first()
             if existing_email:
-                print(f"Email {email} already registered")
                 flash('Email already registered', 'danger')
                 return redirect(url_for('signup'))
             
-            print("Creating new user...")
             try:
-                user = SupabaseUser(username=username, email=email)
+                # Create user with SQLAlchemy
+                user = User(
+                    username=username, 
+                    email=email,
+                    created_at=datetime.utcnow()
+                )
                 user.set_password(password)
                 
                 # Generate verification token
