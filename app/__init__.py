@@ -13,6 +13,12 @@ from flask_mail import Mail
 # Load environment variables
 load_dotenv()
 
+# Print environment variables for debugging
+print("Environment variables at app startup:")
+print(f"SUPABASE_URL present: {bool(os.environ.get('SUPABASE_URL'))}")
+print(f"SUPABASE_KEY present: {bool(os.environ.get('SUPABASE_KEY'))}")
+print(f"SUPABASE_SERVICE_KEY present: {bool(os.environ.get('SUPABASE_SERVICE_KEY'))}")
+
 # Initialize Flask app
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
@@ -66,9 +72,18 @@ login_manager.login_message_category = 'info'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.session_protection = "strong"
 
-# Initialize Supabase client
-from .supabase_client import get_supabase_client
-supabase = get_supabase_client()
+# Initialize Supabase client with error handling
+try:
+    from .supabase_client import get_supabase_client
+    supabase = get_supabase_client()
+    if supabase is None:
+        print("WARNING: Supabase client initialization returned None")
+    else:
+        print("Successfully initialized Supabase client")
+except Exception as e:
+    print(f"ERROR initializing Supabase client: {str(e)}")
+    print(f"Traceback: {traceback.format_exc()}")
+    supabase = None
 
 # Import translations
 import sys
@@ -129,17 +144,32 @@ def load_user(id):
 
 # Initialize Supabase tables if they don't exist
 def init_supabase_tables():
+    if supabase is None:
+        print("WARNING: Skipping table initialization because Supabase client is not available")
+        return
+        
     try:
-        supabase.table('users').select('id').limit(1).execute()
-        supabase.table('products').select('id').limit(1).execute()
-        supabase.table('notifications').select('id').limit(1).execute()
-        print("Supabase tables already exist")
+        print("Checking Supabase tables...")
+        tables = ['users', 'products', 'notifications']
+        for table in tables:
+            try:
+                result = supabase.table(table).select('id').limit(1).execute()
+                print(f"Table '{table}' exists and is accessible")
+            except Exception as table_error:
+                print(f"Could not access table '{table}': {str(table_error)}")
+                print("This is expected during first deployment")
+        
+        print("Supabase table check completed")
     except Exception as e:
-        print(f"Error checking tables: {e}")
-        print("Tables will be created by setup_supabase.py during deployment")
+        print(f"Error during table initialization: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        print("Continuing despite table initialization error")
 
 # Initialize Supabase tables
-init_supabase_tables()
+try:
+    init_supabase_tables()
+except Exception as e:
+    print(f"Failed to initialize tables but continuing: {str(e)}")
 
 # Import routes
 from . import routes 
