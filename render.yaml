@@ -6,6 +6,7 @@ services:
     buildCommand: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
+      python -c "import os; print('SUPABASE_URL:', os.getenv('SUPABASE_URL')); print('SUPABASE_KEY:', bool(os.getenv('SUPABASE_KEY')))"
       python setup_supabase.py || echo "Supabase setup completed with warnings"
     startCommand: gunicorn wsgi:app
     envVars:
